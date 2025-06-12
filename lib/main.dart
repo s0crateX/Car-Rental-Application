@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       title: 'Car Rental App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      initialRoute: AppRoutes.login,
+      initialRoute: AppRoutes.scout, // Changed to scout for Phase 2
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }

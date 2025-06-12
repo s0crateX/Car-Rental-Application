@@ -170,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         
                         // Navigate based on user role (placeholder)
                         Future.delayed(const Duration(seconds: 1), () {
-                          Navigator.pushReplacementNamed(context, AppRoutes.home);
+                          Navigator.pushReplacementNamed(context, AppRoutes.scout);
                         });
                       } catch (e) {
                         ErrorSnackbar.showAuthError(
