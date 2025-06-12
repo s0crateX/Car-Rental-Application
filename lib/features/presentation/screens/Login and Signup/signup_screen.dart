@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:car_rental_app/config/theme.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/validation_snackbar.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/app_snackbar.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:provider/provider.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -11,6 +13,48 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  bool _isSubmitting = false;
+
+  Future<void> _registerUser() async {
+    setState(() {
+      _isSubmitting = true;
+    });
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      // Convert role to lowercase for consistency in the database
+      String userRole = _selectedRole.toLowerCase();
+      if (userRole == 'car owner') {
+        userRole = 'car_owner';
+      }
+      
+      // Use the AuthService to register the user
+      final success = await authService.signUpWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _nameController.text.trim(),
+        _phoneController.text.trim(),
+        userRole,
+      );
+      
+      if (success) {
+        // Send email verification
+        await authService.sendEmailVerification();
+        _showSignupConfirmation();
+      } else {
+        // If there was an error in the AuthService
+        String? errorMsg = authService.errorMessage;
+        AppSnackbar.error(context: context, message: errorMsg ?? 'Registration failed.');
+      }
+    } catch (e) {
+      AppSnackbar.error(context: context, message: 'An unexpected error occurred.');
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -376,8 +420,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         return;
                       }
                       
-                      // TODO: Implement actual signup functionality
-                      _showSignupConfirmation();
+                      // Implement actual signup functionality
+                      _registerUser();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.lightBlue,

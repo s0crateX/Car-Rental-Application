@@ -4,6 +4,9 @@ import 'package:car_rental_app/config/theme.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/validation_snackbar.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/success_snackbar.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/app_snackbar.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,12 +18,55 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
   
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+  
+  // Show a dialog for email verification
+  void _showVerificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Email Verification Required'),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: [
+                Text('Please verify your email before logging in.'),
+                SizedBox(height: 10),
+                Text('Check your inbox for a verification link.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Resend Email'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final authService = Provider.of<AuthService>(context, listen: false);
+                await authService.sendEmailVerification();
+                AppSnackbar.success(
+                  context: context,
+                  message: 'Verification email sent! Please check your inbox.',
+                );
+              },
+            ),
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -148,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () async {
+                    onPressed: _isLoading ? null : () async {
                       // Validate email
                       if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
                         ValidationSnackbar.showFieldValidationError(context);
@@ -161,22 +207,65 @@ class _LoginScreenState extends State<LoginScreen> {
                         return;
                       }
 
+                      setState(() {
+                        _isLoading = true;
+                      });
+
                       try {
-                        // TODO: Implement actual login logic with Firebase
-                        // Simulate login delay
-                        await Future.delayed(const Duration(seconds: 2));
+                        final authService = Provider.of<AuthService>(context, listen: false);
                         
-                        SuccessSnackbar.showLoginSuccess(context: context);
+                        // Attempt to sign in
+                        final success = await authService.signInWithEmailAndPassword(
+                          _emailController.text.trim(),
+                          _passwordController.text.trim(),
+                        );
                         
-                        // Navigate based on user role (placeholder)
-                        Future.delayed(const Duration(seconds: 1), () {
-                          Navigator.pushReplacementNamed(context, AppRoutes.scout);
-                        });
+                        if (success) {
+                          // Check if email is verified
+                          if (!authService.isEmailVerified) {
+                            // Show verification dialog
+                            _showVerificationDialog(context);
+                            // Sign out since email is not verified
+                            await authService.signOut();
+                          } else {
+                            // Email is verified, proceed with login
+                            SuccessSnackbar.showLoginSuccess(context: context);
+                            
+                            // Get user role for navigation
+                            String? userRole = authService.userData?['userRole'] as String?;
+                            
+                            // Navigate based on user role
+                            Future.delayed(const Duration(seconds: 1), () {
+                              // For now, navigate to scout screen for all users
+                              // In the future, we'll add role-based routing when those screens are created
+                              Navigator.pushReplacementNamed(context, AppRoutes.scout);
+                              
+                              // TODO: Implement role-based navigation when screens are available
+                              // if (userRole == 'admin') {
+                              //   Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+                              // } else if (userRole == 'car_owner') {
+                              //   Navigator.pushReplacementNamed(context, AppRoutes.ownerDashboard);
+                              // } else {
+                              //   Navigator.pushReplacementNamed(context, AppRoutes.scout);
+                              // }
+                            });
+                          }
+                        } else {
+                          // Login failed
+                          ErrorSnackbar.showAuthError(
+                            context: context,
+                            customMessage: authService.errorMessage ?? 'Invalid email or password',
+                          );
+                        }
                       } catch (e) {
                         ErrorSnackbar.showAuthError(
                           context: context,
-                          customMessage: 'Invalid email or password',
+                          customMessage: 'An unexpected error occurred',
                         );
+                      } finally {
+                        setState(() {
+                          _isLoading = false;
+                        });
                       }
                     },
                     style: ElevatedButton.styleFrom(
