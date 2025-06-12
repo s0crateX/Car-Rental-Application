@@ -1,0 +1,248 @@
+import 'package:flutter/material.dart';
+import 'package:car_rental_app/config/routes.dart';
+import 'package:car_rental_app/config/theme.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/validation_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/success_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.darkNavy,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // App logo section
+                Center(
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: AppTheme.navy,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // This is a placeholder for the car logo
+                        Icon(
+                          Icons.directions_car,
+                          size: 60,
+                          color: AppTheme.lightBlue,
+                        ),
+                        // Additional graphic elements similar to the design
+                        Positioned(
+                          top: 20,
+                          left: 20,
+                          child: Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              color: AppTheme.mediumBlue,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 15,
+                          right: 15,
+                          child: Container(
+                            height: 20,
+                            width: 20,
+                            decoration: BoxDecoration(
+                              color: AppTheme.lightBlue.withOpacity(0.7),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 30),
+                
+                // Login text
+                Text(
+                  'Login',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                  ),
+                ),
+                
+                const SizedBox(height: 10),
+                
+                // Instruction text
+                Text(
+                  'Please fill the input below here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.paleBlue,
+                  ),
+                ),
+                
+                const SizedBox(height: 40),
+                
+                // Email field
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.email_outlined, color: AppTheme.lightBlue),
+                    hintText: 'Email',
+                    hintStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.7)),
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Password field
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.lock_outline, color: AppTheme.lightBlue),
+                    hintText: 'Password',
+                    hintStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.7)),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        Icons.visibility_off,
+                        color: AppTheme.lightBlue,
+                      ),
+                      onPressed: () {
+                        // TODO: Implement password visibility toggle
+                      },
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 40),
+                
+                // Login button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      // Validate email
+                      if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
+                        ValidationSnackbar.showFieldValidationError(context);
+                        return;
+                      }
+
+                      // Validate password
+                      if (_passwordController.text.isEmpty) {
+                        ValidationSnackbar.showFieldValidationError(context);
+                        return;
+                      }
+
+                      try {
+                        // TODO: Implement actual login logic with Firebase
+                        // Simulate login delay
+                        await Future.delayed(const Duration(seconds: 2));
+                        
+                        SuccessSnackbar.showLoginSuccess(context: context);
+                        
+                        // Navigate based on user role (placeholder)
+                        Future.delayed(const Duration(seconds: 1), () {
+                          Navigator.pushReplacementNamed(context, AppRoutes.home);
+                        });
+                      } catch (e) {
+                        ErrorSnackbar.showAuthError(
+                          context: context,
+                          customMessage: 'Invalid email or password',
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.lightBlue,
+                      foregroundColor: AppTheme.navy,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                    child: const Text(
+                      'LOGIN',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Forgot password
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, AppRoutes.forgotPassword);
+                    },
+                    child: Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: AppTheme.paleBlue,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Don't have an account section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account? ",
+                      style: TextStyle(color: AppTheme.paleBlue),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRoutes.signup);
+                      },
+                      child: const Text(
+                        'Sign up',
+                        style: TextStyle(
+                          color: Colors.lightBlueAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
