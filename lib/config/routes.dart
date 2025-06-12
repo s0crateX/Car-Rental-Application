@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:car_rental_app/features/presentation/screens/login_screen.dart';
-import 'package:car_rental_app/features/presentation/screens/signup_screen.dart';
-import 'package:car_rental_app/features/presentation/screens/forgot_password_screen.dart';
+import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/login_screen.dart';
+import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/signup_screen.dart';
+import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/forgot_password_screen.dart';
 
 class AppRoutes {
   static const String login = '/';
@@ -18,11 +18,12 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
       default:
         return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('No route defined for ${settings.name}'),
-            ),
-          ),
+          builder:
+              (_) => Scaffold(
+                body: Center(
+                  child: Text('No route defined for ${settings.name}'),
+                ),
+              ),
         );
     }
   }
