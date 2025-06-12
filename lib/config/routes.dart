@@ -3,12 +3,14 @@ import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signu
 import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/signup_screen.dart';
 import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/forgot_password_screen.dart';
 import 'package:car_rental_app/features/presentation/screens/Scout/scout_screen.dart';
+import 'package:car_rental_app/features/presentation/screens/Home/home_screen.dart';
 
 class AppRoutes {
   static const String login = '/';
   static const String signup = '/signup';
   static const String forgotPassword = '/forgot-password';
   static const String scout = '/scout';
+  static const String home = '/home';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -20,6 +22,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
       case scout:
         return MaterialPageRoute(builder: (_) => const ScoutScreen());
+      case home:
+        return MaterialPageRoute(builder: (_) => const HomeScreen());
       default:
         return MaterialPageRoute(
           builder:

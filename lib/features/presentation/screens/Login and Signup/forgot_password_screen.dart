@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:car_rental_app/config/theme.dart';
+import 'package:provider/provider.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/success_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/validation_snackbar.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -19,12 +24,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _sendResetEmail() {
+  Future<void> _sendResetEmail() async {
     // Validate email
-    if (_emailController.text.trim().isEmpty || !_emailController.text.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid email address')),
-      );
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ValidationSnackbar.showFieldValidationError(context);
       return;
     }
 
@@ -32,13 +36,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _isSubmitting = true;
     });
 
-    // Simulate API call
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isSubmitting = false;
-        _resetEmailSent = true;
-      });
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final success = await authService.resetPassword(email);
+
+    setState(() {
+      _isSubmitting = false;
+      _resetEmailSent = success;
     });
+
+    if (success) {
+      SuccessSnackbar.show(
+        context: context,
+        message: 'Password reset email sent! Check your inbox.',
+      );
+    } else {
+      final errorMsg = authService.errorMessage ?? 'Failed to send reset email.';
+      ErrorSnackbar.show(
+        context: context,
+        message: errorMsg,
+      );
+    }
   }
 
   @override

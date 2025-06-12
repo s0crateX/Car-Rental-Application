@@ -19,7 +19,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  
+  bool _obscurePassword = true;
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscurePassword = !_obscurePassword;
+    });
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -33,37 +40,87 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Email Verification Required'),
-          content: const SingleChildScrollView(
-            child: ListBody(
+        return Dialog(
+          backgroundColor: AppTheme.navy,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text('Please verify your email before logging in.'),
-                SizedBox(height: 10),
-                Text('Check your inbox for a verification link.'),
+                Row(
+                  children: [
+                    Icon(Icons.mark_email_read_rounded, color: AppTheme.lightBlue, size: 28),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Verify Your Email',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Please verify your email before logging in. Check your inbox for a verification link or spam folder if not found.',
+                  style: TextStyle(color: AppTheme.paleBlue, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.mediumBlue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          final authService = Provider.of<AuthService>(context, listen: false);
+                          final success = await authService.sendEmailVerification();
+                          if (success) {
+                            AppSnackbar.success(
+                              context: context,
+                              message: 'Verification email sent! Please check your inbox.',
+                            );
+                          } else {
+                            AppSnackbar.error(
+                              context: context,
+                              message: authService.errorMessage ?? 'Failed to send verification email.',
+                            );
+                          }
+                        },
+                        child: const Text('Resend'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.lightBlue,
+                          foregroundColor: AppTheme.navy,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Okay'),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              child: const Text('Resend Email'),
-              onPressed: () async {
-                Navigator.of(context).pop();
-                final authService = Provider.of<AuthService>(context, listen: false);
-                await authService.sendEmailVerification();
-                AppSnackbar.success(
-                  context: context,
-                  message: 'Verification email sent! Please check your inbox.',
-                );
-              },
-            ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
         );
       },
     );
@@ -170,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password field
                 TextField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.lock_outline, color: AppTheme.lightBlue),
@@ -178,12 +235,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     hintStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.7)),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        Icons.visibility_off,
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
                         color: AppTheme.lightBlue,
                       ),
-                      onPressed: () {
-                        // TODO: Implement password visibility toggle
-                      },
+                      onPressed: _togglePasswordVisibility,
                     ),
                   ),
                 ),
@@ -195,8 +250,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : () async {
-                      // Validate email
-                      if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
+                      // Validate email format
+                      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                      if (_emailController.text.isEmpty || !emailRegex.hasMatch(_emailController.text.trim())) {
                         ValidationSnackbar.showFieldValidationError(context);
                         return;
                       }
@@ -221,8 +277,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                         
                         if (success) {
-                          // Check if email is verified
-                          if (!authService.isEmailVerified) {
+                          // Force check if email is verified with the latest data
+                          bool isVerified = await authService.checkEmailVerified();
+                          
+                          if (!isVerified && !authService.isEmailVerified) {
                             // Show verification dialog
                             _showVerificationDialog(context);
                             // Sign out since email is not verified
@@ -232,22 +290,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             SuccessSnackbar.showLoginSuccess(context: context);
                             
                             // Get user role for navigation
-                            String? userRole = authService.userData?['userRole'] as String?;
+                            String? userRole = authService.getUserRole();
                             
                             // Navigate based on user role
                             Future.delayed(const Duration(seconds: 1), () {
-                              // For now, navigate to scout screen for all users
-                              // In the future, we'll add role-based routing when those screens are created
-                              Navigator.pushReplacementNamed(context, AppRoutes.scout);
-                              
-                              // TODO: Implement role-based navigation when screens are available
-                              // if (userRole == 'admin') {
-                              //   Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
-                              // } else if (userRole == 'car_owner') {
-                              //   Navigator.pushReplacementNamed(context, AppRoutes.ownerDashboard);
-                              // } else {
-                              //   Navigator.pushReplacementNamed(context, AppRoutes.scout);
-                              // }
+                              if (mounted) {
+                                // Implement role-based navigation
+                                if (authService.isAdmin) {
+                                  // Navigate to admin dashboard when available
+                                  // For now, navigate to scout screen
+                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
+                                } else if (authService.isCarOwner) {
+                                  // Navigate to car owner dashboard when available
+                                  // For now, navigate to scout screen
+                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
+                                } else {
+                                  // Default to customer view (scout screen)
+                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
+                                }
+                              }
                             });
                           }
                         } else {
@@ -258,14 +319,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         }
                       } catch (e) {
+                        print('Login error: $e');
                         ErrorSnackbar.showAuthError(
                           context: context,
-                          customMessage: 'An unexpected error occurred',
+                          customMessage: 'An unexpected error occurred: ${e.toString()}',
                         );
                       } finally {
-                        setState(() {
-                          _isLoading = false;
-                        });
+                        if (mounted) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
