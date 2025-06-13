@@ -3,7 +3,7 @@ import 'package:car_rental_app/config/theme.dart';
 import 'package:car_rental_app/config/routes.dart';
 
 class LoginSignupPopup extends StatelessWidget {
-  const LoginSignupPopup({Key? key}) : super(key: key);
+  const LoginSignupPopup({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +51,10 @@ class LoginSignupPopup extends StatelessWidget {
                       Navigator.pushNamed(context, AppRoutes.login);
                     },
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.lightBlue, width: 2),
+                      side: const BorderSide(
+                        color: AppTheme.lightBlue,
+                        width: 2,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),

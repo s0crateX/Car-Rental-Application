@@ -17,7 +17,7 @@ class AppTheme {
     return ThemeData(
       primaryColor: mediumBlue,
       scaffoldBackgroundColor: darkNavy,
-      fontFamily: 'Lato',
+      fontFamily: 'General Sans',
       colorScheme: ColorScheme.dark(
         primary: mediumBlue,
         secondary: lightBlue,
@@ -55,32 +55,24 @@ class AppTheme {
       // Button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(lightBlue),
-          foregroundColor: MaterialStateProperty.all(navy),
-          shape: MaterialStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
-            ),
+          backgroundColor: WidgetStateProperty.all(lightBlue),
+          foregroundColor: WidgetStateProperty.all(navy),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
           ),
-          padding: MaterialStateProperty.all(
+          padding: WidgetStateProperty.all(
             const EdgeInsets.symmetric(vertical: 15),
           ),
-          textStyle: MaterialStateProperty.all(
-            const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Lato',
-            ),
+          textStyle: WidgetStateProperty.all(
+            const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'General Sans'),
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
-          foregroundColor: MaterialStateProperty.all(lightBlue),
-          textStyle: MaterialStateProperty.all(
-            const TextStyle(
-              fontWeight: FontWeight.normal,
-              fontFamily: 'Lato',
-            ),
+          foregroundColor: WidgetStateProperty.all(lightBlue),
+          textStyle: WidgetStateProperty.all(
+            const TextStyle(fontWeight: FontWeight.normal, fontFamily: 'General Sans'),
           ),
         ),
       ),

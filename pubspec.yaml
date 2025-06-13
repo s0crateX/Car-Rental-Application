@@ -48,7 +48,13 @@ dependencies:
   # State management
   provider: ^6.1.1
   firebase_core_platform_interface: ^5.4.0
-  
+  flutter_svg: ^2.1.0
+  image_picker: ^1.1.2
+
+  flutter_map: ^8.1.1
+  geolocator: ^14.0.1
+  latlong2: ^0.9.1
+  shared_preferences: ^2.5.3
   # No need for Google Fonts as we're using local font files
 
 dev_dependencies:
@@ -76,6 +82,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/images/cars/
+    - assets/svg/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -89,29 +97,39 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: Lato
+    - family: General Sans
       fonts:
-        - asset: assets/fonts/Lato/Lato-Regular.ttf
-        - asset: assets/fonts/Lato/Lato-Bold.ttf
+        - asset: assets/fonts/General Sans/GeneralSans-Regular.ttf
+        - asset: assets/fonts/General Sans/GeneralSans-Italic.ttf
+          style: italic
+        - asset: assets/fonts/General Sans/GeneralSans-Bold.ttf
           weight: 700
-        - asset: assets/fonts/Lato/Lato-Italic.ttf
-          style: italic
-        - asset: assets/fonts/Lato/Lato-BoldItalic.ttf
+        - asset: assets/fonts/General Sans/GeneralSans-BoldItalic.ttf
           weight: 700
           style: italic
-        - asset: assets/fonts/Lato/Lato-Light.ttf
+        - asset: assets/fonts/General Sans/GeneralSans-Extralight.ttf
+          weight: 200
+        - asset: assets/fonts/General Sans/GeneralSans-ExtralightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/General Sans/GeneralSans-Light.ttf
           weight: 300
-        - asset: assets/fonts/Lato/Lato-LightItalic.ttf
+        - asset: assets/fonts/General Sans/GeneralSans-LightItalic.ttf
           weight: 300
           style: italic
-        - asset: assets/fonts/Lato/Lato-Black.ttf
-          weight: 900
-        - asset: assets/fonts/Lato/Lato-BlackItalic.ttf
-          weight: 900
+        - asset: assets/fonts/General Sans/GeneralSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/General Sans/GeneralSans-MediumItalic.ttf
+          weight: 500
           style: italic
-        - asset: assets/fonts/Lato/Lato-Thin.ttf
+        - asset: assets/fonts/General Sans/GeneralSans-Semibold.ttf
+          weight: 600
+        - asset: assets/fonts/General Sans/GeneralSans-SemiboldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/General Sans/GeneralSans-Variable.ttf
           weight: 100
-        - asset: assets/fonts/Lato/Lato-ThinItalic.ttf
+        - asset: assets/fonts/General Sans/GeneralSans-VariableItalic.ttf
           weight: 100
           style: italic
   #

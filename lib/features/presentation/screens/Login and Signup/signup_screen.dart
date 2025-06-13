@@ -25,38 +25,49 @@ class _SignupScreenState extends State<SignupScreen> {
       ValidationSnackbar.showFieldValidationError(context);
       return;
     }
-    
+
     if (!_passwordsMatch) {
       ValidationSnackbar.showPasswordMismatchError(context);
       return;
     }
-    
-    if (!_hasMinLength || !_hasUppercase || !_hasLowercase || !_hasNumber || !_hasSpecialChar) {
+
+    if (!_hasMinLength ||
+        !_hasUppercase ||
+        !_hasLowercase ||
+        !_hasNumber ||
+        !_hasSpecialChar) {
       ValidationSnackbar.showPasswordStrengthError(context);
       return;
     }
-    
+
     // Validate email format
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(_emailController.text.trim())) {
-      AppSnackbar.error(context: context, message: 'Please enter a valid email address.');
+      AppSnackbar.error(
+        context: context,
+        message: 'Please enter a valid email address.',
+      );
       return;
     }
-    
+
     // Validate phone number (PH format, must be 10 digits, starts with 9)
     final phone = _phoneController.text.trim();
     if (!RegExp(r'^9\d{9}$').hasMatch(phone)) {
-      AppSnackbar.error(context: context, message: 'Please enter a valid 10-digit PH mobile number (e.g., 9123456789).');
+      AppSnackbar.error(
+        context: context,
+        message:
+            'Please enter a valid 10-digit PH mobile number (e.g., 9123456789).',
+      );
       return;
     }
-    
+
     setState(() {
       _isSubmitting = true;
     });
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       // Use the AuthService to register the user
       final success = await authService.signUpWithEmailAndPassword(
         _emailController.text.trim(),
@@ -65,17 +76,23 @@ class _SignupScreenState extends State<SignupScreen> {
         _phoneController.text.trim(),
         _selectedRole, // The AuthService now handles role normalization
       );
-      
+
       if (success) {
         // Email verification is now sent automatically in the AuthService
         _showSignupConfirmation();
       } else {
         // If there was an error in the AuthService
         String? errorMsg = authService.errorMessage;
-        AppSnackbar.error(context: context, message: errorMsg ?? 'Registration failed.');
+        AppSnackbar.error(
+          context: context,
+          message: errorMsg ?? 'Registration failed.',
+        );
       }
     } catch (e) {
-      AppSnackbar.error(context: context, message: 'An unexpected error occurred: ${e.toString()}');
+      AppSnackbar.error(
+        context: context,
+        message: 'An unexpected error occurred: ${e.toString()}',
+      );
       print('Error during registration: $e');
     } finally {
       if (mounted) {
@@ -94,7 +111,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // User role selection
   String _selectedRole = 'Customer';
-  
+
   // Password strength variables
   bool _hasMinLength = false;
   bool _hasUppercase = false;
@@ -102,12 +119,11 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
-
+  final bool _obscureConfirmPassword = true;
 
   // Check if passwords match
   bool _passwordsMatch = false;
-  
+
   void _checkPasswordStrength(String password) {
     setState(() {
       _hasMinLength = password.length >= 6;
@@ -117,13 +133,14 @@ class _SignupScreenState extends State<SignupScreen> {
       _hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
     });
   }
-  
+
   void _checkPasswordsMatch() {
     setState(() {
-      _passwordsMatch = _passwordController.text == _confirmPasswordController.text;
+      _passwordsMatch =
+          _passwordController.text == _confirmPasswordController.text;
     });
   }
-  
+
   // Show signup confirmation dialog
   void _showSignupConfirmation() {
     showDialog(
@@ -132,7 +149,9 @@ class _SignupScreenState extends State<SignupScreen> {
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: AppTheme.navy,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             child: Column(
@@ -141,7 +160,11 @@ class _SignupScreenState extends State<SignupScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.mark_email_read_rounded, color: AppTheme.lightBlue, size: 28),
+                    Icon(
+                      Icons.mark_email_read_rounded,
+                      color: AppTheme.lightBlue,
+                      size: 28,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -168,7 +191,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.lightBlue,
                       foregroundColor: AppTheme.navy,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     onPressed: () {
@@ -186,7 +211,7 @@ class _SignupScreenState extends State<SignupScreen> {
       },
     );
   }
-  
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -196,7 +221,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
-  
+
   // Build password requirement indicator
   Widget _buildPasswordRequirement(String requirement, bool isMet) {
     return Padding(
@@ -241,7 +266,7 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Title
                 Text(
                   'Create Account',
@@ -251,80 +276,101 @@ class _SignupScreenState extends State<SignupScreen> {
                     fontSize: 28,
                   ),
                 ),
-                
+
                 const SizedBox(height: 10),
-                
+
                 // Instruction text
                 Text(
                   'Please fill the input below here',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.paleBlue,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppTheme.paleBlue),
                 ),
-                
+
                 const SizedBox(height: 30),
-                
+
                 // Full name field
                 TextField(
                   controller: _nameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.person_outline, color: AppTheme.lightBlue),
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                      color: AppTheme.lightBlue,
+                    ),
                     hintText: 'Full Name',
-                    hintStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.7)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.lightBlue.withOpacity(0.7),
+                    ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Phone field (PH format)
-Row(
-  children: [
-    Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.navy.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBlue.withOpacity(0.5)),
-      ),
-      child: const Text(
-        '+63',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-      ),
-    ),
-    const SizedBox(width: 8),
-    Expanded(
-      child: TextField(
-        controller: _phoneController,
-        keyboardType: TextInputType.number,
-        maxLength: 10,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          counterText: '',
-          hintText: '9123456789',
-          hintStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.7)),
-        ),
-      ),
-    ),
-  ],
-),
-                
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.navy.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppTheme.lightBlue.withOpacity(0.5),
+                        ),
+                      ),
+                      child: const Text(
+                        '+63',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 10,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          hintText: '9123456789',
+                          hintStyle: TextStyle(
+                            color: AppTheme.lightBlue.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 16),
-                
+
                 // Email field
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.email_outlined, color: AppTheme.lightBlue),
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: AppTheme.lightBlue,
+                    ),
                     hintText: 'Email',
-                    hintStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.7)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.lightBlue.withOpacity(0.7),
+                    ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Password field
                 TextFormField(
                   controller: _passwordController,
@@ -338,7 +384,9 @@ Row(
                     labelStyle: TextStyle(color: AppTheme.lightBlue),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: AppTheme.lightBlue,
                       ),
                       onPressed: () {
@@ -349,23 +397,42 @@ Row(
                     ),
                   ),
                 ),
-                
+
                 // Show password requirements only if not all are met and typing started
-if (_passwordController.text.isNotEmpty &&
-    (!(_hasMinLength && _hasUppercase && _hasLowercase && _hasNumber && _hasSpecialChar)))
-  Column(
-    children: [
-      const SizedBox(height: 10),
-      _buildPasswordRequirement('At least 6 characters', _hasMinLength),
-      _buildPasswordRequirement('At least 1 uppercase letter', _hasUppercase),
-      _buildPasswordRequirement('At least 1 lowercase letter', _hasLowercase),
-      _buildPasswordRequirement('At least 1 number', _hasNumber),
-      _buildPasswordRequirement('At least 1 special character', _hasSpecialChar),
-    ],
-  ),
-                
+                if (_passwordController.text.isNotEmpty &&
+                    (!(_hasMinLength &&
+                        _hasUppercase &&
+                        _hasLowercase &&
+                        _hasNumber &&
+                        _hasSpecialChar)))
+                  Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      _buildPasswordRequirement(
+                        'At least 6 characters',
+                        _hasMinLength,
+                      ),
+                      _buildPasswordRequirement(
+                        'At least 1 uppercase letter',
+                        _hasUppercase,
+                      ),
+                      _buildPasswordRequirement(
+                        'At least 1 lowercase letter',
+                        _hasLowercase,
+                      ),
+                      _buildPasswordRequirement(
+                        'At least 1 number',
+                        _hasNumber,
+                      ),
+                      _buildPasswordRequirement(
+                        'At least 1 special character',
+                        _hasSpecialChar,
+                      ),
+                    ],
+                  ),
+
                 const SizedBox(height: 20),
-                
+
                 // Confirm Password field
                 TextFormField(
                   controller: _confirmPasswordController,
@@ -388,8 +455,9 @@ if (_passwordController.text.isNotEmpty &&
                     ),
                   ),
                 ),
-                
-                if (_confirmPasswordController.text.isNotEmpty && !_passwordsMatch)
+
+                if (_confirmPasswordController.text.isNotEmpty &&
+                    !_passwordsMatch)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
@@ -397,9 +465,9 @@ if (_passwordController.text.isNotEmpty &&
                       style: TextStyle(color: Colors.red, fontSize: 12),
                     ),
                   ),
-                
+
                 const SizedBox(height: 25),
-                
+
                 // User role selection
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,7 +481,7 @@ if (_passwordController.text.isNotEmpty &&
                       ),
                     ),
                     const SizedBox(height: 10),
-                    
+
                     // Role selection buttons
                     Row(
                       children: [
@@ -427,14 +495,16 @@ if (_passwordController.text.isNotEmpty &&
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: _selectedRole == 'Customer' 
-                                  ? AppTheme.mediumBlue 
-                                  : AppTheme.navy,
+                                color:
+                                    _selectedRole == 'Customer'
+                                        ? AppTheme.mediumBlue
+                                        : AppTheme.navy,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: _selectedRole == 'Customer'
-                                      ? AppTheme.mediumBlue
-                                      : AppTheme.lightBlue,
+                                  color:
+                                      _selectedRole == 'Customer'
+                                          ? AppTheme.mediumBlue
+                                          : AppTheme.lightBlue,
                                   width: 1,
                                 ),
                               ),
@@ -442,9 +512,10 @@ if (_passwordController.text.isNotEmpty &&
                                 child: Text(
                                   'Customer',
                                   style: TextStyle(
-                                    color: _selectedRole == 'Customer'
-                                        ? Colors.white
-                                        : AppTheme.lightBlue,
+                                    color:
+                                        _selectedRole == 'Customer'
+                                            ? Colors.white
+                                            : AppTheme.lightBlue,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -463,14 +534,16 @@ if (_passwordController.text.isNotEmpty &&
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: _selectedRole == 'Car Owner'
-                                    ? AppTheme.mediumBlue
-                                    : AppTheme.navy,
+                                color:
+                                    _selectedRole == 'Car Owner'
+                                        ? AppTheme.mediumBlue
+                                        : AppTheme.navy,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: _selectedRole == 'Car Owner'
-                                      ? AppTheme.mediumBlue
-                                      : AppTheme.lightBlue,
+                                  color:
+                                      _selectedRole == 'Car Owner'
+                                          ? AppTheme.mediumBlue
+                                          : AppTheme.lightBlue,
                                   width: 1,
                                 ),
                               ),
@@ -478,9 +551,10 @@ if (_passwordController.text.isNotEmpty &&
                                 child: Text(
                                   'Car Owner',
                                   style: TextStyle(
-                                    color: _selectedRole == 'Car Owner'
-                                        ? Colors.white
-                                        : AppTheme.lightBlue,
+                                    color:
+                                        _selectedRole == 'Car Owner'
+                                            ? Colors.white
+                                            : AppTheme.lightBlue,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -492,9 +566,9 @@ if (_passwordController.text.isNotEmpty &&
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 30),
-                
+
                 // Sign Up button
                 SizedBox(
                   width: double.infinity,
@@ -517,9 +591,9 @@ if (_passwordController.text.isNotEmpty &&
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Already have an account section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
