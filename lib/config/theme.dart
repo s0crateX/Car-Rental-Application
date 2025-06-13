@@ -11,6 +11,7 @@ class AppTheme {
   // Additional standard colors
   static const Color white = Colors.white;
   static const Color black = Colors.black;
+  static const Color surface = Colors.pinkAccent;
 
   // Create theme data for the app
   static ThemeData get theme {
@@ -64,7 +65,10 @@ class AppTheme {
             const EdgeInsets.symmetric(vertical: 15),
           ),
           textStyle: WidgetStateProperty.all(
-            const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'General Sans'),
+            const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'General Sans',
+            ),
           ),
         ),
       ),
@@ -72,7 +76,10 @@ class AppTheme {
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.all(lightBlue),
           textStyle: WidgetStateProperty.all(
-            const TextStyle(fontWeight: FontWeight.normal, fontFamily: 'General Sans'),
+            const TextStyle(
+              fontWeight: FontWeight.normal,
+              fontFamily: 'General Sans',
+            ),
           ),
         ),
       ),

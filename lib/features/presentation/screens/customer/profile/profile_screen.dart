@@ -73,9 +73,9 @@ class ProfileScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(150, 40),
+                      minimumSize: const Size(120, 15),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: const Text('Edit Profile'),

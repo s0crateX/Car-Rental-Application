@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
+import 'cars/cars_screen.dart';
 
 class CustomerScreen extends StatefulWidget {
   const CustomerScreen({super.key});
@@ -15,15 +16,10 @@ class _CustomerScreenState extends State<CustomerScreen> {
 
   static final List<Widget> _screens = <Widget>[
     const HomeScreen(),
+    CarsScreen(),
     Center(
       child: Text(
-        'Car',
-        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-      ),
-    ),
-    Center(
-      child: Text(
-        'Book',
+        'Rent',
         style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
       ),
     ),
@@ -39,11 +35,11 @@ class _CustomerScreenState extends State<CustomerScreen> {
   final List<String> _svgIcons = [
     'assets/svg/home.svg',
     'assets/svg/steering-wheel.svg',
-    'assets/svg/book.svg',
+    'assets/svg/key.svg',
     'assets/svg/user-circle.svg',
   ];
 
-  final List<String> _labels = ['Home', 'Car', 'Book', 'Profile'];
+  final List<String> _labels = ['Home', 'Cars', 'Rent', 'Profile'];
 
   @override
   Widget build(BuildContext context) {

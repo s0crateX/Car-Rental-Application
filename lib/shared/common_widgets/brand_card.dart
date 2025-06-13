@@ -6,8 +6,7 @@ class BrandCard extends StatelessWidget {
   final CarBrandModel brand;
   final VoidCallback? onTap;
 
-  const BrandCard({Key? key, required this.brand, this.onTap})
-    : super(key: key);
+  const BrandCard({super.key, required this.brand, this.onTap});
 
   @override
   Widget build(BuildContext context) {

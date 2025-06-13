@@ -10,12 +10,24 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final TextEditingController fullNameController = TextEditingController(text: 'Dave Cruz');
-  final TextEditingController emailController = TextEditingController(text: 'davecruz@gmail.com');
-  final TextEditingController mobileController = TextEditingController(text: '+63 912 345 6789');
-  final TextEditingController dobController = TextEditingController(text: '14.03.2001');
-  final TextEditingController addressController = TextEditingController(text: '123 Main St, Quezon City, PH');
-  final TextEditingController emergencyController = TextEditingController(text: 'Jane Cruz - +63 923 456 7890');
+  final TextEditingController fullNameController = TextEditingController(
+    text: 'Dave Cruz',
+  );
+  final TextEditingController emailController = TextEditingController(
+    text: 'davecruz@gmail.com',
+  );
+  final TextEditingController mobileController = TextEditingController(
+    text: '+63 912 345 6789',
+  );
+  final TextEditingController dobController = TextEditingController(
+    text: '14.03.2001',
+  );
+  final TextEditingController addressController = TextEditingController(
+    text: '123 Main St, Quezon City, PH',
+  );
+  final TextEditingController emergencyController = TextEditingController(
+    text: 'Jane Cruz - +63 923 456 7890',
+  );
 
   @override
   void dispose() {
@@ -120,13 +132,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onTap: () async {
                     DateTime? picked = await showDatePicker(
                       context: context,
-                      initialDate: DateTime.tryParse(_parseDate(dobController.text)) ?? DateTime(2000, 1, 1),
+                      initialDate:
+                          DateTime.tryParse(_parseDate(dobController.text)) ??
+                          DateTime(2000, 1, 1),
                       firstDate: DateTime(1900),
                       lastDate: DateTime.now(),
                     );
-                    if (picked != null) {
-                      dobController.text = _formatDate(picked);
-                    }
+                    dobController.text = _formatDate(picked!);
                   },
                 ),
                 _buildEditableField(
@@ -196,12 +208,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               hintStyle: TextStyle(color: AppTheme.paleBlue.withOpacity(0.7)),
               filled: true,
               fillColor: AppTheme.navy.withOpacity(0.12),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(22),
                 borderSide: BorderSide.none,
               ),
-              suffixIcon: Icon(Icons.edit, color: AppTheme.mediumBlue, size: 20),
+              suffixIcon: Icon(
+                Icons.edit,
+                color: AppTheme.mediumBlue,
+                size: 20,
+              ),
             ),
           ),
         ],

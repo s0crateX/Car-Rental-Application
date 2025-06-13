@@ -1,14 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/car_model.dart';
+import '../utils/location_utils.dart';
 
-class CarCard extends StatelessWidget {
+class CarCard extends StatefulWidget {
   final CarModel car;
   final VoidCallback? onBookNow;
   final VoidCallback? onFavorite;
 
-  const CarCard({Key? key, required this.car, this.onBookNow, this.onFavorite})
-    : super(key: key);
+  const CarCard({
+    super.key,
+    required this.car,
+    this.onBookNow,
+    this.onFavorite,
+  });
+
+  @override
+  State<CarCard> createState() => _CarCardState();
+}
+
+class _CarCardState extends State<CarCard> {
+  String? _distanceText;
+  bool _isLoadingDistance = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDistance();
+  }
+
+  Future<void> _loadDistance() async {
+    if (widget.car.location == null) return;
+
+    setState(() {
+      _isLoadingDistance = true;
+    });
+
+    try {
+      final distance = await LocationUtils().getDistanceToCarInKm(
+        widget.car.location,
+      );
+      if (mounted) {
+        setState(() {
+          _distanceText = LocationUtils().formatDistance(distance);
+          _isLoadingDistance = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingDistance = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +76,7 @@ class CarCard extends StatelessWidget {
                   topRight: Radius.circular(16),
                 ),
                 child: Image.asset(
-                  car.image,
+                  widget.car.image,
                   width: double.infinity,
                   height: 180,
                   fit: BoxFit.cover,
@@ -62,7 +107,7 @@ class CarCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        car.rating.toString(),
+                        widget.car.rating.toString(),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -77,7 +122,7 @@ class CarCard extends StatelessWidget {
                 top: 12,
                 right: 12,
                 child: GestureDetector(
-                  onTap: onFavorite,
+                  onTap: widget.onFavorite,
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -85,13 +130,13 @@ class CarCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: SvgPicture.asset(
-                      car.isFavorite
+                      widget.car.isFavorite
                           ? 'assets/svg/heart-filled.svg'
                           : 'assets/svg/heart.svg',
                       width: 20,
                       height: 20,
                       colorFilter: ColorFilter.mode(
-                        car.isFavorite
+                        widget.car.isFavorite
                             ? Colors.red
                             : theme.colorScheme.onSurface,
                         BlendMode.srcIn,
@@ -107,16 +152,62 @@ class CarCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  car.type,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      widget.car.type,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    if (widget.car.location != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        height: 4,
+                        width: 4,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _isLoadingDistance
+                          ? SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                          : Row(
+                            children: [
+                              SvgPicture.asset(
+                                'assets/svg/location.svg',
+                                width: 12,
+                                height: 12,
+                                colorFilter: ColorFilter.mode(
+                                  theme.colorScheme.primary,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _distanceText ?? 'Calculating...',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  car.name,
+                  widget.car.name,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -129,20 +220,22 @@ class CarCard extends StatelessWidget {
                   children: [
                     _buildFeatureItem(
                       context,
-                      car.transmissionType.toLowerCase().contains('manual')
+                      widget.car.transmissionType.toLowerCase().contains(
+                            'manual',
+                          )
                           ? 'assets/svg/manual-gearbox.svg'
                           : 'assets/svg/automatic-gearbox.svg',
-                      car.transmissionType,
+                      widget.car.transmissionType,
                     ),
                     _buildFeatureItem(
                       context,
                       'assets/svg/gas-station.svg',
-                      car.fuelType,
+                      widget.car.fuelType,
                     ),
                     _buildFeatureItem(
                       context,
                       'assets/svg/user.svg',
-                      car.seatsCount,
+                      widget.car.seatsCount,
                     ),
                   ],
                 ),
@@ -166,7 +259,7 @@ class CarCard extends StatelessWidget {
                             ),
                           ),
                           TextSpan(
-                            text: '${car.price.toStringAsFixed(2)}',
+                            text: widget.car.price.toStringAsFixed(2),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -174,7 +267,7 @@ class CarCard extends StatelessWidget {
                             ),
                           ),
                           TextSpan(
-                            text: car.pricePeriod,
+                            text: widget.car.pricePeriod,
                             style: TextStyle(
                               fontSize: 14,
                               color: theme.colorScheme.onSurface.withOpacity(
@@ -186,7 +279,7 @@ class CarCard extends StatelessWidget {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: onBookNow,
+                      onPressed: widget.onBookNow,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
@@ -198,7 +291,7 @@ class CarCard extends StatelessWidget {
                           vertical: 8,
                         ),
                       ),
-                      child: const Text('Book Now'),
+                      child: const Text('Rent Now'),
                     ),
                   ],
                 ),
