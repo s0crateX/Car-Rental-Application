@@ -14,7 +14,7 @@ class FeaturesTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -22,25 +22,37 @@ class FeaturesTabContent extends StatelessWidget {
           sectionTitleBuilder('Car Features'),
           const SizedBox(height: 16),
           ...car.features.map((feature) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12.0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SvgPicture.asset(
-                    'assets/svg/check.svg',
-                    width: 20,
-                    height: 20,
-                    colorFilter: ColorFilter.mode(
-                      Theme.of(context).colorScheme.primary,
-                      BlendMode.srcIn,
+                  Container(
+                    margin: const EdgeInsets.only(top: 2.0),
+                    child: SvgPicture.asset(
+                      'assets/svg/check.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: ColorFilter.mode(
+                        Theme.of(context).colorScheme.primary,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(feature, style: Theme.of(context).textTheme.bodyMedium),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      softWrap: true,
+                    ),
+                  ),
                 ],
               ),
             );
           }),
+          // Add some bottom padding to ensure content doesn't get cut off
+          const SizedBox(height: 24),
         ],
       ),
     );

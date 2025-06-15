@@ -4,11 +4,7 @@ class PricingOption extends StatelessWidget {
   final String period;
   final Widget price;
 
-  const PricingOption({
-    Key? key,
-    required this.period,
-    required this.price,
-  }) : super(key: key);
+  const PricingOption({super.key, required this.period, required this.price});
 
   @override
   Widget build(BuildContext context) {

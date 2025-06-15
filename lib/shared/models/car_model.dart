@@ -1,5 +1,7 @@
 import 'package:latlong2/latlong.dart';
 
+enum AvailabilityStatus { available, unavailable }
+
 class CarModel {
   final String id;
   final String image;
@@ -21,9 +23,7 @@ class CarModel {
   final List<String> features; // AC, Bluetooth, USB port, etc.
   final List<String> inclusions; // Insurance, Unlimited Mileage, etc.
   final Map<String, double> extraCharges; // Driver fee, delivery fee, etc.
-  final Map<String, double> discounts; // Early booking, long-term rental, etc.
-  final DateTime availableFrom;
-  final DateTime availableTo;
+  final AvailabilityStatus availabilityStatus;
   final List<String> pickupLocations;
   final List<String> returnLocations;
   final Map<String, String> rentalRequirements; // License type, age, deposit
@@ -34,6 +34,7 @@ class CarModel {
   final String locationAddress; // Car's current location address
 
   CarModel({
+    required this.availabilityStatus,
     required this.id,
     required this.image,
     this.imageGallery = const [],
@@ -54,7 +55,6 @@ class CarModel {
     this.features = const [],
     this.inclusions = const [],
     this.extraCharges = const {},
-    this.discounts = const {},
     DateTime? availableFrom,
     DateTime? availableTo,
     this.pickupLocations = const [],
@@ -65,23 +65,21 @@ class CarModel {
     this.reviews = const [],
     this.location,
     this.locationAddress = '',
-  }) : availableFrom = availableFrom ?? DateTime.now(),
-       availableTo =
-           availableTo ?? DateTime.now().add(const Duration(days: 30));
+  });
 
   // Factory constructor to create a CarModel from a Map (for Firebase)
   factory CarModel.fromMap(Map<String, dynamic> map) {
     // Handle location data if available
     LatLng? location;
-    if (map['location'] != null && 
-        map['location']['latitude'] != null && 
+    if (map['location'] != null &&
+        map['location']['latitude'] != null &&
         map['location']['longitude'] != null) {
       location = LatLng(
         map['location']['latitude'],
         map['location']['longitude'],
       );
     }
-    
+
     return CarModel(
       id: map['id'] ?? '',
       image: map['image'] ?? '',
@@ -103,15 +101,7 @@ class CarModel {
       features: List<String>.from(map['features'] ?? []),
       inclusions: List<String>.from(map['inclusions'] ?? []),
       extraCharges: Map<String, double>.from(map['extraCharges'] ?? {}),
-      discounts: Map<String, double>.from(map['discounts'] ?? {}),
-      availableFrom:
-          map['availableFrom'] != null
-              ? DateTime.parse(map['availableFrom'])
-              : null,
-      availableTo:
-          map['availableTo'] != null
-              ? DateTime.parse(map['availableTo'])
-              : null,
+      availabilityStatus: _parseAvailabilityStatus(map['availabilityStatus']),
       pickupLocations: List<String>.from(map['pickupLocations'] ?? []),
       returnLocations: List<String>.from(map['returnLocations'] ?? []),
       rentalRequirements: Map<String, String>.from(
@@ -152,9 +142,7 @@ class CarModel {
       'features': features,
       'inclusions': inclusions,
       'extraCharges': extraCharges,
-      'discounts': discounts,
-      'availableFrom': availableFrom.toIso8601String(),
-      'availableTo': availableTo.toIso8601String(),
+      'availabilityStatus': availabilityStatus.name,
       'pickupLocations': pickupLocations,
       'returnLocations': returnLocations,
       'rentalRequirements': rentalRequirements,
@@ -163,7 +151,7 @@ class CarModel {
       'reviews': reviews,
       'locationAddress': locationAddress,
     };
-    
+
     // Add location data if available
     if (location != null) {
       map['location'] = {
@@ -171,12 +159,13 @@ class CarModel {
         'longitude': location!.longitude,
       };
     }
-    
+
     return map;
   }
 
   // Create a copy of the car model with updated fields
   CarModel copyWith({
+    AvailabilityStatus? availabilityStatus,
     String? id,
     String? image,
     List<String>? imageGallery,
@@ -197,7 +186,6 @@ class CarModel {
     List<String>? features,
     List<String>? inclusions,
     Map<String, double>? extraCharges,
-    Map<String, double>? discounts,
     DateTime? availableFrom,
     DateTime? availableTo,
     List<String>? pickupLocations,
@@ -230,9 +218,7 @@ class CarModel {
       features: features ?? this.features,
       inclusions: inclusions ?? this.inclusions,
       extraCharges: extraCharges ?? this.extraCharges,
-      discounts: discounts ?? this.discounts,
-      availableFrom: availableFrom ?? this.availableFrom,
-      availableTo: availableTo ?? this.availableTo,
+      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
       pickupLocations: pickupLocations ?? this.pickupLocations,
       returnLocations: returnLocations ?? this.returnLocations,
       rentalRequirements: rentalRequirements ?? this.rentalRequirements,
@@ -242,5 +228,17 @@ class CarModel {
       location: location ?? this.location,
       locationAddress: locationAddress ?? this.locationAddress,
     );
+  }
+
+  static AvailabilityStatus _parseAvailabilityStatus(dynamic value) {
+    if (value is String) {
+      switch (value.toLowerCase()) {
+        case 'available':
+          return AvailabilityStatus.available;
+        case 'unavailable':
+          return AvailabilityStatus.unavailable;
+      }
+    }
+    return AvailabilityStatus.available;
   }
 }

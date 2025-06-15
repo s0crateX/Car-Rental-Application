@@ -4,11 +4,7 @@ class ExtraChargeItem extends StatelessWidget {
   final String title;
   final Widget price;
 
-  const ExtraChargeItem({
-    Key? key,
-    required this.title,
-    required this.price,
-  }) : super(key: key);
+  const ExtraChargeItem({super.key, required this.title, required this.price});
 
   @override
   Widget build(BuildContext context) {

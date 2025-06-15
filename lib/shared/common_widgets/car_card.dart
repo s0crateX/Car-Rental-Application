@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/car_model.dart';
+import 'blinking_status_indicator.dart';
 import '../utils/location_utils.dart';
 
 class CarCard extends StatefulWidget {
@@ -129,18 +130,31 @@ class _CarCardState extends State<CarCard> {
                       color: theme.colorScheme.surface,
                       shape: BoxShape.circle,
                     ),
-                    child: SvgPicture.asset(
-                      widget.car.isFavorite
-                          ? 'assets/svg/heart-filled.svg'
-                          : 'assets/svg/heart.svg',
-                      width: 20,
-                      height: 20,
-                      colorFilter: ColorFilter.mode(
-                        widget.car.isFavorite
-                            ? Colors.red
-                            : theme.colorScheme.onSurface,
-                        BlendMode.srcIn,
-                      ),
+                    child: Row(
+                      children: [
+                        BlinkingStatusIndicator(
+                          isAvailable:
+                              widget.car.availabilityStatus ==
+                              AvailabilityStatus.available,
+                          size: 8,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.car.availabilityStatus ==
+                                  AvailabilityStatus.available
+                              ? 'Available'
+                              : 'Unavailable',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color:
+                                widget.car.availabilityStatus ==
+                                        AvailabilityStatus.available
+                                    ? Colors.green
+                                    : Colors.red,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -261,7 +275,7 @@ class _CarCardState extends State<CarCard> {
                           TextSpan(
                             text: widget.car.price.toStringAsFixed(2),
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,
                             ),
@@ -269,7 +283,7 @@ class _CarCardState extends State<CarCard> {
                           TextSpan(
                             text: widget.car.pricePeriod,
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               color: theme.colorScheme.onSurface.withOpacity(
                                 0.7,
                               ),
@@ -277,21 +291,6 @@ class _CarCardState extends State<CarCard> {
                           ),
                         ],
                       ),
-                    ),
-                    ElevatedButton(
-                      onPressed: widget.onBookNow,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: const Text('Rent Now'),
                     ),
                   ],
                 ),

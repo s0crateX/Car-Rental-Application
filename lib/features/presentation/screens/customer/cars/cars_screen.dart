@@ -30,13 +30,17 @@ class _CarsScreenState extends State<CarsScreen> {
     List<CarModel> cars = _allCarsRaw;
     final q = _searchQuery.trim().toLowerCase();
     if (q.isNotEmpty) {
-      cars = cars.where((car) =>
-        car.name.toLowerCase().contains(q) ||
-        car.type.toLowerCase().contains(q) ||
-        car.transmissionType.toLowerCase().contains(q) ||
-        car.fuelType.toLowerCase().contains(q) ||
-        car.seatsCount.toLowerCase().contains(q)
-      ).toList();
+      cars =
+          cars
+              .where(
+                (car) =>
+                    car.name.toLowerCase().contains(q) ||
+                    car.type.toLowerCase().contains(q) ||
+                    car.transmissionType.toLowerCase().contains(q) ||
+                    car.fuelType.toLowerCase().contains(q) ||
+                    car.seatsCount.toLowerCase().contains(q),
+              )
+              .toList();
     }
     // Car Type
     if (_filter.carType != null && _filter.carType != 'All') {
@@ -44,14 +48,21 @@ class _CarsScreenState extends State<CarsScreen> {
     }
     // Price Range
     if (_filter.priceRange != null) {
-      cars = cars.where((car) =>
-        car.price >= _filter.priceRange!.start &&
-        car.price <= _filter.priceRange!.end
-      ).toList();
+      cars =
+          cars
+              .where(
+                (car) =>
+                    car.price >= _filter.priceRange!.start &&
+                    car.price <= _filter.priceRange!.end,
+              )
+              .toList();
     }
     // Transmission
     if (_filter.transmission != null && _filter.transmission != 'All') {
-      cars = cars.where((car) => car.transmissionType == _filter.transmission).toList();
+      cars =
+          cars
+              .where((car) => car.transmissionType == _filter.transmission)
+              .toList();
     }
     // Fuel Type
     if (_filter.fuelType != null && _filter.fuelType != 'All') {
@@ -65,7 +76,6 @@ class _CarsScreenState extends State<CarsScreen> {
         cars.sort((a, b) => b.price.compareTo(a.price));
       }
       // 'Newest' is omitted since CarModel has no year field.
-
     }
     return cars;
   }
@@ -219,9 +229,8 @@ class _CarsScreenState extends State<CarsScreen> {
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (context) => CarFilterBottomSheet(
-                  initialFilter: _filter,
-                ),
+                builder:
+                    (context) => CarFilterBottomSheet(initialFilter: _filter),
               );
               if (result != null) {
                 setState(() {
@@ -376,11 +385,12 @@ class _CarsScreenState extends State<CarsScreen> {
             return CarCardCompact(
               car: car,
               onBookNow: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CarDetailsScreen(car: car),
-                  ),
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder:
+                      (context) => FractionallySizedBox(heightFactor: 0.95),
                 );
               },
               onFavorite: () {},

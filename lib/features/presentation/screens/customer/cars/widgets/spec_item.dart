@@ -6,8 +6,7 @@ class SpecItem extends StatelessWidget {
   final String svgAssetPath;
   final String text;
 
-  const SpecItem({Key? key, required this.svgAssetPath, required this.text})
-    : super(key: key);
+  const SpecItem({super.key, required this.svgAssetPath, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -21,11 +20,14 @@ class SpecItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: SvgPicture.asset(
-            svgAssetPath,
-            width: 28,
-            height: 28,
-            colorFilter: ColorFilter.mode(AppTheme.mediumBlue, BlendMode.srcIn),
-          ),
+              svgAssetPath,
+              width: 28,
+              height: 28,
+              colorFilter: ColorFilter.mode(
+                AppTheme.mediumBlue,
+                BlendMode.srcIn,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Text(

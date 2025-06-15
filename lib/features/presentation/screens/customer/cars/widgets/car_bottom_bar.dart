@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../../shared/models/car_model.dart';
+import '../rent_car/rent_car_screen.dart';
 
 class CarBottomBar extends StatelessWidget {
   final CarModel car;
@@ -85,7 +86,10 @@ class CarBottomBar extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  // Rent now logic
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RentCarScreen()),
+                  );
                 },
                 child: const Text(
                   'Rent Now',

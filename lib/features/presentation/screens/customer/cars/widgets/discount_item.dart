@@ -4,11 +4,7 @@ class DiscountItem extends StatelessWidget {
   final String title;
   final String discount;
 
-  const DiscountItem({
-    Key? key,
-    required this.title,
-    required this.discount,
-  }) : super(key: key);
+  const DiscountItem({super.key, required this.title, required this.discount});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +23,9 @@ class DiscountItem extends StatelessWidget {
             child: Text(
               discount,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.green[800],
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Colors.green[800],
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

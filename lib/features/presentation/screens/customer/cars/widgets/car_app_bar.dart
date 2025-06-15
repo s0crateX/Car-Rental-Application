@@ -33,10 +33,7 @@ class CarAppBar extends StatelessWidget {
             'assets/svg/arrow-left.svg',
             width: 24,
             height: 24,
-            colorFilter: ColorFilter.mode(
-              AppTheme.white,
-              BlendMode.srcIn,
-            ),
+            colorFilter: ColorFilter.mode(AppTheme.white, BlendMode.srcIn),
           ),
         ),
         onPressed: () => Navigator.pop(context),
@@ -50,9 +47,7 @@ class CarAppBar extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: SvgPicture.asset(
-              car.isFavorite
-                  ? 'assets/svg/heart.svg'
-                  : 'assets/svg/heart.svg',
+              car.isFavorite ? 'assets/svg/heart.svg' : 'assets/svg/heart.svg',
               width: 24,
               height: 24,
               colorFilter: ColorFilter.mode(

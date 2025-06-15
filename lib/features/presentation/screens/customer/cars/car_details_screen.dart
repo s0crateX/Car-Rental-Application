@@ -37,68 +37,54 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // App Bar
-          CarAppBar(
-            car: widget.car,
-            currentImageIndex: _currentImageIndex,
-            onImageTap: (index) {
-              setState(() {
-                _currentImageIndex = index;
-              });
-            },
-          ),
-          
-          // Content
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Car Name and Rating
-                CarHeaderInfo(car: widget.car),
-
-                // Tabs
-                CarTabBar(tabController: _tabController),
-
-                // Tab Content
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6, // Adjust this value as needed
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      // Details Tab
-                      SingleChildScrollView(
-                        child: DetailsTabContent(
-                          car: widget.car,
-                          formatDate: _formatDate,
-                          sectionTitleBuilder: _sectionTitle,
-                        ),
-                      ),
-
-                      // Features Tab
-                      SingleChildScrollView(
-                        child: FeaturesTabContent(
-                          car: widget.car,
-                          sectionTitleBuilder: _sectionTitle,
-                        ),
-                      ),
-
-                      // Reviews Tab
-                      SingleChildScrollView(
-                        child: ReviewsTabContent(
-                          car: widget.car,
-                          sectionTitleBuilder: _sectionTitle,
-                          formatDate: _formatDate,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            // App Bar
+            CarAppBar(
+              car: widget.car,
+              currentImageIndex: _currentImageIndex,
+              onImageTap: (index) {
+                setState(() {
+                  _currentImageIndex = index;
+                });
+              },
             ),
-          ),
-        ],
+
+            // Sticky Header (Car Name, Rating, and Tabs)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyHeaderDelegate(
+                car: widget.car,
+                tabController: _tabController,
+              ),
+            ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // Details Tab
+            DetailsTabContent(
+              car: widget.car,
+              formatDate: _formatDate,
+              sectionTitleBuilder: _sectionTitle,
+            ),
+
+            // Features Tab
+            FeaturesTabContent(
+              car: widget.car,
+              sectionTitleBuilder: _sectionTitle,
+            ),
+
+            // Reviews Tab
+            ReviewsTabContent(
+              car: widget.car,
+              sectionTitleBuilder: _sectionTitle,
+              formatDate: _formatDate,
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: CarBottomBar(car: widget.car),
     );
@@ -112,5 +98,59 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
   // Helper methods
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final CarModel car;
+  final TabController tabController;
+  static const double tabBarHeight = 48.0;
+
+  _StickyHeaderDelegate({required this.car, required this.tabController});
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      elevation: overlapsContent ? 4.0 : 0.0,
+      child: SizedBox(
+        height: maxExtent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Car Header Info - Use Expanded to take available space
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                child: CarHeaderInfo(car: car),
+              ),
+            ),
+
+            // Tab Bar - Fixed height container at the bottom
+            SizedBox(
+              height: tabBarHeight,
+              child: CarTabBar(tabController: tabController),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => 180.0; // Increased height to accommodate content
+
+  @override
+  double get minExtent => 180.0;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return oldDelegate is! _StickyHeaderDelegate ||
+        oldDelegate.car != car ||
+        oldDelegate.tabController != tabController;
   }
 }

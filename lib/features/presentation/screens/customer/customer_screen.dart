@@ -19,7 +19,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
     CarsScreen(),
     Center(
       child: Text(
-        'Rent',
+        'Bookings',
         style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
       ),
     ),
@@ -35,11 +35,11 @@ class _CustomerScreenState extends State<CustomerScreen> {
   final List<String> _svgIcons = [
     'assets/svg/home.svg',
     'assets/svg/steering-wheel.svg',
-    'assets/svg/key.svg',
+    'assets/svg/book.svg',
     'assets/svg/user-circle.svg',
   ];
 
-  final List<String> _labels = ['Home', 'Cars', 'Rent', 'Profile'];
+  final List<String> _labels = ['Home', 'Cars', 'Bookings', 'Profile'];
 
   @override
   Widget build(BuildContext context) {

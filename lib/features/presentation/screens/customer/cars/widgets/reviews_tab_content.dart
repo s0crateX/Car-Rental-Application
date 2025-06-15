@@ -16,36 +16,42 @@ class ReviewsTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              sectionTitleBuilder('Customer Reviews'),
+              Expanded(child: sectionTitleBuilder('Customer Reviews')),
               Text(
                 'Average: ${car.rating}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.amber[800],
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.amber[800]),
               ),
             ],
           ),
           const SizedBox(height: 16),
           ...car.reviews.map((review) {
-            return ReviewItem(
-              name: review['userName'] as String,
-              avatar: review['userAvatar'] as String,
-              rating: (review['rating'] as double),
-              comment: review['comment'] as String,
-              date: review['date'] as String,
-              formattedDate: formatDate(
-                DateTime.parse(review['date'] as String),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16.0),
+              child: ReviewItem(
+                name: review['userName'] as String,
+                avatar: review['userAvatar'] as String,
+                rating: (review['rating'] as double),
+                comment: review['comment'] as String,
+                date: review['date'] as String,
+                formattedDate: formatDate(
+                  DateTime.parse(review['date'] as String),
+                ),
               ),
             );
           }),
+          // Add some bottom padding to ensure content doesn't get cut off
+          const SizedBox(height: 24),
         ],
       ),
     );

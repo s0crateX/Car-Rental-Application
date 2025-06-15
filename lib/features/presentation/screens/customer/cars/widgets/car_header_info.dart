@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../../../config/theme.dart';
 import '../../../../../../shared/models/car_model.dart';
 import '../../../../../../shared/utils/location_utils.dart';
 import 'car_location_map_screen.dart';
@@ -53,72 +54,88 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8), // Reduced top padding
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          Flexible(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize:
+                  MainAxisSize.min, // Important: minimize column height
               children: [
                 Text(
                   widget.car.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontSize: 28, // Slightly smaller font
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2), // Reduced spacing
                 Text(
                   '${widget.car.brand} ${widget.car.model} ${widget.car.year}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                    fontSize: 12, // Slightly smaller
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (widget.car.location != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10), // Reduced spacing
                   Row(
                     children: [
                       SvgPicture.asset(
                         'assets/svg/location.svg',
-                        width: 16,
-                        height: 16,
+                        width: 14, // Slightly smaller icon
+                        height: 14,
                         colorFilter: ColorFilter.mode(
                           Theme.of(context).colorScheme.primary,
                           BlendMode.srcIn,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                       _isLoadingDistance
                           ? SizedBox(
-                            width: 14,
-                            height: 14,
+                            width: 12,
+                            height: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                           )
-                          : Text(
-                            _distanceText ?? 'Calculating distance...',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
+                          : Flexible(
+                            child: Text(
+                              _distanceText ?? 'Calculating...',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                     ],
                   ),
                   if (widget.car.locationAddress.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
-                        const SizedBox(
-                          width: 22,
-                        ), // For alignment with the location icon
+                        const SizedBox(width: 18), // Adjusted for smaller icon
                         Expanded(
                           child: Text(
                             widget.car.locationAddress,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.grey[600]),
-                            maxLines: 2,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 11,
+                            ),
+                            maxLines: 1, // Reduced to 1 line to save space
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -129,10 +146,15 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
               ],
             ),
           ),
+          const SizedBox(
+            width: 8,
+          ), // Add some spacing between left and right content
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   RatingBar.builder(
                     initialRating: widget.car.rating,
@@ -140,40 +162,42 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
                     direction: Axis.horizontal,
                     allowHalfRating: true,
                     itemCount: 5,
-                    itemSize: 16,
+                    itemSize: 14, // Smaller stars
                     ignoreGestures: true,
                     itemBuilder:
                         (context, _) => SvgPicture.asset(
                           'assets/svg/star-filled.svg',
-                          width: 16,
-                          height: 16,
-                          colorFilter: ColorFilter.mode(
+                          width: 14,
+                          height: 14,
+                          colorFilter: const ColorFilter.mode(
                             Colors.amber,
                             BlendMode.srcIn,
                           ),
                         ),
                     onRatingUpdate: (rating) {},
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 3),
                   Text(
                     widget.car.rating.toString(),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.amber[800]),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.amber[800],
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 '${widget.car.type} • ${widget.car.transmissionType}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                  fontSize: 11,
+                ),
               ),
               if (widget.car.location != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 InkWell(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(6),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -183,17 +207,19 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(
+                      5,
+                    ), // Slightly smaller padding
                     decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppTheme.navy,
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: SvgPicture.asset(
                       'assets/svg/map-2.svg',
-                      width: 24,
-                      height: 24,
+                      width: 35, // Smaller icon
+                      height: 35,
                       colorFilter: const ColorFilter.mode(
-                        Colors.white,
+                        AppTheme.white,
                         BlendMode.srcIn,
                       ),
                     ),

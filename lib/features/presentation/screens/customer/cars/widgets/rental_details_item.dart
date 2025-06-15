@@ -5,10 +5,10 @@ class RentalDetailsItem extends StatelessWidget {
   final String value;
 
   const RentalDetailsItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,9 @@ class RentalDetailsItem extends StatelessWidget {
             width: 120,
             child: Text(
               title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             ),
           ),
           Expanded(

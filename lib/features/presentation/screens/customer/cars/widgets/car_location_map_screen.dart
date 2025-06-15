@@ -7,7 +7,7 @@ import '../../../../../../shared/utils/location_utils.dart';
 
 class CarLocationMapScreen extends StatefulWidget {
   final CarModel car;
-  const CarLocationMapScreen({Key? key, required this.car}) : super(key: key);
+  const CarLocationMapScreen({super.key, required this.car});
 
   @override
   State<CarLocationMapScreen> createState() => _CarLocationMapScreenState();
@@ -68,37 +68,40 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
       );
     }
 
-    final center = carLoc ?? _userLocation ?? LatLng(14.5995, 120.9842); // fallback Manila
+    final center =
+        carLoc ?? _userLocation ?? LatLng(14.5995, 120.9842); // fallback Manila
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Car & Your Location'),
-      ),
-      body: _loadingUserLocation && _userLocation == null
-          ? const Center(child: CircularProgressIndicator())
-          : FlutterMap(
-              options: MapOptions(
-                initialCenter: center,
-                initialZoom: 13,
-                maxZoom: 18,
-                minZoom: 3,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.car_rental_app',
+      appBar: AppBar(title: const Text('Car & Your Location')),
+      body:
+          _loadingUserLocation && _userLocation == null
+              ? const Center(child: CircularProgressIndicator())
+              : FlutterMap(
+                options: MapOptions(
+                  initialCenter: center,
+                  initialZoom: 13,
+                  maxZoom: 18,
+                  minZoom: 3,
                 ),
-                MarkerLayer(markers: markers),
-                if (_userLocation != null && carLoc != null)
-                  PolylineLayer(polylines: [
-                    Polyline(
-                      points: [_userLocation!, carLoc],
-                      color: Colors.blueAccent,
-                      strokeWidth: 4,
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.car_rental_app',
+                  ),
+                  MarkerLayer(markers: markers),
+                  if (_userLocation != null && carLoc != null)
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: [_userLocation!, carLoc],
+                          color: Colors.blueAccent,
+                          strokeWidth: 4,
+                        ),
+                      ],
                     ),
-                  ]),
-              ],
-            ),
+                ],
+              ),
     );
   }
 }
@@ -108,7 +111,12 @@ class _MapMarker extends StatelessWidget {
   final String icon;
   final String label;
   final Color color;
-  const _MapMarker({this.carImage, required this.icon, required this.label, required this.color});
+  const _MapMarker({
+    this.carImage,
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/car_model.dart';
+import 'blinking_status_indicator.dart';
 import '../utils/location_utils.dart';
 
 class CarCardCompact extends StatefulWidget {
@@ -19,7 +20,6 @@ class CarCardCompact extends StatefulWidget {
 
   @override
   State<CarCardCompact> createState() => _CarCardCompactState();
-
 }
 
 class _CarCardCompactState extends State<CarCardCompact> {
@@ -34,13 +34,15 @@ class _CarCardCompactState extends State<CarCardCompact> {
 
   Future<void> _loadDistance() async {
     if (widget.car.location == null) return;
-    
+
     setState(() {
       _isLoadingDistance = true;
     });
 
     try {
-      final distance = await LocationUtils().getDistanceToCarInKm(widget.car.location);
+      final distance = await LocationUtils().getDistanceToCarInKm(
+        widget.car.location,
+      );
       if (mounted) {
         setState(() {
           _distanceText = LocationUtils().formatDistance(distance);
@@ -105,21 +107,31 @@ class _CarCardCompactState extends State<CarCardCompact> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: widget.onFavorite,
-                        child: SvgPicture.asset(
-                          widget.car.isFavorite
-                              ? 'assets/svg/heart-filled.svg'
-                              : 'assets/svg/heart.svg',
-                          width: 16,
-                          height: 16,
-                          colorFilter: ColorFilter.mode(
-                            widget.car.isFavorite
-                                ? Colors.red
-                                : theme.colorScheme.onSurface,
-                            BlendMode.srcIn,
+                      Row(
+                        children: [
+                          BlinkingStatusIndicator(
+                            isAvailable:
+                                widget.car.availabilityStatus ==
+                                AvailabilityStatus.available,
+                            size: 8,
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.car.availabilityStatus ==
+                                    AvailabilityStatus.available
+                                ? 'Available'
+                                : 'Unavailable',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color:
+                                  widget.car.availabilityStatus ==
+                                          AvailabilityStatus.available
+                                      ? Colors.green
+                                      : Colors.red,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -159,38 +171,38 @@ class _CarCardCompactState extends State<CarCardCompact> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (widget.car.location != null) ...[  
+                      if (widget.car.location != null) ...[
                         const SizedBox(width: 4),
                         _isLoadingDistance
                             ? SizedBox(
-                                width: 10,
-                                height: 10,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.5,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              )
-                            : Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/svg/location.svg',
-                                    width: 10,
-                                    height: 10,
-                                    colorFilter: ColorFilter.mode(
-                                      theme.colorScheme.primary,
-                                      BlendMode.srcIn,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    _distanceText ?? 'Calculating...',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
+                              width: 10,
+                              height: 10,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: theme.colorScheme.primary,
                               ),
+                            )
+                            : Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/svg/location.svg',
+                                  width: 10,
+                                  height: 10,
+                                  colorFilter: ColorFilter.mode(
+                                    theme.colorScheme.primary,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  _distanceText ?? 'Calculating...',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
                       ],
                     ],
                   ),
@@ -202,7 +214,9 @@ class _CarCardCompactState extends State<CarCardCompact> {
                         child: Row(
                           children: [
                             SvgPicture.asset(
-                              widget.car.transmissionType.toLowerCase().contains('manual')
+                              widget.car.transmissionType
+                                      .toLowerCase()
+                                      .contains('manual')
                                   ? 'assets/svg/manual-gearbox.svg'
                                   : 'assets/svg/automatic-gearbox.svg',
                               width: 13,
@@ -309,7 +323,7 @@ class _CarCardCompactState extends State<CarCardCompact> {
                           Text(
                             widget.car.price.toStringAsFixed(0),
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,
                             ),
@@ -317,34 +331,13 @@ class _CarCardCompactState extends State<CarCardCompact> {
                           Text(
                             widget.car.pricePeriod,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               color: theme.colorScheme.onSurface.withOpacity(
                                 0.6,
                               ),
                             ),
                           ),
                         ],
-                      ),
-                      GestureDetector(
-                        onTap: widget.onBookNow,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ), // Slightly increased padding
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'Rent', // Changed from 'Book' to 'Rent'
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),

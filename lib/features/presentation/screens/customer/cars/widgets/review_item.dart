@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-import '../../../../../../config/theme.dart';
-
 class ReviewItem extends StatelessWidget {
   final String name;
   final String avatar;
@@ -12,14 +10,14 @@ class ReviewItem extends StatelessWidget {
   final String formattedDate;
 
   const ReviewItem({
-    Key? key,
+    super.key,
     required this.name,
     required this.avatar,
     required this.rating,
     required this.comment,
     required this.date,
     required this.formattedDate,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
