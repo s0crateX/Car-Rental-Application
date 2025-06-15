@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
 import 'cars/cars_screen.dart';
+import 'book/booking_screen.dart';
 
 class CustomerScreen extends StatefulWidget {
   const CustomerScreen({super.key});
@@ -17,12 +18,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
   static final List<Widget> _screens = <Widget>[
     const HomeScreen(),
     CarsScreen(),
-    Center(
-      child: Text(
-        'Bookings',
-        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-      ),
-    ),
+    BookingScreen(),
     const ProfileScreen(),
   ];
 
