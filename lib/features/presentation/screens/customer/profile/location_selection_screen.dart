@@ -11,7 +11,8 @@ class LocationSelectionScreen extends StatefulWidget {
   const LocationSelectionScreen({super.key});
 
   @override
-  State<LocationSelectionScreen> createState() => _LocationSelectionScreenState();
+  State<LocationSelectionScreen> createState() =>
+      _LocationSelectionScreenState();
 }
 
 class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
@@ -36,12 +37,12 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final double? lat = prefs.getDouble('user_location_lat');
       final double? lng = prefs.getDouble('user_location_lng');
-      
+
       if (lat != null && lng != null) {
         setState(() {
           _selectedLocation = LatLng(lat, lng);
@@ -63,12 +64,12 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('user_location_lat', _selectedLocation.latitude);
       await prefs.setDouble('user_location_lng', _selectedLocation.longitude);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -109,7 +110,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
       _isLoading = true;
       _locationPermissionDenied = false;
     });
-    
+
     try {
       // Check location permission
       LocationPermission permission = await Geolocator.checkPermission();
@@ -123,7 +124,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
           return;
         }
       }
-      
+
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           _locationPermissionDenied = true;
@@ -131,16 +132,16 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
         });
         return;
       }
-      
+
       // Get current position
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      
+
       setState(() {
         _selectedLocation = LatLng(position.latitude, position.longitude);
       });
-      
+
       // Animate to the current location
       _mapController.move(_selectedLocation, 15.0);
     } catch (e) {
@@ -173,10 +174,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
         elevation: 0,
         title: const Text(
           'Set Your Location',
-          style: TextStyle(
-            fontSize: 20,
-            color: AppTheme.white,
-          ),
+          style: TextStyle(fontSize: 20, color: AppTheme.white),
         ),
         leading: IconButton(
           icon: SvgPicture.asset(
@@ -261,18 +259,12 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
             const SizedBox(height: 8),
             Text(
               'Latitude: ${_selectedLocation.latitude.toStringAsFixed(6)}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.paleBlue,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppTheme.paleBlue),
             ),
             const SizedBox(height: 4),
             Text(
               'Longitude: ${_selectedLocation.longitude.toStringAsFixed(6)}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.paleBlue,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppTheme.paleBlue),
             ),
             const SizedBox(height: 16),
             Text(
@@ -297,10 +289,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                 ),
                 child: const Text(
                   'Save Location',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -314,9 +303,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
     return Container(
       color: AppTheme.darkNavy.withOpacity(0.7),
       child: const Center(
-        child: CircularProgressIndicator(
-          color: AppTheme.lightBlue,
-        ),
+        child: CircularProgressIndicator(color: AppTheme.lightBlue),
       ),
     );
   }
@@ -361,7 +348,10 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.mediumBlue,
                 foregroundColor: AppTheme.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

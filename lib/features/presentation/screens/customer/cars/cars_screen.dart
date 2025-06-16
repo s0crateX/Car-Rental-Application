@@ -263,7 +263,6 @@ class _CarsScreenState extends State<CarsScreen> {
         'icon': 'assets/svg/hatchback.svg',
         'isSelected': false,
       },
-      {'name': 'Luxury', 'icon': 'assets/svg/luxury.svg', 'isSelected': false},
     ];
 
     return Column(

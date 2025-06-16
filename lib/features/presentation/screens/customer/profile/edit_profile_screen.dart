@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../../config/theme.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -10,6 +12,8 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
   final TextEditingController fullNameController = TextEditingController(
     text: 'Dave Cruz',
   );
@@ -29,6 +33,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     text: 'Jane Cruz - +63 923 456 7890',
   );
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+
+      if (image != null) {
+        setState(() {
+          _profileImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to pick image. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     fullNameController.dispose();
@@ -45,6 +75,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/arrow-left.svg',
+            colorFilter: ColorFilter.mode(AppTheme.white, BlendMode.srcIn),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -53,52 +99,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 8),
-                const Text('Edit Profile', style: TextStyle(fontSize: 22)),
                 const SizedBox(height: 16),
                 Stack(
                   alignment: Alignment.bottomRight,
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.mediumBlue,
-                          width: 2,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Container(
-                          color: AppTheme.navy,
-                          child: SvgPicture.asset(
-                            'assets/svg/user.svg',
-                            width: 80,
-                            height: 80,
-                            colorFilter: const ColorFilter.mode(
-                              AppTheme.paleBlue,
-                              BlendMode.srcIn,
-                            ),
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppTheme.mediumBlue,
+                            width: 2,
                           ),
+                        ),
+                        child: ClipOval(
+                          child:
+                              _profileImage != null
+                                  ? Image.file(
+                                    _profileImage!,
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  )
+                                  : Container(
+                                    color: AppTheme.navy,
+                                    child: SvgPicture.asset(
+                                      'assets/svg/user.svg',
+                                      width: 80,
+                                      height: 80,
+                                      colorFilter: const ColorFilter.mode(
+                                        AppTheme.paleBlue,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                  ),
                         ),
                       ),
                     ),
                     Positioned(
                       bottom: 4,
                       right: 4,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.mediumBlue,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(6),
-                        child: SvgPicture.asset(
-                          'assets/svg/camera.svg',
-                          width: 18,
-                          height: 18,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.white,
-                            BlendMode.srcIn,
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.mediumBlue,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(6),
+                          child: SvgPicture.asset(
+                            'assets/svg/camera.svg',
+                            width: 18,
+                            height: 18,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
                       ),

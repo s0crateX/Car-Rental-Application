@@ -5,6 +5,8 @@ import '../../../../../shared/common_widgets/brand_card.dart';
 import '../../../../../shared/data/sample_cars.dart';
 import '../../../../../shared/data/sample_brands.dart';
 import '../../../../../shared/models/car_model.dart';
+import '../map_screen.dart';
+import 'package:latlong2/latlong.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -59,8 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const SizedBox(height: 16),
                     _buildLocationHeader(theme),
-                    const SizedBox(height: 16),
-                    _buildSearchBar(theme),
                     const SizedBox(height: 24),
                     _buildBrandsSection(theme),
                     const SizedBox(height: 24),
@@ -123,72 +123,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(width: 4),
-            SvgPicture.asset(
-              'assets/svg/chevron-down.svg',
-              width: 20,
-              height: 20,
-              colorFilter: ColorFilter.mode(
-                theme.colorScheme.onSurface,
-                BlendMode.srcIn,
-              ),
-            ),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.1),
-            ),
-          ),
-          child: SvgPicture.asset(
-            'assets/svg/bell.svg',
-            width: 20,
-            height: 20,
-            colorFilter: ColorFilter.mode(
-              theme.colorScheme.onSurface,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          SvgPicture.asset(
-            'assets/svg/search.svg',
-            width: 20,
-            height: 20,
-            colorFilter: ColorFilter.mode(
-              theme.colorScheme.onSurface.withOpacity(0.7),
-              BlendMode.srcIn,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Search',
-              style: TextStyle(
-                fontSize: 16,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => MapScreen(
+                  cars: popularCars,
+                  userLocation: const LatLng(6.1164, 125.1716), // Example: General Santos City
+                ),
               ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(6),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(8),
@@ -197,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             child: SvgPicture.asset(
-              'assets/svg/adjustments-horizontal.svg',
+              'assets/svg/map-2.svg',
               width: 20,
               height: 20,
               colorFilter: ColorFilter.mode(
@@ -206,8 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -226,13 +175,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 80,
+          height: 90, // Increased from 80 to give more vertical space
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: brands.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 16),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              vertical: 4,
+            ), // Add vertical padding
+            separatorBuilder:
+                (context, index) =>
+                    const SizedBox(width: 12), // Reduced from 16
             itemBuilder: (context, index) {
-              return BrandCard(brand: brands[index]);
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                ), // Add vertical padding to cards
+                child: BrandCard(brand: brands[index]),
+              );
             },
           ),
         ),

@@ -83,7 +83,7 @@ class SampleCars {
         reviews: [
           {
             'id': '101',
-            'userName': 'John Doe',
+            'userName': 'David',
             'userAvatar': 'assets/images/avatars/user1.png',
             'rating': 5.0,
             'comment': 'Great car, very comfortable and fuel efficient.',
@@ -91,7 +91,7 @@ class SampleCars {
           },
           {
             'id': '102',
-            'userName': 'Jane Smith',
+            'userName': 'Jane',
             'userAvatar': 'assets/images/avatars/user2.png',
             'rating': 4.8,
             'comment': 'Smooth drive, would rent again.',
@@ -100,6 +100,120 @@ class SampleCars {
         ],
         location: const LatLng(14.5995, 120.9842), // Manila, Philippines
         locationAddress: 'Manila, Metro Manila, Philippines',
+      ),
+      CarModel(
+        id: '3',
+        image: 'assets/images/cars/1.png',
+        imageGallery: [
+          'assets/images/cars/1.png',
+          'assets/images/cars/hyundai_verna.png',
+          'assets/images/cars/1.png',
+          'assets/images/cars/hyundai_verna.png',
+        ],
+        type: 'MPV',
+        name: 'Toyota Innova',
+        brand: 'Toyota',
+        model: 'Innova',
+        year: '2023',
+        transmissionType: 'Automatic',
+        fuelType: 'Diesel',
+        seatsCount: '7 Seats',
+        luggageCapacity: '4 Bags',
+        rating: 4.7,
+        price: 35.00,
+        pricePeriod: '/hr',
+        priceOptions: {'Daily': 200.00, 'Weekly': 1200.00, 'Monthly': 4500.00},
+        features: [
+          ..._commonFeatures,
+          'Leather Seats',
+          'Rear AC Vents',
+          'Touchscreen Infotainment',
+        ],
+        inclusions: _commonInclusions,
+        extraCharges: _commonExtraCharges,
+        availabilityStatus: AvailabilityStatus.available,
+        pickupLocations: [
+          'Makati City Branch',
+          'Bonifacio Global City',
+          'NAIA Terminal 3',
+        ],
+        returnLocations: [
+          'Makati City Branch',
+          'Bonifacio Global City',
+          'NAIA Terminal 3',
+        ],
+        rentalRequirements: _commonRentalRequirements,
+        fuelPolicy: 'Full to Full',
+        cancellationPolicy: 'Free cancellation up to 24 hours before pickup',
+        reviews: [
+          {
+            'id': '103',
+            'userName': 'Michael Tan',
+            'userAvatar': 'assets/images/avatars/user3.png',
+            'rating': 4.9,
+            'comment': 'Very spacious and comfortable for family trips.',
+            'date': now.subtract(const Duration(days: 7)).toIso8601String(),
+          },
+        ],
+        location: const LatLng(14.5547, 121.0244), // Makati City
+        locationAddress: 'Makati City, Metro Manila, Philippines',
+      ),
+      CarModel(
+        id: '4',
+        image: 'assets/images/cars/hyundai_verna.png',
+        imageGallery: [
+          'assets/images/cars/1.png',
+          'assets/images/cars/hyundai_verna.png',
+          'assets/images/cars/1.png',
+          'assets/images/cars/hyundai_verna.png',
+        ],
+        type: 'Sedan',
+        name: 'Honda City',
+        brand: 'Honda',
+        model: 'City',
+        year: '2023',
+        transmissionType: 'CVT',
+        fuelType: 'Petrol',
+        seatsCount: '5 Seats',
+        luggageCapacity: '3 Bags',
+        rating: 4.6,
+        price: 28.00,
+        pricePeriod: '/hr',
+        priceOptions: {'Daily': 170.00, 'Weekly': 1000.00, 'Monthly': 3800.00},
+        features: [
+          ..._commonFeatures,
+          'Push Start',
+          'Paddle Shifters',
+          'Lane Watch Camera',
+        ],
+        inclusions: _commonInclusions,
+        extraCharges: _commonExtraCharges,
+        availabilityStatus: AvailabilityStatus.available,
+        pickupLocations: [
+          'Quezon City Branch',
+          'Eastwood City',
+          'Araneta City',
+        ],
+        returnLocations: [
+          'Quezon City Branch',
+          'Eastwood City',
+          'Araneta City',
+        ],
+        location: const LatLng(6.2164, 125.2716), // General Santos City
+        locationAddress: 'General Santos City, South Cotabato, Philippines',
+        rentalRequirements: _commonRentalRequirements,
+        fuelPolicy: 'Full to Full',
+        cancellationPolicy: 'Free cancellation up to 24 hours before pickup',
+        reviews: [
+          {
+            'id': '104',
+            'userName': 'Lim',
+            'userAvatar': 'assets/images/avatars/user4.png',
+            'rating': 4.8,
+            'comment': 'Great fuel efficiency and comfortable ride.',
+            'date': now.subtract(const Duration(days: 10)).toIso8601String(),
+          },
+        ],
       ),
       CarModel(
         id: '2',
@@ -153,7 +267,7 @@ class SampleCars {
         reviews: [
           {
             'id': '103',
-            'userName': 'Robert Johnson',
+            'userName': 'Robert',
             'userAvatar': 'assets/images/avatars/user3.png',
             'rating': 4.9,
             'comment': 'Perfect for our family trip. Spacious and comfortable.',
@@ -161,7 +275,7 @@ class SampleCars {
           },
           {
             'id': '104',
-            'userName': 'Sarah Williams',
+            'userName': 'Sarah',
             'userAvatar': 'assets/images/avatars/user4.png',
             'rating': 4.7,
             'comment': 'Great SUV, handled mountain roads perfectly.',
@@ -207,7 +321,7 @@ class SampleCars {
         reviews: [
           {
             'id': '105',
-            'userName': 'Michael Brown',
+            'userName': 'Michael',
             'userAvatar': 'assets/images/avatars/user5.png',
             'rating': 4.6,
             'comment': 'Compact and easy to drive in the city.',
@@ -264,7 +378,7 @@ class SampleCars {
         reviews: [
           {
             'id': '106',
-            'userName': 'David Clark',
+            'userName': 'David',
             'userAvatar': 'assets/images/avatars/user6.png',
             'rating': 5.0,
             'comment': 'Excellent hybrid car, saved a lot on fuel costs.',
@@ -272,7 +386,7 @@ class SampleCars {
           },
           {
             'id': '107',
-            'userName': 'Emily Taylor',
+            'userName': 'Emily',
             'userAvatar': 'assets/images/avatars/user7.png',
             'rating': 4.9,
             'comment': 'Luxurious and comfortable. Great for long trips.',
@@ -319,7 +433,7 @@ class SampleCars {
         reviews: [
           {
             'id': '108',
-            'userName': 'Thomas Wilson',
+            'userName': 'Thomas',
             'userAvatar': 'assets/images/avatars/user8.png',
             'rating': 4.5,
             'comment': 'Great crossover with good ground clearance.',
@@ -327,7 +441,7 @@ class SampleCars {
           },
           {
             'id': '109',
-            'userName': 'Lisa Martinez',
+            'userName': 'Lisa',
             'userAvatar': 'assets/images/avatars/user9.png',
             'rating': 4.7,
             'comment': 'Smooth drive and good fuel efficiency.',

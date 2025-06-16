@@ -9,25 +9,27 @@ class DocumentVerificationScreen extends StatefulWidget {
   const DocumentVerificationScreen({super.key});
 
   @override
-  State<DocumentVerificationScreen> createState() => _DocumentVerificationScreenState();
+  State<DocumentVerificationScreen> createState() =>
+      _DocumentVerificationScreenState();
 }
 
-class _DocumentVerificationScreenState extends State<DocumentVerificationScreen> {
+class _DocumentVerificationScreenState
+    extends State<DocumentVerificationScreen> {
   // Image picker instance
   final ImagePicker _picker = ImagePicker();
-  
+
   // Track uploaded images
   File? _driverLicenseFrontImage;
   File? _driverLicenseBackImage;
   File? _governmentIdImage;
   File? _selfieWithLicenseImage;
-  
+
   // Track upload status for each document
   bool _driverLicenseFrontUploaded = false;
   bool _driverLicenseBackUploaded = false;
   bool _governmentIdUploaded = false;
   bool _selfieWithLicenseUploaded = false;
-  
+
   // Track if images are currently uploading
   bool _isUploading = false;
 
@@ -40,10 +42,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
         elevation: 0,
         title: const Text(
           'Document Verification',
-          style: TextStyle(
-            fontSize: 20,
-            color: AppTheme.white,
-          ),
+          style: TextStyle(fontSize: 20, color: AppTheme.white),
         ),
         leading: IconButton(
           icon: SvgPicture.asset(
@@ -208,7 +207,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
     String documentType = '',
   }) {
     File? imageFile;
-    
+
     // Get the correct image file based on document type
     switch (documentType) {
       case 'license_front':
@@ -224,7 +223,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
         imageFile = _selfieWithLicenseImage;
         break;
     }
-    
+
     return GestureDetector(
       onTap: isUploaded ? () => _showImageOptions(documentType) : onTap,
       child: Container(
@@ -240,7 +239,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isUploaded && imageFile != null) ...[  
+            if (isUploaded && imageFile != null) ...[
               // Show image preview if uploaded
               Stack(
                 alignment: Alignment.center,
@@ -270,12 +269,15 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
                   ),
                 ],
               ),
-            ] else ... [
+            ] else ...[
               // Show icon if not uploaded or no image
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isUploaded ? AppTheme.mediumBlue.withOpacity(0.2) : AppTheme.navy,
+                  color:
+                      isUploaded
+                          ? AppTheme.mediumBlue.withOpacity(0.2)
+                          : AppTheme.navy,
                   shape: BoxShape.circle,
                 ),
                 child: SvgPicture.asset(
@@ -316,67 +318,73 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
   }
 
   Widget _buildSubmitButton() {
-    final bool allDocumentsUploaded = _driverLicenseFrontUploaded &&
+    final bool allDocumentsUploaded =
+        _driverLicenseFrontUploaded &&
         _driverLicenseBackUploaded &&
         _governmentIdUploaded &&
         _selfieWithLicenseUploaded;
-        
+
     final bool isProcessing = _isUploading;
 
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: (allDocumentsUploaded && !isProcessing)
-            ? () async {
-                // Set uploading state
-                setState(() {
-                  _isUploading = true;
-                });
-                
-                try {
-                  // Here you would upload all documents to Firebase/ImageKit if not already done
-                  // For now, we'll simulate a network delay
-                  await Future.delayed(const Duration(seconds: 2));
-                  
-                  // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Documents submitted for verification'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  
-                  // Navigate back
-                  Navigator.pop(context);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error submitting documents: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                } finally {
+        onPressed:
+            (allDocumentsUploaded && !isProcessing)
+                ? () async {
+                  // Set uploading state
                   setState(() {
-                    _isUploading = false;
+                    _isUploading = true;
                   });
+
+                  try {
+                    // Here you would upload all documents to Firebase/ImageKit if not already done
+                    // For now, we'll simulate a network delay
+                    await Future.delayed(const Duration(seconds: 2));
+
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Documents submitted for verification'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+
+                    // Navigate back
+                    Navigator.pop(context);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error submitting documents: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } finally {
+                    setState(() {
+                      _isUploading = false;
+                    });
+                  }
                 }
-              }
-            : null,
+                : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: allDocumentsUploaded ? AppTheme.lightBlue : AppTheme.lightBlue.withOpacity(0.3),
+          backgroundColor:
+              allDocumentsUploaded
+                  ? AppTheme.lightBlue
+                  : AppTheme.lightBlue.withOpacity(0.3),
           disabledBackgroundColor: AppTheme.lightBlue.withOpacity(0.3),
           disabledForegroundColor: AppTheme.navy.withOpacity(0.5),
         ),
-        child: isProcessing
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppTheme.navy,
-                ),
-              )
-            : const Text('Submit for Verification'),
+        child:
+            isProcessing
+                ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.navy,
+                  ),
+                )
+                : const Text('Submit for Verification'),
       ),
     );
   }
@@ -388,18 +396,33 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: AppTheme.navy,
-          title: const Text('Select Image Source', style: TextStyle(color: AppTheme.white)),
+          title: const Text(
+            'Select Image Source',
+            style: TextStyle(color: AppTheme.white),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library, color: AppTheme.lightBlue),
-                title: const Text('Gallery', style: TextStyle(color: AppTheme.white)),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: AppTheme.lightBlue,
+                ),
+                title: const Text(
+                  'Gallery',
+                  style: TextStyle(color: AppTheme.white),
+                ),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppTheme.lightBlue),
-                title: const Text('Camera', style: TextStyle(color: AppTheme.white)),
+                leading: const Icon(
+                  Icons.camera_alt,
+                  color: AppTheme.lightBlue,
+                ),
+                title: const Text(
+                  'Camera',
+                  style: TextStyle(color: AppTheme.white),
+                ),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
             ],
@@ -428,11 +451,11 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
 
         // Create file from picked image
         final File imageFile = File(pickedFile.path);
-        
+
         // Here you would upload to Firebase/ImageKit
         // For now, we'll simulate a network delay
         await Future.delayed(const Duration(seconds: 1));
-        
+
         setState(() {
           switch (documentType) {
             case 'license_front':
@@ -475,16 +498,16 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
       );
     }
   }
-  
+
   // Handle document upload
   void _handleUpload(String documentType) {
     _showImageSourceDialog(documentType);
   }
-  
+
   // Show options to view, update or remove the uploaded image
   Future<void> _showImageOptions(String documentType) async {
     String title = '';
-    
+
     switch (documentType) {
       case 'license_front':
         title = 'Driver\'s License (Front)';
@@ -499,7 +522,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
         title = 'Selfie with License';
         break;
     }
-    
+
     await showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -512,13 +535,15 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
           parent: animation,
           curve: Curves.easeInOut,
         );
-        
+
         return ScaleTransition(
           scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
           child: FadeTransition(
             opacity: curvedAnimation,
             child: Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               elevation: 8,
               backgroundColor: Colors.transparent,
               child: Container(
@@ -592,7 +617,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
                     const SizedBox(height: 20),
                     const Divider(color: AppTheme.paleBlue, thickness: 0.5),
                     const SizedBox(height: 10),
-                    
+
                     // Option buttons
                     _buildOptionButton(
                       icon: Icons.visibility,
@@ -632,7 +657,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
       },
     );
   }
-  
+
   // Helper method to build option buttons for the dialog
   Widget _buildOptionButton({
     required IconData icon,
@@ -681,7 +706,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
   void _viewDocument(String documentType) {
     File? imageFile;
     String title = '';
-    
+
     switch (documentType) {
       case 'license_front':
         imageFile = _driverLicenseFrontImage;
@@ -700,7 +725,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
         title = 'Selfie with License';
         break;
     }
-    
+
     if (imageFile != null) {
       showGeneralDialog(
         context: context,
@@ -714,14 +739,20 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
             parent: animation,
             curve: Curves.easeInOut,
           );
-          
+
           return FadeTransition(
             opacity: curvedAnimation,
             child: ScaleTransition(
-              scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
+              scale: Tween<double>(
+                begin: 0.8,
+                end: 1.0,
+              ).animate(curvedAnimation),
               child: Dialog(
                 backgroundColor: Colors.transparent,
-                insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     color: AppTheme.navy,
@@ -794,7 +825,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
                         ),
                       ),
                       const Divider(color: AppTheme.paleBlue, thickness: 0.5),
-                      
+
                       // Image
                       ClipRRect(
                         borderRadius: const BorderRadius.only(
@@ -822,7 +853,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
   // Remove the document
   void _removeDocument(String documentType) {
     String title = '';
-    
+
     switch (documentType) {
       case 'license_front':
         title = 'Driver\'s License (Front)';
@@ -837,7 +868,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
         title = 'Selfie with License';
         break;
     }
-    
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -850,13 +881,15 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
           parent: animation,
           curve: Curves.easeInOut,
         );
-        
+
         return ScaleTransition(
           scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
           child: FadeTransition(
             opacity: curvedAnimation,
             child: Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               elevation: 8,
               backgroundColor: Colors.transparent,
               child: Container(
@@ -893,7 +926,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Title
                     Text(
                       'Remove $title',
@@ -904,18 +937,15 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Message
                     const Text(
                       'Are you sure you want to remove this document? This action cannot be undone.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppTheme.paleBlue,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: AppTheme.paleBlue, fontSize: 14),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Action buttons
                     Row(
                       children: [
@@ -945,7 +975,7 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
                           ),
                         ),
                         const SizedBox(width: 12),
-                        
+
                         // Remove button
                         Expanded(
                           child: InkWell(
@@ -971,15 +1001,20 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
                                 }
                               });
                               Navigator.pop(context);
-                              
+
                               // Show feedback
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Row(
                                     children: [
-                                      const Icon(Icons.check_circle, color: Colors.white),
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.white,
+                                      ),
                                       const SizedBox(width: 12),
-                                      const Text('Document removed successfully'),
+                                      const Text(
+                                        'Document removed successfully',
+                                      ),
                                     ],
                                   ),
                                   backgroundColor: Colors.red.shade700,
@@ -1025,13 +1060,13 @@ class _DocumentVerificationScreenState extends State<DocumentVerificationScreen>
   Future<String?> _uploadToStorage(File imageFile, String documentType) async {
     // This is a placeholder for Firebase/ImageKit implementation
     // You would implement this when connecting to Firebase/ImageKit
-    
+
     // Example implementation structure:
     // 1. Create a reference to Firebase Storage or ImageKit
     // 2. Upload the file
     // 3. Get the download URL
     // 4. Store the URL in Firestore or your database
-    
+
     // For now, just return a mock URL
     return 'https://example.com/images/$documentType-${DateTime.now().millisecondsSinceEpoch}.jpg';
   }

@@ -9,6 +9,7 @@ class InteractiveMap extends StatefulWidget {
   final bool enableTap;
   final Function(LatLng)? onLocationSelected;
   final MapController? mapController;
+  final List<dynamic>? carMarkers; // Accepts List<CarModel> or List<Map<String, dynamic>>
 
   const InteractiveMap({
     super.key,
@@ -17,6 +18,7 @@ class InteractiveMap extends StatefulWidget {
     this.enableTap = true,
     this.onLocationSelected,
     this.mapController,
+    this.carMarkers,
   });
 
   @override
@@ -65,6 +67,44 @@ class _InteractiveMapState extends State<InteractiveMap> {
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.car_rental_app',
         ),
+        // Car markers
+        if (widget.carMarkers != null)
+          MarkerLayer(
+            markers: widget.carMarkers!
+                .where((car) => car.location != null)
+                .map<Marker>((car) => Marker(
+                      point: car.location,
+                      width: 54,
+                      height: 54,
+                      child: Tooltip(
+                        message: car.name,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.blueAccent, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              car.image,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Icon(Icons.directions_car, size: 32, color: Colors.redAccent),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        // User selected location marker
         MarkerLayer(
           markers: [
             Marker(

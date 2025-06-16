@@ -18,12 +18,6 @@ class BookingScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('My Bookings'),
-        centerTitle: true,
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 1,
-      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: SingleChildScrollView(
@@ -33,7 +27,7 @@ class BookingScreen extends StatelessWidget {
               if (currentRental != null) ...[
                 Text(
                   'Currently Renting',
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -42,7 +36,7 @@ class BookingScreen extends StatelessWidget {
               ],
               Text(
                 'Rental History',
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
