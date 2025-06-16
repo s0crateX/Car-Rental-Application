@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum AuthStatus { authenticated, unauthenticated, loading }
 
@@ -29,6 +30,46 @@ class AuthService with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Map<String, dynamic>? get userData => _userData;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+
+  /// Public method to refresh user data (for pull-to-refresh, etc.)
+  Future<void> refreshUserData() async {
+    await _fetchUserData();
+    notifyListeners();
+  }
+
+  /// Updates arbitrary profile fields for the current user in Firestore
+  Future<void> updateUserProfileData(Map<String, dynamic> dataToUpdate) async {
+    if (_user == null) {
+      throw Exception('No authenticated user.');
+    }
+    try {
+      await _firestore.collection('users').doc(_user!.uid).update(dataToUpdate);
+      // Update local cache
+      _userData?.addAll(dataToUpdate);
+      notifyListeners();
+    } catch (e) {
+      print('Error updating user profile data: $e');
+      throw Exception('Failed to update profile data.');
+    }
+  }
+
+  /// Updates the profile image URL for the currently authenticated user in Firestore
+  Future<void> updateProfileImageUrl(String imageUrl) async {
+    if (_user == null) {
+      throw Exception('No authenticated user.');
+    }
+    try {
+      await _firestore.collection('users').doc(_user!.uid).update({
+        'profileImageUrl': imageUrl,
+      });
+      // Optionally update local user data
+      _userData?['profileImageUrl'] = imageUrl;
+      notifyListeners();
+    } catch (e) {
+      print('Error updating profile image URL: $e');
+      throw Exception('Failed to update profile image URL.');
+    }
+  }
   EmailVerificationStatus get emailVerificationStatus =>
       _emailVerificationStatus;
   bool get isEmailVerified => _user?.emailVerified ?? false;
@@ -119,6 +160,8 @@ class AuthService with ChangeNotifier {
 
   // Sign in with email and password
   Future<bool> signInWithEmailAndPassword(String email, String password) async {
+    // Clear any previous session
+    await _clearSession();
     try {
       _status = AuthStatus.loading;
       _errorMessage = null;
@@ -154,6 +197,18 @@ class AuthService with ChangeNotifier {
         }
       }
 
+      // Fetch user data from Firestore
+      try {
+        await _fetchUserData();
+      } catch (e) {
+        print('Error in _fetchUserData: $e');
+        // If we can't fetch user data, we'll continue with null userData
+      }
+
+      // Save session after successful login
+      if (_user != null && _userData != null) {
+        await _saveSession(_user!.uid, _userData!['userRole'] as String? ?? 'customer');
+      }
       return true;
     } on FirebaseAuthException catch (e) {
       _status = AuthStatus.unauthenticated;
@@ -308,6 +363,7 @@ class AuthService with ChangeNotifier {
   Future<void> signOut() async {
     try {
       await _auth.signOut();
+      await _clearSession();
     } catch (e) {
       _errorMessage = 'Error signing out';
       notifyListeners();
@@ -484,4 +540,35 @@ class AuthService with ChangeNotifier {
 
   // Check if user is customer
   bool get isCustomer => hasRole('customer');
+
+  /// Session Persistence Methods
+  Future<void> _saveSession(String uid, String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('uid', uid);
+    await prefs.setString('role', role);
+    await prefs.setBool('isLoggedIn', true);
+  }
+
+  Future<void> _clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('uid');
+    await prefs.remove('role');
+    await prefs.setBool('isLoggedIn', false);
+  }
+
+  Future<bool> hasSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isLoggedIn') ?? false;
+  }
+
+  Future<String?> getSavedRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('role');
+  }
+
+  Future<String?> getSavedUid() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('uid');
+  }
 }
+

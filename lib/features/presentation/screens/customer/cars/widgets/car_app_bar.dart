@@ -38,30 +38,6 @@ class CarAppBar extends StatelessWidget {
         ),
         onPressed: () => Navigator.pop(context),
       ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              shape: BoxShape.circle,
-            ),
-            child: SvgPicture.asset(
-              car.isFavorite ? 'assets/svg/heart.svg' : 'assets/svg/heart.svg',
-              width: 24,
-              height: 24,
-              colorFilter: ColorFilter.mode(
-                car.isFavorite ? Colors.red : AppTheme.white,
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
-          onPressed: () {
-            // Toggle favorite logic would go here
-          },
-        ),
-        const SizedBox(width: 16),
-      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           children: [

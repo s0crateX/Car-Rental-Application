@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/car_model.dart';
 import 'blinking_status_indicator.dart';
-import '../utils/location_utils.dart';
+import 'package:provider/provider.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:latlong2/latlong.dart';
 
 class CarCard extends StatefulWidget {
   final CarModel car;
@@ -31,28 +33,41 @@ class _CarCardState extends State<CarCard> {
   }
 
   Future<void> _loadDistance() async {
-    if (widget.car.location == null) return;
-
+    final carLoc = widget.car.location;
+    final userData = Provider.of<AuthService>(context, listen: false).userData;
+    LatLng? userLoc;
+    final locData = userData != null ? userData['location'] : null;
+    if (locData != null && locData is Map) {
+      final lat = locData['latitude'];
+      final lng = locData['longitude'];
+      if (lat != null && lng != null) {
+        userLoc = LatLng(lat.toDouble(), lng.toDouble());
+      }
+    }
+    if (carLoc == null || userLoc == null) {
+      setState(() {
+        _distanceText = 'N/A';
+        _isLoadingDistance = false;
+      });
+      return;
+    }
     setState(() {
       _isLoadingDistance = true;
     });
-
     try {
-      final distance = await LocationUtils().getDistanceToCarInKm(
-        widget.car.location,
-      );
-      if (mounted) {
-        setState(() {
-          _distanceText = LocationUtils().formatDistance(distance);
-          _isLoadingDistance = false;
-        });
-      }
+      final distanceMeters = Distance().as(LengthUnit.Meter, userLoc, carLoc);
+      final distanceKm = distanceMeters / 1000.0;
+      setState(() {
+        _distanceText = distanceKm < 1
+            ? '${(distanceMeters).toStringAsFixed(0)} m'
+            : '${distanceKm.toStringAsFixed(2)} km';
+        _isLoadingDistance = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingDistance = false;
-        });
-      }
+      setState(() {
+        _distanceText = 'N/A';
+        _isLoadingDistance = false;
+      });
     }
   }
 
@@ -175,48 +190,6 @@ class _CarCardState extends State<CarCard> {
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
-                    if (widget.car.location != null) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        height: 4,
-                        width: 4,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.onSurface.withOpacity(0.3),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _isLoadingDistance
-                          ? SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: theme.colorScheme.primary,
-                            ),
-                          )
-                          : Row(
-                            children: [
-                              SvgPicture.asset(
-                                'assets/svg/location.svg',
-                                width: 12,
-                                height: 12,
-                                colorFilter: ColorFilter.mode(
-                                  theme.colorScheme.primary,
-                                  BlendMode.srcIn,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _distanceText ?? 'Calculating...',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -291,6 +264,36 @@ class _CarCardState extends State<CarCard> {
                           ),
                         ],
                       ),
+                    ),
+                    Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/svg/location.svg',
+                          width: 14,
+                          height: 14,
+                          colorFilter: ColorFilter.mode(
+                            theme.colorScheme.primary,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        _isLoadingDistance
+                            ? SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              )
+                            : Text(
+                                _distanceText ?? 'Calculating...',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                      ],
                     ),
                   ],
                 ),

@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../config/theme.dart';
+import 'package:provider/provider.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:car_rental_app/core/services/image_upload_service.dart';
+
+import 'package:car_rental_app/shared/common_widgets/snackbars/success_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -13,25 +19,71 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   File? _profileImage;
+  String? _profileImageUrl;
   final ImagePicker _picker = ImagePicker();
-  final TextEditingController fullNameController = TextEditingController(
-    text: 'Dave Cruz',
-  );
-  final TextEditingController emailController = TextEditingController(
-    text: 'davecruz@gmail.com',
-  );
-  final TextEditingController mobileController = TextEditingController(
-    text: '+63 912 345 6789',
-  );
-  final TextEditingController dobController = TextEditingController(
-    text: '14.03.2001',
-  );
-  final TextEditingController addressController = TextEditingController(
-    text: '123 Main St, Quezon City, PH',
-  );
-  final TextEditingController emergencyController = TextEditingController(
-    text: 'Jane Cruz - +63 923 456 7890',
-  );
+  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController mobileController = TextEditingController();
+  final TextEditingController dobController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  final TextEditingController emergencyController = TextEditingController();
+
+  bool _hasChanges = false;
+  bool _isSaving = false;
+  String? joinedDate;
+
+  void _setupChangeListeners() {
+    for (final controller in [
+      fullNameController,
+      emailController,
+      mobileController,
+      dobController,
+      addressController,
+      emergencyController,
+    ]) {
+      controller.addListener(() {
+        setState(() {
+          _hasChanges = true;
+        });
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _setupChangeListeners();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userData = Provider.of<AuthService>(context, listen: false).userData;
+    fullNameController.text = userData?['fullName'] ?? '';
+    emailController.text = userData?['email'] ?? '';
+    mobileController.text = userData?['phoneNumber'] ?? '';
+    dobController.text = userData?['dob'] ?? '';
+    addressController.text = userData?['address'] ?? '';
+    emergencyController.text = userData?['emergencyContact'] ?? '';
+    _profileImageUrl = userData?['profileImageUrl'] as String?;
+    final createdAt = userData?['createdAt'];
+    if (createdAt != null) {
+      DateTime? date;
+      if (createdAt.runtimeType.toString() == 'Timestamp') {
+        date = (createdAt as dynamic).toDate();
+      } else if (createdAt is String && createdAt.isNotEmpty) {
+        try {
+          date = DateTime.parse(createdAt);
+        } catch (_) {}
+      }
+      if (date != null) {
+        joinedDate = 'Joined ${_formatDate(date)}';
+      } else {
+        joinedDate = null;
+      }
+    }
+    _hasChanges = false;
+  }
 
   Future<void> _pickImage() async {
     try {
@@ -45,15 +97,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (image != null) {
         setState(() {
           _profileImage = File(image.path);
+          _hasChanges = true; // Mark changes when image is picked
         });
+      } else {
+        if (mounted) {
+          ErrorSnackbar.show(
+            context: context,
+            message: 'No image selected.',
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to pick image. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
+        ErrorSnackbar.show(
+          context: context,
+          message: 'Failed to pick image. $e',
         );
       }
     }
@@ -70,164 +128,85 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/svg/arrow-left.svg',
-            colorFilter: ColorFilter.mode(AppTheme.white, BlendMode.srcIn),
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 8),
-                const SizedBox(height: 16),
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppTheme.mediumBlue,
-                            width: 2,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child:
-                              _profileImage != null
-                                  ? Image.file(
-                                    _profileImage!,
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                  )
-                                  : Container(
-                                    color: AppTheme.navy,
-                                    child: SvgPicture.asset(
-                                      'assets/svg/user.svg',
-                                      width: 80,
-                                      height: 80,
-                                      colorFilter: const ColorFilter.mode(
-                                        AppTheme.paleBlue,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                  ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: GestureDetector(
-                        onTap: _pickImage,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.mediumBlue,
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(6),
-                          child: SvgPicture.asset(
-                            'assets/svg/camera.svg',
-                            width: 18,
-                            height: 18,
-                            colorFilter: const ColorFilter.mode(
-                              Colors.white,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                const SizedBox(height: 16),
-                _buildEditableField(
-                  label: 'Full Name (must match IDs)',
-                  controller: fullNameController,
-                  hint: 'Enter your full name',
-                ),
-                _buildEditableField(
-                  label: 'Email Address',
-                  controller: emailController,
-                  hint: 'Enter your email',
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                _buildEditableField(
-                  label: 'Mobile Number (+63)',
-                  controller: mobileController,
-                  hint: 'Enter your mobile number',
-                  keyboardType: TextInputType.phone,
-                ),
-                _buildEditableField(
-                  label: 'Date of Birth',
-                  controller: dobController,
-                  hint: 'DD.MM.YYYY',
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate:
-                          DateTime.tryParse(_parseDate(dobController.text)) ??
-                          DateTime(2000, 1, 1),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                    );
-                    dobController.text = _formatDate(picked!);
-                  },
-                ),
-                _buildEditableField(
-                  label: 'Home Address',
-                  controller: addressController,
-                  hint: 'Enter your home address',
-                ),
-                _buildEditableField(
-                  label: 'Emergency Contact Info',
-                  controller: emergencyController,
-                  hint: 'Name - Phone Number',
-                ),
-                const SizedBox(height: 24),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Joined 04 March 2025',
-                    style: TextStyle(
-                      color: AppTheme.paleBlue,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  Future<void> _saveProfileChanges() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    String? uploadedImageUrl;
+    if (_profileImage != null) {
+      try {
+        uploadedImageUrl = await ImageUploadService.uploadProfileImage(_profileImage!);
+        if (uploadedImageUrl == null) {
+          if (mounted) {
+            ErrorSnackbar.show(
+              context: context,
+              message: 'Failed to upload image.',
+            );
+          }
+          setState(() {
+            _isSaving = false;
+          });
+          return;
+        }
+      } catch (e) {
+        if (mounted) {
+          ErrorSnackbar.show(
+            context: context,
+            message: 'Failed to upload image. $e',
+          );
+        }
+        setState(() {
+          _isSaving = false;
+        });
+        return;
+      }
+    }
+
+    final Map<String, dynamic> dataToUpdate = {
+      'fullName': fullNameController.text.trim(),
+      'email': emailController.text.trim(),
+      'phoneNumber': mobileController.text.trim(),
+      'dob': dobController.text.trim(),
+      'address': addressController.text.trim(),
+      'emergencyContact': emergencyController.text.trim(),
+    };
+    if (uploadedImageUrl != null) {
+      dataToUpdate['profileImageUrl'] = uploadedImageUrl;
+    }
+
+    try {
+      await Provider.of<AuthService>(
+        context,
+        listen: false,
+      ).updateUserProfileData(dataToUpdate);
+      if (mounted) {
+        SuccessSnackbar.show(
+          context: context,
+          message: 'Profile updated successfully!',
+        );
+        setState(() {
+          _hasChanges = false;
+          if (uploadedImageUrl != null) {
+            _profileImageUrl = uploadedImageUrl;
+            _profileImage = null;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ErrorSnackbar.show(
+          context: context,
+          message: 'Failed to update profile. $e',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   Widget _buildEditableField({
@@ -280,6 +259,204 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 color: AppTheme.mediumBlue,
                 size: 20,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/arrow-left.svg',
+            colorFilter: ColorFilter.mode(AppTheme.white, BlendMode.srcIn),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+      ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 8),
+                const SizedBox(height: 16),
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppTheme.mediumBlue,
+                            width: 2,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(50),
+                          child:
+                              _profileImage != null
+                                  ? Image.file(
+                                    _profileImage!,
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  )
+                                  : (_profileImageUrl != null &&
+                                      _profileImageUrl!.isNotEmpty)
+                                  ? Image.network(
+                                    _profileImageUrl!,
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  )
+                                  : Container(
+                                    color: AppTheme.navy,
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: AppTheme.paleBlue,
+                                    ),
+                                  ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.mediumBlue,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildEditableField(
+                  label: 'Full Name',
+                  controller: fullNameController,
+                  hint: 'Enter your full name',
+                ),
+                _buildEditableField(
+                  label: 'Email',
+                  controller: emailController,
+                  hint: 'Enter your email',
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                _buildEditableField(
+                  label: 'Mobile Number',
+                  controller: mobileController,
+                  hint: 'Enter your mobile number',
+                  keyboardType: TextInputType.phone,
+                ),
+                _buildEditableField(
+                  label: 'Date of Birth',
+                  controller: dobController,
+                  hint: 'DD.MM.YYYY',
+                  readOnly: true,
+                  onTap: () async {
+                    DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate:
+                          DateTime.tryParse(_parseDate(dobController.text)) ??
+                          DateTime(2000, 1, 1),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      dobController.text = _formatDate(picked);
+                      setState(() {
+                        _hasChanges = true;
+                      });
+                    }
+                  },
+                ),
+                _buildEditableField(
+                  label: 'Address',
+                  controller: addressController,
+                  hint: 'Enter your address',
+                ),
+                _buildEditableField(
+                  label: 'Emergency Contact',
+                  controller: emergencyController,
+                  hint: 'Enter emergency contact',
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 16),
+                if (joinedDate != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      joinedDate!,
+                      style: TextStyle(
+                        color: AppTheme.paleBlue,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                if (_hasChanges)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _saveProfileChanges,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.mediumBlue,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child:
+                          _isSaving
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text(
+                                'Save Changes',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
         ],

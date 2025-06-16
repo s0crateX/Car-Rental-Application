@@ -10,6 +10,7 @@ class InteractiveMap extends StatefulWidget {
   final Function(LatLng)? onLocationSelected;
   final MapController? mapController;
   final List<dynamic>? carMarkers; // Accepts List<CarModel> or List<Map<String, dynamic>>
+  final String? userProfileImageUrl;
 
   const InteractiveMap({
     super.key,
@@ -19,6 +20,7 @@ class InteractiveMap extends StatefulWidget {
     this.onLocationSelected,
     this.mapController,
     this.carMarkers,
+    this.userProfileImageUrl,
   });
 
   @override
@@ -111,11 +113,17 @@ class _InteractiveMapState extends State<InteractiveMap> {
               point: _selectedLocation,
               width: 40,
               height: 40,
-              child: const Icon(
-                Icons.location_on,
-                color: AppTheme.mediumBlue,
-                size: 40,
-              ),
+              child: widget.userProfileImageUrl != null && widget.userProfileImageUrl!.isNotEmpty
+                  ? CircleAvatar(
+                      radius: 20,
+                      backgroundImage: NetworkImage(widget.userProfileImageUrl!),
+                      backgroundColor: Colors.white,
+                    )
+                  : const Icon(
+                      Icons.location_on,
+                      color: AppTheme.mediumBlue,
+                      size: 40,
+                    ),
             ),
           ],
         ),

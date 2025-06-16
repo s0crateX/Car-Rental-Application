@@ -7,6 +7,7 @@ class CarFilter {
   String? transmission;
   String? fuelType;
   String? sortBy;
+  double? maxDistance;
 
   CarFilter({
     this.carType,
@@ -14,6 +15,7 @@ class CarFilter {
     this.transmission,
     this.fuelType,
     this.sortBy,
+    this.maxDistance,
   });
 }
 
@@ -52,6 +54,8 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
 
   RangeValues priceRange = const RangeValues(10, 500);
 
+  double _distanceKm = 20;
+
   @override
   void initState() {
     super.initState();
@@ -61,8 +65,10 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
       transmission: widget.initialFilter.transmission ?? 'All',
       fuelType: widget.initialFilter.fuelType ?? 'All',
       sortBy: widget.initialFilter.sortBy ?? 'Default',
+      maxDistance: widget.initialFilter.maxDistance ?? 20,
     );
     priceRange = _filter.priceRange!;
+    _distanceKm = _filter.maxDistance ?? 20;
   }
 
   @override
@@ -179,6 +185,31 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
                 ),
               ),
               const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(Icons.place, color: theme.colorScheme.secondary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Show cars within ${_distanceKm.round()} km',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              Slider(
+                value: _distanceKm,
+                min: 1,
+                max: 2000, // update this if needed.default is 100km
+                divisions: 99, // update this if needed.default is 99
+                label: '${_distanceKm.round()} km',
+                onChanged:
+                    (v) => setState(() {
+                      _distanceKm = v;
+                      _filter.maxDistance = v;
+                    }),
+              ),
+              const SizedBox(height: 16),
               _buildDropdown(
                 'Transmission',
                 transmissions,
@@ -212,8 +243,10 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
                             transmission: 'All',
                             fuelType: 'All',
                             sortBy: 'Default',
+                            maxDistance: 20,
                           );
                           priceRange = _filter.priceRange!;
+                          _distanceKm = _filter.maxDistance!;
                         });
                       },
                       style: OutlinedButton.styleFrom(
@@ -265,19 +298,11 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SvgPicture.asset(
-                            'assets/svg/checks.svg',
-                            height: 18,
-                            width: 18,
-                            colorFilter: const ColorFilter.mode(
-                              Colors.white,
-                              BlendMode.srcIn,
-                            ),
-                          ),
+                          Icon(Icons.check, color: Colors.white),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             'Apply',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -302,7 +327,6 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
     final theme = Theme.of(context);
     String iconPath;
 
-    // Select appropriate SVG icon based on filter type
     switch (label) {
       case 'Car Type':
         iconPath = 'assets/svg/car.svg';

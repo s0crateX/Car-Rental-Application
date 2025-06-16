@@ -296,16 +296,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             Future.delayed(const Duration(seconds: 1), () {
                               if (mounted) {
                                 // Implement role-based navigation
-                                if (authService.isAdmin) {
-                                  // Navigate to admin dashboard when available
-                                  // For now, navigate to scout screen
+                                if (authService.isCustomer) {
+                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
+                                } else if (authService.isAdmin) {
+                                  // TODO: Navigate to admin dashboard when implemented
                                   Navigator.pushReplacementNamed(context, AppRoutes.home);
                                 } else if (authService.isCarOwner) {
-                                  // Navigate to car owner dashboard when available
-                                  // For now, navigate to scout screen
-                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
-                                } else {
-                                  // Default to customer view (scout screen)
+                                  // TODO: Navigate to car owner dashboard when implemented
                                   Navigator.pushReplacementNamed(context, AppRoutes.home);
                                 }
                               }

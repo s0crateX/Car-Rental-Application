@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../../shared/common_widgets/car_card_compact.dart';
 import '../../../../../shared/data/sample_cars.dart';
 import '../../../../../shared/models/car_model.dart';
@@ -19,12 +22,23 @@ class _CarsScreenState extends State<CarsScreen> {
   String _searchQuery = '';
   bool _showScrollToTop = false;
 
-  List<CarModel> get _allCarsRaw => [
-    ...SampleCars.getPopularCars(),
-    ...SampleCars.getRecommendedCars(),
-  ];
+  List<CarModel> get _allCarsRaw => [...SampleCars.getPopularCars()];
 
   CarFilter _filter = CarFilter();
+
+  LatLng? get _userLocation {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userData = authService.userData;
+    final locData = userData != null ? userData['location'] : null;
+    if (locData != null && locData is Map) {
+      final lat = locData['latitude'];
+      final lng = locData['longitude'];
+      if (lat != null && lng != null) {
+        return LatLng(lat.toDouble(), lng.toDouble());
+      }
+    }
+    return null;
+  }
 
   List<CarModel> get filteredCars {
     List<CarModel> cars = _allCarsRaw;
@@ -77,6 +91,29 @@ class _CarsScreenState extends State<CarsScreen> {
       }
       // 'Newest' is omitted since CarModel has no year field.
     }
+    // Distance filter and proximity sort
+    final userLoc = _userLocation;
+    if (userLoc != null) {
+      final Distance distance = Distance();
+      final carsWithDistance =
+          cars
+              .where((car) => car.location != null)
+              .map((car) {
+                final carLoc = car.location!;
+                final dist = distance.as(LengthUnit.Kilometer, userLoc, carLoc);
+                return {'car': car, 'distance': dist};
+              })
+              .where((entry) {
+                final maxDist = _filter.maxDistance;
+                return maxDist == null ||
+                    (entry['distance'] as double) <= maxDist;
+              })
+              .toList();
+      carsWithDistance.sort(
+        (a, b) => (a['distance'] as double).compareTo(b['distance'] as double),
+      );
+      return carsWithDistance.map((entry) => entry['car'] as CarModel).toList();
+    }
     return cars;
   }
 
@@ -102,6 +139,10 @@ class _CarsScreenState extends State<CarsScreen> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    setState(() {}); // Triggers rebuild and re-sorts cars
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -111,23 +152,26 @@ class _CarsScreenState extends State<CarsScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildHeader(theme),
-                    const SizedBox(height: 16),
-                    _buildSearchBar(theme),
-                    const SizedBox(height: 24),
-                    _buildCategoriesSection(theme),
-                    const SizedBox(height: 24),
-                    _buildAllCarsSection(theme),
-                  ],
+            RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildHeader(theme),
+                      const SizedBox(height: 16),
+                      _buildSearchBar(theme),
+                      const SizedBox(height: 24),
+                      _buildCategoriesSection(theme),
+                      const SizedBox(height: 24),
+                      _buildAllCarsSection(theme),
+                    ],
+                  ),
                 ),
               ),
             ),

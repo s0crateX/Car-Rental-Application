@@ -6,6 +6,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../config/theme.dart';
 import '../../../../../shared/common_widgets/maps/interactive_map.dart';
+import 'package:provider/provider.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/success_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
 
 class LocationSelectionScreen extends StatefulWidget {
   const LocationSelectionScreen({super.key});
@@ -66,36 +70,32 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
     });
 
     try {
+      // Save locally for offline use
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('user_location_lat', _selectedLocation.latitude);
       await prefs.setDouble('user_location_lng', _selectedLocation.longitude);
 
+      // Save to Firebase (user profile)
+      final locationData = {
+        'location': {
+          'latitude': _selectedLocation.latitude,
+          'longitude': _selectedLocation.longitude,
+        }
+      };
+      await Provider.of<AuthService>(context, listen: false).updateUserProfileData(locationData);
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Location saved successfully'),
-            backgroundColor: Colors.green.shade700,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(10),
-          ),
+        SuccessSnackbar.show(
+          context: context,
+          message: 'Location saved successfully',
         );
         Navigator.pop(context, _selectedLocation);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving location: $e'),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(10),
-          ),
+        ErrorSnackbar.show(
+          context: context,
+          message: 'Error saving location: $e',
         );
       }
     } finally {
@@ -110,6 +110,28 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
       _isLoading = true;
       _locationPermissionDenied = false;
     });
+
+    // Check if location services are enabled
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location services are disabled. Please enable GPS to get your current location.'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
+        );
+      }
+      return;
+    }
 
     try {
       // Check location permission

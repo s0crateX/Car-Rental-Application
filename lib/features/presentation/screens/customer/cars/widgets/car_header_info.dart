@@ -3,8 +3,10 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../../config/theme.dart';
 import '../../../../../../shared/models/car_model.dart';
-import '../../../../../../shared/utils/location_utils.dart';
 import 'car_location_map_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:latlong2/latlong.dart';
 
 class CarHeaderInfo extends StatefulWidget {
   final CarModel car;
@@ -26,28 +28,41 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
   }
 
   Future<void> _loadDistance() async {
-    if (widget.car.location == null) return;
-
+    final carLoc = widget.car.location;
+    final userData = Provider.of<AuthService>(context, listen: false).userData;
+    LatLng? userLoc;
+    final locData = userData != null ? userData['location'] : null;
+    if (locData != null && locData is Map) {
+      final lat = locData['latitude'];
+      final lng = locData['longitude'];
+      if (lat != null && lng != null) {
+        userLoc = LatLng(lat.toDouble(), lng.toDouble());
+      }
+    }
+    if (carLoc == null || userLoc == null) {
+      setState(() {
+        _distanceText = 'N/A';
+        _isLoadingDistance = false;
+      });
+      return;
+    }
     setState(() {
       _isLoadingDistance = true;
     });
-
     try {
-      final distance = await LocationUtils().getDistanceToCarInKm(
-        widget.car.location,
-      );
-      if (mounted) {
-        setState(() {
-          _distanceText = LocationUtils().formatDistance(distance);
-          _isLoadingDistance = false;
-        });
-      }
+      final distanceMeters = Distance().as(LengthUnit.Meter, userLoc, carLoc);
+      final distanceKm = distanceMeters / 1000.0;
+      setState(() {
+        _distanceText = distanceKm < 1
+            ? '${(distanceMeters).toStringAsFixed(0)} m'
+            : '${distanceKm.toStringAsFixed(2)} km';
+        _isLoadingDistance = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingDistance = false;
-        });
-      }
+      setState(() {
+        _distanceText = 'N/A';
+        _isLoadingDistance = false;
+      });
     }
   }
 

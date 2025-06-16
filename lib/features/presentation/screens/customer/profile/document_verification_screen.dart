@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../config/theme.dart';
+import 'package:provider/provider.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:car_rental_app/core/services/image_upload_service.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/success_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
 
 class DocumentVerificationScreen extends StatefulWidget {
   const DocumentVerificationScreen({super.key});
@@ -15,23 +20,31 @@ class DocumentVerificationScreen extends StatefulWidget {
 
 class _DocumentVerificationScreenState
     extends State<DocumentVerificationScreen> {
-  // Image picker instance
   final ImagePicker _picker = ImagePicker();
-
-  // Track uploaded images
-  File? _driverLicenseFrontImage;
-  File? _driverLicenseBackImage;
-  File? _governmentIdImage;
-  File? _selfieWithLicenseImage;
-
-  // Track upload status for each document
-  bool _driverLicenseFrontUploaded = false;
-  bool _driverLicenseBackUploaded = false;
-  bool _governmentIdUploaded = false;
-  bool _selfieWithLicenseUploaded = false;
-
-  // Track if images are currently uploading
   bool _isUploading = false;
+
+  // Document state: {type: {file, url, status}}
+  final Map<String, Map<String, dynamic>> _documents = {
+    'license_front': {'file': null, 'url': null, 'status': null},
+    'license_back': {'file': null, 'url': null, 'status': null},
+    'government_id': {'file': null, 'url': null, 'status': null},
+    'selfie_with_license': {'file': null, 'url': null, 'status': null},
+  };
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userData = Provider.of<AuthService>(context, listen: false).userData;
+    final docData = userData?['documents'] as Map<String, dynamic>?;
+    if (docData != null) {
+      for (final key in _documents.keys) {
+        if (docData[key] != null) {
+          _documents[key]!['url'] = docData[key]['url'];
+          _documents[key]!['status'] = docData[key]['status'];
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +84,8 @@ class _DocumentVerificationScreenState
                     child: _buildUploadCard(
                       title: 'Front Side',
                       icon: 'assets/svg/upload.svg',
-                      isUploaded: _driverLicenseFrontUploaded,
-                      onTap: () => _handleUpload('license_front'),
                       documentType: 'license_front',
+                      onTap: () => _handleUpload('license_front'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -81,9 +93,8 @@ class _DocumentVerificationScreenState
                     child: _buildUploadCard(
                       title: 'Back Side',
                       icon: 'assets/svg/upload.svg',
-                      isUploaded: _driverLicenseBackUploaded,
-                      onTap: () => _handleUpload('license_back'),
                       documentType: 'license_back',
+                      onTap: () => _handleUpload('license_back'),
                     ),
                   ),
                 ],
@@ -102,9 +113,8 @@ class _DocumentVerificationScreenState
               _buildUploadCard(
                 title: 'Upload ID',
                 icon: 'assets/svg/note.svg',
-                isUploaded: _governmentIdUploaded,
-                onTap: () => _handleUpload('government_id'),
                 documentType: 'government_id',
+                onTap: () => _handleUpload('government_id'),
               ),
               const SizedBox(height: 24),
               _buildSectionTitle('Selfie with Driver\'s License'),
@@ -120,9 +130,8 @@ class _DocumentVerificationScreenState
               _buildUploadCard(
                 title: 'Take Selfie with ID',
                 icon: 'assets/svg/camera.svg',
-                isUploaded: _selfieWithLicenseUploaded,
-                onTap: () => _handleUpload('selfie_with_license'),
                 documentType: 'selfie_with_license',
+                onTap: () => _handleUpload('selfie_with_license'),
               ),
               const SizedBox(height: 32),
               _buildSubmitButton(),
@@ -202,26 +211,26 @@ class _DocumentVerificationScreenState
   Widget _buildUploadCard({
     required String title,
     required String icon,
-    required bool isUploaded,
+    required String documentType,
     required VoidCallback onTap,
-    String documentType = '',
   }) {
-    File? imageFile;
+    final doc = _documents[documentType]!;
+    final File? imageFile = doc['file'] as File?;
+    final String? url = doc['url'] as String?;
+    final String? status = doc['status'] as String?;
+    final bool isUploaded = imageFile != null || url != null;
 
-    // Get the correct image file based on document type
-    switch (documentType) {
-      case 'license_front':
-        imageFile = _driverLicenseFrontImage;
-        break;
-      case 'license_back':
-        imageFile = _driverLicenseBackImage;
-        break;
-      case 'government_id':
-        imageFile = _governmentIdImage;
-        break;
-      case 'selfie_with_license':
-        imageFile = _selfieWithLicenseImage;
-        break;
+    String statusLabel = 'Not Uploaded';
+    Color statusColor = AppTheme.paleBlue.withOpacity(0.7);
+    if (status == 'pending') {
+      statusLabel = 'Pending';
+      statusColor = Colors.orangeAccent;
+    } else if (status == 'verified') {
+      statusLabel = 'Verified';
+      statusColor = Colors.greenAccent;
+    } else if (status == 'rejected') {
+      statusLabel = 'Rejected';
+      statusColor = Colors.redAccent;
     }
 
     return GestureDetector(
@@ -239,8 +248,7 @@ class _DocumentVerificationScreenState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isUploaded && imageFile != null) ...[
-              // Show image preview if uploaded
+            if (imageFile != null) ...[
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -253,7 +261,34 @@ class _DocumentVerificationScreenState
                       fit: BoxFit.cover,
                     ),
                   ),
-                  // Overlay with view icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppTheme.navy.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.visibility,
+                      color: AppTheme.lightBlue,
+                      size: 30,
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (url != null) ...[
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      url,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                   Container(
                     width: 80,
                     height: 80,
@@ -270,22 +305,18 @@ class _DocumentVerificationScreenState
                 ],
               ),
             ] else ...[
-              // Show icon if not uploaded or no image
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      isUploaded
-                          ? AppTheme.mediumBlue.withOpacity(0.2)
-                          : AppTheme.navy,
+                  color: AppTheme.navy,
                   shape: BoxShape.circle,
                 ),
                 child: SvgPicture.asset(
-                  isUploaded ? 'assets/svg/clock-check.svg' : icon,
+                  icon,
                   width: 24,
                   height: 24,
                   colorFilter: ColorFilter.mode(
-                    isUploaded ? AppTheme.mediumBlue : AppTheme.lightBlue,
+                    AppTheme.lightBlue,
                     BlendMode.srcIn,
                   ),
                 ),
@@ -301,16 +332,18 @@ class _DocumentVerificationScreenState
                 color: isUploaded ? AppTheme.mediumBlue : AppTheme.white,
               ),
             ),
-            if (!isUploaded) ...[
-              const SizedBox(height: 6),
-              Text(
-                'Tap to upload',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.paleBlue.withOpacity(0.7),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.info_outline, color: statusColor, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  statusLabel,
+                  style: TextStyle(fontSize: 12, color: statusColor),
                 ),
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),
@@ -318,73 +351,65 @@ class _DocumentVerificationScreenState
   }
 
   Widget _buildSubmitButton() {
-    final bool allDocumentsUploaded =
-        _driverLicenseFrontUploaded &&
-        _driverLicenseBackUploaded &&
-        _governmentIdUploaded &&
-        _selfieWithLicenseUploaded;
-
+    final bool allDocumentsReady = _documents.values.every((doc) => doc['file'] != null || doc['url'] != null);
     final bool isProcessing = _isUploading;
 
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed:
-            (allDocumentsUploaded && !isProcessing)
-                ? () async {
-                  // Set uploading state
-                  setState(() {
-                    _isUploading = true;
-                  });
-
-                  try {
-                    // Here you would upload all documents to Firebase/ImageKit if not already done
-                    // For now, we'll simulate a network delay
-                    await Future.delayed(const Duration(seconds: 2));
-
-                    // Show success message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Documents submitted for verification'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-
-                    // Navigate back
-                    Navigator.pop(context);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error submitting documents: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  } finally {
-                    setState(() {
-                      _isUploading = false;
-                    });
+        onPressed: (allDocumentsReady && !isProcessing)
+            ? () async {
+                setState(() {
+                  _isUploading = true;
+                });
+                try {
+                  // Upload new images and collect URLs
+                  final Map<String, Map<String, dynamic>> uploadData = {};
+                  for (final entry in _documents.entries) {
+                    final docType = entry.key;
+                    final doc = entry.value;
+                    String? url = doc['url'] as String?;
+                    if (doc['file'] != null) {
+                      url = await ImageUploadService.uploadProfileImage(doc['file']);
+                    }
+                    uploadData[docType] = {
+                      'url': url,
+                      'status': 'pending',
+                    };
                   }
+                  await Provider.of<AuthService>(context, listen: false).updateUserProfileData({'documents': uploadData});
+                  SuccessSnackbar.show(
+                    context: context,
+                    message: 'Documents submitted for verification',
+                  );
+                  Navigator.pop(context);
+                } catch (e) {
+                  ErrorSnackbar.show(
+                    context: context,
+                    message: 'Error submitting documents: $e',
+                  );
+                } finally {
+                  setState(() {
+                    _isUploading = false;
+                  });
                 }
-                : null,
+              }
+            : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              allDocumentsUploaded
-                  ? AppTheme.lightBlue
-                  : AppTheme.lightBlue.withOpacity(0.3),
+          backgroundColor: allDocumentsReady ? AppTheme.lightBlue : AppTheme.lightBlue.withOpacity(0.3),
           disabledBackgroundColor: AppTheme.lightBlue.withOpacity(0.3),
           disabledForegroundColor: AppTheme.navy.withOpacity(0.5),
         ),
-        child:
-            isProcessing
-                ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppTheme.navy,
-                  ),
-                )
-                : const Text('Submit for Verification'),
+        child: isProcessing
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppTheme.navy,
+                ),
+              )
+            : const Text('Submit for Verification'),
       ),
     );
   }
@@ -443,58 +468,19 @@ class _DocumentVerificationScreenState
         source: source,
         imageQuality: 80,
       );
-
       if (pickedFile != null) {
         setState(() {
-          _isUploading = true;
+          _documents[documentType]!['file'] = File(pickedFile.path);
         });
-
-        // Create file from picked image
-        final File imageFile = File(pickedFile.path);
-
-        // Here you would upload to Firebase/ImageKit
-        // For now, we'll simulate a network delay
-        await Future.delayed(const Duration(seconds: 1));
-
-        setState(() {
-          switch (documentType) {
-            case 'license_front':
-              _driverLicenseFrontImage = imageFile;
-              _driverLicenseFrontUploaded = true;
-              break;
-            case 'license_back':
-              _driverLicenseBackImage = imageFile;
-              _driverLicenseBackUploaded = true;
-              break;
-            case 'government_id':
-              _governmentIdImage = imageFile;
-              _governmentIdUploaded = true;
-              break;
-            case 'selfie_with_license':
-              _selfieWithLicenseImage = imageFile;
-              _selfieWithLicenseUploaded = true;
-              break;
-          }
-          _isUploading = false;
-        });
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Image selected successfully'),
-            backgroundColor: Colors.green,
-          ),
+        SuccessSnackbar.show(
+          context: context,
+          message: 'Image selected successfully',
         );
       }
     } catch (e) {
-      setState(() {
-        _isUploading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error picking image: $e'),
-          backgroundColor: Colors.red,
-        ),
+      ErrorSnackbar.show(
+        context: context,
+        message: 'Error picking image: $e',
       );
     }
   }
@@ -507,7 +493,6 @@ class _DocumentVerificationScreenState
   // Show options to view, update or remove the uploaded image
   Future<void> _showImageOptions(String documentType) async {
     String title = '';
-
     switch (documentType) {
       case 'license_front':
         title = 'Driver\'s License (Front)';
@@ -522,7 +507,6 @@ class _DocumentVerificationScreenState
         title = 'Selfie with License';
         break;
     }
-
     await showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -704,29 +688,25 @@ class _DocumentVerificationScreenState
 
   // View the document in full screen
   void _viewDocument(String documentType) {
-    File? imageFile;
+    final doc = _documents[documentType]!;
+    final File? imageFile = doc['file'] as File?;
+    final String? url = doc['url'] as String?;
     String title = '';
-
     switch (documentType) {
       case 'license_front':
-        imageFile = _driverLicenseFrontImage;
         title = 'Driver\'s License (Front)';
         break;
       case 'license_back':
-        imageFile = _driverLicenseBackImage;
         title = 'Driver\'s License (Back)';
         break;
       case 'government_id':
-        imageFile = _governmentIdImage;
         title = 'Government ID';
         break;
       case 'selfie_with_license':
-        imageFile = _selfieWithLicenseImage;
         title = 'Selfie with License';
         break;
     }
-
-    if (imageFile != null) {
+    if (imageFile != null || url != null) {
       showGeneralDialog(
         context: context,
         barrierDismissible: true,
@@ -739,7 +719,6 @@ class _DocumentVerificationScreenState
             parent: animation,
             curve: Curves.easeInOut,
           );
-
           return FadeTransition(
             opacity: curvedAnimation,
             child: ScaleTransition(
@@ -832,12 +811,9 @@ class _DocumentVerificationScreenState
                           bottomLeft: Radius.circular(20),
                           bottomRight: Radius.circular(20),
                         ),
-                        child: Image.file(
-                          imageFile!,
-                          fit: BoxFit.contain,
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.5,
-                        ),
+                        child: imageFile != null
+                            ? Image.file(imageFile)
+                            : Image.network(url!),
                       ),
                     ],
                   ),
@@ -853,7 +829,6 @@ class _DocumentVerificationScreenState
   // Remove the document
   void _removeDocument(String documentType) {
     String title = '';
-
     switch (documentType) {
       case 'license_front':
         title = 'Driver\'s License (Front)';
@@ -868,7 +843,6 @@ class _DocumentVerificationScreenState
         title = 'Selfie with License';
         break;
     }
-
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -881,7 +855,6 @@ class _DocumentVerificationScreenState
           parent: animation,
           curve: Curves.easeInOut,
         );
-
         return ScaleTransition(
           scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
           child: FadeTransition(
@@ -981,24 +954,9 @@ class _DocumentVerificationScreenState
                           child: InkWell(
                             onTap: () {
                               setState(() {
-                                switch (documentType) {
-                                  case 'license_front':
-                                    _driverLicenseFrontImage = null;
-                                    _driverLicenseFrontUploaded = false;
-                                    break;
-                                  case 'license_back':
-                                    _driverLicenseBackImage = null;
-                                    _driverLicenseBackUploaded = false;
-                                    break;
-                                  case 'government_id':
-                                    _governmentIdImage = null;
-                                    _governmentIdUploaded = false;
-                                    break;
-                                  case 'selfie_with_license':
-                                    _selfieWithLicenseImage = null;
-                                    _selfieWithLicenseUploaded = false;
-                                    break;
-                                }
+                                _documents[documentType]!['file'] = null;
+                                _documents[documentType]!['url'] = null;
+                                _documents[documentType]!['status'] = null;
                               });
                               Navigator.pop(context);
 
