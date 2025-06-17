@@ -1,4 +1,4 @@
-import 'package:car_rental_app/features/presentation/screens/Car%20Owner/car_owner_screen.dart';
+import 'package:car_rental_app/presentation/screens/Car%20Owner/car_owner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';

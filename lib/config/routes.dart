@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/login_screen.dart';
-import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/signup_screen.dart';
-import 'package:car_rental_app/features/presentation/screens/Login%20and%20Signup/forgot_password_screen.dart';
-import 'package:car_rental_app/features/presentation/screens/customer/customer_screen.dart';
+import 'package:car_rental_app/presentation/screens/Login%20and%20Signup/login_screen.dart';
+import 'package:car_rental_app/presentation/screens/Login%20and%20Signup/signup_screen.dart';
+import 'package:car_rental_app/presentation/screens/Login%20and%20Signup/forgot_password_screen.dart';
+import 'package:car_rental_app/presentation/screens/customer/customer_screen.dart';
 
 class AppRoutes {
   static const String login = '/';
