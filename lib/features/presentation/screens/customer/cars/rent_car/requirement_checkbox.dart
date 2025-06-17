@@ -17,8 +17,8 @@ class RequirementStatusIndicator extends StatefulWidget {
     this.onTap,
     this.uploadedDate,
     this.description,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<RequirementStatusIndicator> createState() =>
@@ -273,6 +273,8 @@ class _RequirementStatusIndicatorState extends State<RequirementStatusIndicator>
 
 // Example usage widget
 class RequirementsList extends StatefulWidget {
+  const RequirementsList({super.key});
+
   @override
   State<RequirementsList> createState() => _RequirementsListState();
 }

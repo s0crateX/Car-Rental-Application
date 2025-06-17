@@ -1,5 +1,4 @@
 import '../models/booking_model.dart';
-import '../models/car_model.dart';
 import 'sample_cars.dart';
 
 class SampleBookings {

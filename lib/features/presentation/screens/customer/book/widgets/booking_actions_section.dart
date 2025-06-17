@@ -3,7 +3,7 @@ import '../../../../../../shared/models/booking_model.dart';
 
 class BookingActionsSection extends StatelessWidget {
   final BookingModel booking;
-  const BookingActionsSection({Key? key, required this.booking}) : super(key: key);
+  const BookingActionsSection({super.key, required this.booking});
 
   bool get canCancel {
     // If pending and created more than 24 hours ago
@@ -27,7 +27,11 @@ class BookingActionsSection extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {
                 // TODO: Add cancel booking logic
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking cancelled (mock logic)')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Booking cancelled (mock logic)'),
+                  ),
+                );
               },
               icon: const Icon(Icons.cancel_rounded, size: 22),
               label: const Text('Cancel'),
@@ -36,9 +40,16 @@ class BookingActionsSection extends StatelessWidget {
                 foregroundColor: Colors.white,
                 elevation: 3,
                 shadowColor: theme.colorScheme.error.withOpacity(0.25),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                textStyle: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                textStyle: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
         ],

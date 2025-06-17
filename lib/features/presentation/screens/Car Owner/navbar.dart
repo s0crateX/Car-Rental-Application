@@ -6,10 +6,10 @@ class AnimatedUnderlineNavBar extends StatelessWidget {
   final Function(int) onItemTapped;
 
   const AnimatedUnderlineNavBar({
-    Key? key,
+    super.key,
     required this.selectedIndex,
     required this.onItemTapped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +70,9 @@ class AnimatedUnderlineNavBar extends StatelessWidget {
                                     ? theme.colorScheme.primary
                                     : theme.unselectedWidgetColor,
                             fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.normal,
+                                isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                           ),
                         ),
                         AnimatedContainer(

@@ -20,14 +20,14 @@ class PaymentModeSection extends StatelessWidget {
   };
 
   const PaymentModeSection({
-    Key? key,
+    super.key,
     required this.selectedPaymentMode,
     required this.paymentModes,
     required this.onPaymentModeChanged,
     required this.receiptImage,
     required this.onPickReceiptImage,
     this.onRemoveReceiptImage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -4,18 +4,16 @@ import '../booking_details_screen.dart';
 
 class CurrentRentalWidget extends StatelessWidget {
   final CarModel car;
-  const CurrentRentalWidget({Key? key, required this.car}) : super(key: key);
+  const CurrentRentalWidget({super.key, required this.car});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => BookingDetailsScreen(),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => BookingDetailsScreen()));
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 12),
@@ -39,18 +37,35 @@ class CurrentRentalWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(car.name, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    Text(car.brand + ' • ' + car.model, style: theme.textTheme.bodySmall),
+                    Text(
+                      car.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${car.brand} • ${car.model}',
+                      style: theme.textTheme.bodySmall,
+                    ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.star, color: Colors.amber, size: 18),
                         const SizedBox(width: 4),
-                        Text(car.rating.toString(), style: theme.textTheme.bodySmall),
+                        Text(
+                          car.rating.toString(),
+                          style: theme.textTheme.bodySmall,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text('Currently Rented', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Currently Rented',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),

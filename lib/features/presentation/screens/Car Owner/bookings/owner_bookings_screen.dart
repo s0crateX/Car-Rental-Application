@@ -4,7 +4,7 @@ import '../../../../../../shared/models/booking_model.dart';
 import 'widgets/booking_list_item.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
-  const OwnerBookingsScreen({Key? key}) : super(key: key);
+  const OwnerBookingsScreen({super.key});
 
   @override
   State<OwnerBookingsScreen> createState() => _OwnerBookingsScreenState();
@@ -33,7 +33,10 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Text(
                 'Bookings',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 26),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -48,10 +51,13 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       // TODO: Show booking details modal/screen
                       showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Booking Details'),
-                          content: Text('Details for booking: \\${_bookings[index].id}'),
-                        ),
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text('Booking Details'),
+                              content: Text(
+                                'Details for booking: \\${_bookings[index].id}',
+                              ),
+                            ),
                       );
                     },
                   );

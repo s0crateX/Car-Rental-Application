@@ -10,7 +10,7 @@ import 'widgets/booking_actions_section.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   final BookingModel? booking;
-  const BookingDetailsScreen({Key? key, this.booking}) : super(key: key);
+  const BookingDetailsScreen({super.key, this.booking});
 
   @override
   Widget build(BuildContext context) {

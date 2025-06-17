@@ -5,7 +5,7 @@ import 'widgets/current_rental_widget.dart';
 import 'widgets/rental_history_widget.dart';
 
 class BookingScreen extends StatelessWidget {
-  const BookingScreen({Key? key}) : super(key: key);
+  const BookingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

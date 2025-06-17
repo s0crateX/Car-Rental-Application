@@ -6,7 +6,6 @@ import 'package:car_rental_app/config/routes.dart';
 import 'package:car_rental_app/config/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
-import 'package:car_rental_app/core/session_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

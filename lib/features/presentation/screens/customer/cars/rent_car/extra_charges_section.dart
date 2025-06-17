@@ -10,13 +10,13 @@ class ExtraChargesSection extends StatefulWidget {
   final String? subtitle;
 
   const ExtraChargesSection({
-    Key? key,
+    super.key,
     required this.extraCharges,
     required this.selectedExtras,
     required this.onToggle,
     this.title = 'Extra Charges (Optional)',
     this.subtitle = 'Select additional services for your rental',
-  }) : super(key: key);
+  });
 
   @override
   State<ExtraChargesSection> createState() => _ExtraChargesSectionState();
@@ -112,14 +112,21 @@ class _ExtraChargesSectionState extends State<ExtraChargesSection>
                   if (_selectedCount > 0)
                     Container(
                       margin: const EdgeInsets.only(right: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.mediumBlue,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         '$_selectedCount',
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   AnimatedBuilder(
@@ -149,28 +156,42 @@ class _ExtraChargesSectionState extends State<ExtraChargesSection>
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: widget.extraCharges.length,
                     itemBuilder: (context, index) {
-                      final entry = widget.extraCharges.entries.elementAt(index);
-                      final isSelected = widget.selectedExtras[entry.key] ?? false;
+                      final entry = widget.extraCharges.entries.elementAt(
+                        index,
+                      );
+                      final isSelected =
+                          widget.selectedExtras[entry.key] ?? false;
                       return ListTile(
                         dense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 0,
+                        ),
                         leading: Checkbox(
                           value: isSelected,
                           onChanged: (_) => widget.onToggle(entry.key),
                           activeColor: AppTheme.mediumBlue,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                         title: Text(
                           entry.key,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: AppTheme.paleBlue,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontWeight:
+                                isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                           ),
                         ),
                         trailing: Text(
                           '+${PriceUtils.formatPrice(entry.value)}',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isSelected ? AppTheme.lightBlue : AppTheme.paleBlue.withOpacity(0.7),
+                            color:
+                                isSelected
+                                    ? AppTheme.lightBlue
+                                    : AppTheme.paleBlue.withOpacity(0.7),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -396,6 +417,8 @@ class _ExtraChargeItemState extends State<_ExtraChargeItem>
 
 // Example usage
 class ExtraChargesDemo extends StatefulWidget {
+  const ExtraChargesDemo({super.key});
+
   @override
   State<ExtraChargesDemo> createState() => _ExtraChargesDemoState();
 }

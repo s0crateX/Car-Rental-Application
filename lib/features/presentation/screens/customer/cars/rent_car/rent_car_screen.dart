@@ -12,7 +12,7 @@ import 'package:car_rental_app/shared/models/car_model.dart';
 // Add dotted_border to pubspec.yaml if not present: dotted_border: ^2.0.0
 
 class RentCarScreen extends StatefulWidget {
-  const RentCarScreen({Key? key}) : super(key: key);
+  const RentCarScreen({super.key});
 
   @override
   State<RentCarScreen> createState() => _RentCarScreenState();
@@ -30,10 +30,10 @@ class _RentCarScreenState extends State<RentCarScreen> {
   File? _receiptImage;
 
   // Mock document upload statuses (replace with real user profile state in production)
-  bool _governmentIdUploaded = false;
-  bool _driverLicenseFrontUploaded = false;
-  bool _driverLicenseBackUploaded = false;
-  bool _selfieWithLicenseUploaded = false;
+  final bool _governmentIdUploaded = false;
+  final bool _driverLicenseFrontUploaded = false;
+  final bool _driverLicenseBackUploaded = false;
+  final bool _selfieWithLicenseUploaded = false;
 
   // Mock selected car (normally passed from previous screen)
   final CarModel _car = SampleCars.getPopularCars().first;

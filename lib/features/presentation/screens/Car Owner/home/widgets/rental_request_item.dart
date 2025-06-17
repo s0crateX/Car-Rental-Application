@@ -10,12 +10,12 @@ class RentalRequestItem extends StatelessWidget {
   final VoidCallback? onViewDetails;
 
   const RentalRequestItem({
-    Key? key,
+    super.key,
     required this.request,
     this.onApprove,
     this.onReject,
     this.onViewDetails,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +123,7 @@ class RentalRequestItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      '${request.totalPrice.toStringAsFixed(2)}',
+                      request.totalPrice.toStringAsFixed(2),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: AppTheme.lightBlue,
                         fontWeight: FontWeight.bold,

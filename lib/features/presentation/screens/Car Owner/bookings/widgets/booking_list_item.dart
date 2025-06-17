@@ -7,10 +7,10 @@ class BookingListItem extends StatelessWidget {
   final VoidCallback onViewDetails;
 
   const BookingListItem({
-    Key? key,
+    super.key,
     required this.booking,
     required this.onViewDetails,
-  }) : super(key: key);
+  });
 
   Color _statusColor(BuildContext context) {
     switch (booking.status) {
@@ -55,19 +55,24 @@ class BookingListItem extends StatelessWidget {
             // Car image (if available)
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: booking.car.image.isNotEmpty
-                  ? Image.asset(
-                      booking.car.image,
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      color: theme.colorScheme.primary.withOpacity(0.13),
-                      child: Icon(Icons.directions_car, size: 24, color: theme.colorScheme.primary),
-                    ),
+              child:
+                  booking.car.image.isNotEmpty
+                      ? Image.asset(
+                        booking.car.image,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                      )
+                      : Container(
+                        width: 48,
+                        height: 48,
+                        color: theme.colorScheme.primary.withOpacity(0.13),
+                        child: Icon(
+                          Icons.directions_car,
+                          size: 24,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
             ),
             const SizedBox(width: 10),
             // Booking details
@@ -77,7 +82,10 @@ class BookingListItem extends StatelessWidget {
                 children: [
                   Text(
                     booking.car.name,
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -89,13 +97,19 @@ class BookingListItem extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${df.format(booking.startDate)} – ${df.format(booking.endDate)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500, fontSize: 13),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 2,
+                          horizontal: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: _statusColor(context),
                           borderRadius: BorderRadius.circular(12),
@@ -114,13 +128,19 @@ class BookingListItem extends StatelessWidget {
                         onPressed: onViewDetails,
                         style: TextButton.styleFrom(
                           minimumSize: Size.zero,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: const Text('View Details', style: TextStyle(fontSize: 13)),
+                        child: const Text(
+                          'View Details',
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),

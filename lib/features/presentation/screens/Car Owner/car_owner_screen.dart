@@ -6,7 +6,7 @@ import 'profile/owner_profile_screen.dart';
 import 'navbar.dart';
 
 class CarOwnerScreen extends StatefulWidget {
-  const CarOwnerScreen({Key? key}) : super(key: key);
+  const CarOwnerScreen({super.key});
 
   @override
   _CarOwnerScreenState createState() => _CarOwnerScreenState();

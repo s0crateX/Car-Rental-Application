@@ -10,13 +10,13 @@ class SummaryCard extends StatelessWidget {
   final Color? iconColor;
 
   const SummaryCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.count,
     required this.iconPath,
     this.color = AppTheme.mediumBlue,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +32,7 @@ class SummaryCard extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.9),
-                color.withOpacity(0.7),
-              ],
+              colors: [color.withOpacity(0.9), color.withOpacity(0.7)],
             ),
             boxShadow: [
               BoxShadow(
@@ -51,9 +48,9 @@ class SummaryCard extends StatelessWidget {
               // Decorative elements - made smaller and positioned more carefully
               Positioned(
                 right: -15, // Adjusted position
-                top: -15,   // Adjusted position
+                top: -15, // Adjusted position
                 child: Container(
-                  width: 60,  // Reduced size
+                  width: 60, // Reduced size
                   height: 60, // Reduced size
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
@@ -73,11 +70,13 @@ class SummaryCard extends StatelessWidget {
                       padding: const EdgeInsets.all(8), // Reduced padding
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10), // Slightly smaller radius
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ), // Slightly smaller radius
                       ),
                       child: SvgPicture.asset(
                         iconPath,
-                        width: 20,  // Reduced size
+                        width: 20, // Reduced size
                         height: 20, // Reduced size
                         colorFilter: ColorFilter.mode(
                           iconColor ?? Colors.white,
@@ -89,12 +88,14 @@ class SummaryCard extends StatelessWidget {
                     // Count - adjusted text size
                     Text(
                       count.toString(),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
-                            height: 1.1,
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                        height: 1.1,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -103,10 +104,10 @@ class SummaryCard extends StatelessWidget {
                     Text(
                       title.toUpperCase(),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Colors.white.withOpacity(0.8),
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.3, // Reduced letter spacing
-                          ),
+                        color: Colors.white.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3, // Reduced letter spacing
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

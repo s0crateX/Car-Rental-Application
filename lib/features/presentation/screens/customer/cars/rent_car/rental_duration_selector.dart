@@ -5,10 +5,10 @@ class RentalDurationSelector extends StatelessWidget {
   final ValueChanged<int> onChanged;
 
   const RentalDurationSelector({
-    Key? key,
+    super.key,
     required this.rentalDays,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,16 +25,12 @@ class RentalDurationSelector extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.remove_circle_outline),
-              onPressed: rentalDays > 1
-                  ? () => onChanged(rentalDays - 1)
-                  : null,
+              onPressed:
+                  rentalDays > 1 ? () => onChanged(rentalDays - 1) : null,
             ),
             Text(
               ' $rentalDays day${rentalDays > 1 ? 's' : ''}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),

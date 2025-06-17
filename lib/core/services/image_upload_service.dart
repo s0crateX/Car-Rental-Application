@@ -10,14 +10,15 @@ class ImageUploadService {
     final bytes = await imageFile.readAsBytes();
     final base64Image = base64Encode(bytes);
 
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['file'] = base64Image
-      ..fields['fileName'] = imageFile.path.split('/').last;
+    final request =
+        http.MultipartRequest('POST', uri)
+          ..fields['file'] = base64Image
+          ..fields['fileName'] = imageFile.path.split('/').last;
     // Do not send publicKey in fields for private key upload
 
     // Add HTTP Basic Auth header with private key (password is blank)
     final privateKey = AppConstants.imageKitPrivateKey;
-    final authHeader = 'Basic ' + base64Encode(utf8.encode('$privateKey:'));
+    final authHeader = 'Basic ${base64Encode(utf8.encode('$privateKey:'))}';
     request.headers['Authorization'] = authHeader;
 
     try {

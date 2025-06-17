@@ -8,11 +8,11 @@ class PaymentBreakdownSection extends StatelessWidget {
   final Map<String, bool> selectedExtras;
 
   const PaymentBreakdownSection({
-    Key? key,
+    super.key,
     required this.car,
     required this.rentalDays,
     required this.selectedExtras,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,15 +33,24 @@ class PaymentBreakdownSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Payment Breakdown',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'Payment Breakdown',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             _row('Daily Rate', PriceUtils.formatPrice(dailyRate)),
             _row('Rental Days', rentalDays.toString()),
             _row('Subtotal', PriceUtils.formatPrice(rentalSubtotal)),
             if (selectedExtras.values.any((v) => v)) ...[
               const Divider(),
-              ...extraCharges.entries.where((entry) => selectedExtras[entry.key] == true).map((entry) => _row(entry.key, PriceUtils.formatPrice(entry.value))).toList(),
+              ...extraCharges.entries
+                  .where((entry) => selectedExtras[entry.key] == true)
+                  .map(
+                    (entry) =>
+                        _row(entry.key, PriceUtils.formatPrice(entry.value)),
+                  ),
             ],
             const Divider(),
             _row('Total', PriceUtils.formatPrice(total), isTotal: true),
@@ -57,8 +66,16 @@ class PaymentBreakdownSection extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: isTotal ? const TextStyle(fontWeight: FontWeight.bold) : null),
-          Text(value, style: isTotal ? const TextStyle(fontWeight: FontWeight.bold) : null),
+          Text(
+            label,
+            style:
+                isTotal ? const TextStyle(fontWeight: FontWeight.bold) : null,
+          ),
+          Text(
+            value,
+            style:
+                isTotal ? const TextStyle(fontWeight: FontWeight.bold) : null,
+          ),
         ],
       ),
     );

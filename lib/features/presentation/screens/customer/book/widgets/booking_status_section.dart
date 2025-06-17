@@ -3,8 +3,7 @@ import '../../../../../../shared/models/booking_model.dart';
 
 class BookingStatusSection extends StatelessWidget {
   final BookingModel booking;
-  const BookingStatusSection({Key? key, required this.booking})
-    : super(key: key);
+  const BookingStatusSection({super.key, required this.booking});
 
   Color _statusColor(BuildContext context) {
     switch (booking.status) {

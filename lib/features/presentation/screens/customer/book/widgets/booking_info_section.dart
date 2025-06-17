@@ -58,10 +58,10 @@ class BookingInfoSection extends StatelessWidget {
   final Function(int days)? onExtendBooking;
 
   const BookingInfoSection({
-    Key? key,
+    super.key,
     required this.booking,
     this.onExtendBooking,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +176,7 @@ class BookingInfoSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        car.brand + ' • ' + car.model,
+                        '${car.brand} • ${car.model}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.hintColor,
                         ),

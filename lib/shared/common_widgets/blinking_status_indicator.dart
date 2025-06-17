@@ -5,10 +5,10 @@ class BlinkingStatusIndicator extends StatefulWidget {
   final double size;
 
   const BlinkingStatusIndicator({
-    Key? key,
+    super.key,
     required this.isAvailable,
     this.size = 6,
-  }) : super(key: key);
+  });
 
   @override
   State<BlinkingStatusIndicator> createState() =>
