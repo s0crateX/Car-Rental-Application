@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import '../../../../../shared/models/booking_model.dart';
 
@@ -114,13 +115,31 @@ class BookingListItem extends StatelessWidget {
                           color: _statusColor(context),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          _statusText(),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              booking.status == BookingStatus.approved
+                                  ? 'assets/svg/progress-check.svg'
+                                  : booking.status == BookingStatus.pending
+                                      ? 'assets/svg/waiting.svg'
+                                      : booking.status == BookingStatus.completed
+                                          ? 'assets/svg/circle-check.svg'
+                                          : 'assets/svg/alert-square-rounded.svg',
+                              width: 14,
+                              height: 14,
+                              color: Colors.black,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _statusText(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const Spacer(),
@@ -134,9 +153,21 @@ class BookingListItem extends StatelessWidget {
                           ),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: const Text(
-                          'View Details',
-                          style: TextStyle(fontSize: 13),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/svg/binoculars.svg',
+                              width: 14,
+                              height: 14,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'View Details',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ],
                         ),
                       ),
                     ],

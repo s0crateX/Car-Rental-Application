@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../../shared/data/sample_bookings.dart';
-import '../../../../../shared/models/booking_model.dart';
+import '../../../../../shared/models/booking_model.dart' show BookingModel, BookingStatus;
 import 'widgets/booking_list_item.dart';
+import 'booking_details_screen.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
   const OwnerBookingsScreen({super.key});
@@ -16,7 +17,18 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   @override
   void initState() {
     super.initState();
-    _bookings = SampleBookings.getSampleBookings();
+    _bookings = SampleBookings.getSampleBookings()
+        .where((booking) => booking.status != BookingStatus.completed)
+        .toList()
+      ..sort((a, b) {
+        // Sort pending bookings to the top
+        if (a.status == BookingStatus.pending && b.status != BookingStatus.pending) {
+          return -1;
+        } else if (a.status != BookingStatus.pending && b.status == BookingStatus.pending) {
+          return 1;
+        }
+        return 0; // Maintain original order for other statuses
+      });
   }
 
   @override
@@ -31,12 +43,28 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Text(
-                'Bookings',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 26,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Bookings',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // TODO: Navigate to booking history
+                    },
+                    child: Text(
+                      'View History',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -48,16 +76,26 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   return BookingListItem(
                     booking: _bookings[index],
                     onViewDetails: () {
-                      // TODO: Show booking details modal/screen
-                      showDialog(
-                        context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: const Text('Booking Details'),
-                              content: Text(
-                                'Details for booking: \\${_bookings[index].id}',
-                              ),
-                            ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => BookingDetailsScreen(
+                            booking: _bookings[index],
+                            onStatusUpdated: (newStatus) {
+                              setState(() {
+                                _bookings[index] = _bookings[index].copyWith(status: newStatus);
+                                // Re-sort the list after status update
+                                _bookings.sort((a, b) {
+                                  if (a.status == BookingStatus.pending && b.status != BookingStatus.pending) {
+                                    return -1;
+                                  } else if (a.status != BookingStatus.pending && b.status == BookingStatus.pending) {
+                                    return 1;
+                                  }
+                                  return 0;
+                                });
+                              });
+                            },
+                          ),
+                        ),
                       );
                     },
                   );
