@@ -9,17 +9,17 @@ class CarOwnerScreen extends StatefulWidget {
   const CarOwnerScreen({super.key});
 
   @override
-  _CarOwnerScreenState createState() => _CarOwnerScreenState();
+  State<CarOwnerScreen> createState() => _CarOwnerScreenState();
 }
 
 class _CarOwnerScreenState extends State<CarOwnerScreen> {
   int _selectedIndex = 0;
 
   static final List<Widget> _screens = <Widget>[
-    OwnerHomeScreen(),
-    OwnerBookingsScreen(),
-    OwnerMyCarsScreen(),
-    OwnerProfileScreen(),
+    const OwnerHomeScreen(),
+    const OwnerBookingsScreen(),
+    const OwnerMyCarsScreen(),
+    const OwnerProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -31,7 +31,9 @@ class _CarOwnerScreenState extends State<CarOwnerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: SafeArea(
+        child: _screens[_selectedIndex],
+      ),
       bottomNavigationBar: AnimatedUnderlineNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,

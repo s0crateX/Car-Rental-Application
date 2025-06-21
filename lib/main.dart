@@ -1,8 +1,9 @@
-import 'package:car_rental_app/presentation/screens/Car%20Owner/car_owner_screen.dart';
+//import 'package:car_rental_app/core/session_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:car_rental_app/config/routes.dart';
+
 import 'package:car_rental_app/config/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
@@ -43,7 +44,7 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.theme,
 
         onGenerateRoute: AppRoutes.generateRoute,
-        home: CarOwnerScreen(),
+        initialRoute: AppRoutes.carOwner,
       ),
     );
   }

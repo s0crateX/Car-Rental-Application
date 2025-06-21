@@ -13,7 +13,8 @@ class BookingModel {
   final Map<String, double> extras; // e.g., {'Driver Fee': 25.0}
   final BookingStatus status;
   final DateTime createdAt;
-  final String? deliveryLocation;  // Address where the car should be delivered
+  final String? deliveryLocation; // Address where the car should be delivered
+  final String? notes; // Special notes from the customer
 
   BookingModel({
     required this.id,
@@ -26,6 +27,7 @@ class BookingModel {
     required this.status,
     required this.createdAt,
     this.deliveryLocation,
+    this.notes,
   });
 
   BookingModel copyWith({
@@ -38,6 +40,7 @@ class BookingModel {
     Map<String, double>? extras,
     BookingStatus? status,
     DateTime? createdAt,
+    String? notes,
   }) {
     return BookingModel(
       id: id ?? this.id,
@@ -49,7 +52,8 @@ class BookingModel {
       extras: extras ?? Map.from(this.extras),
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
-      deliveryLocation: deliveryLocation ?? this.deliveryLocation,
+      deliveryLocation: deliveryLocation ?? deliveryLocation,
+      notes: notes ?? this.notes,
     );
   }
 }

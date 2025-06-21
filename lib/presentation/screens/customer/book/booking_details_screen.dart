@@ -5,7 +5,6 @@ import '../../../../shared/data/sample_bookings.dart';
 import '../../../../shared/models/booking_model.dart';
 
 import 'widgets/booking_info_section.dart';
-import 'widgets/booking_status_section.dart';
 import 'widgets/booking_actions_section.dart';
 
 class BookingDetailsScreen extends StatelessWidget {

@@ -51,6 +51,10 @@ class BookingDetailsScreen extends StatelessWidget {
             ExtraChargesCard(booking: booking),
             const SizedBox(height: 16),
 
+            // Customer Notes Card
+            NotesCard(notes: booking.notes),
+            const SizedBox(height: 16),
+
             // Action Buttons
             if (onStatusUpdated != null)
               Padding(
@@ -58,7 +62,7 @@ class BookingDetailsScreen extends StatelessWidget {
                 child: BookingActionButtons(
                   status: booking.status,
                   onStatusUpdated: (newStatus) {
-                    onStatusUpdated!(newStatus);
+                    onStatusUpdated?.call(newStatus);
                     Navigator.of(context).pop();
                   },
                 ),

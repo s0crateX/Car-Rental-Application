@@ -3,6 +3,7 @@ import '../../../../../shared/data/sample_bookings.dart';
 import '../../../../../shared/models/booking_model.dart' show BookingModel, BookingStatus;
 import 'widgets/booking_list_item.dart';
 import 'booking_details_screen.dart';
+import 'owner_bookings_history_screen.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
   const OwnerBookingsScreen({super.key});
@@ -55,7 +56,11 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // TODO: Navigate to booking history
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const OwnerBookingsHistoryScreen(),
+                        ),
+                      );
                     },
                     child: Text(
                       'View History',
