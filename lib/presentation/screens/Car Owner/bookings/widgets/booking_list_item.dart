@@ -16,13 +16,26 @@ class BookingListItem extends StatelessWidget {
   Color _statusColor(BuildContext context) {
     switch (booking.status) {
       case BookingStatus.approved:
-        return Colors.greenAccent.shade400;
+        return const Color(0xFF10B981); // Emerald green
       case BookingStatus.completed:
-        return Colors.blueAccent.shade100;
+        return const Color(0xFF3B82F6); // Blue
       case BookingStatus.cancelled:
-        return Colors.redAccent.shade200;
+        return const Color(0xFFEF4444); // Red
       case BookingStatus.pending:
-        return Theme.of(context).colorScheme.secondary;
+        return const Color(0xFFF59E0B); // Amber
+    }
+  }
+
+  Color _statusBackgroundColor(BuildContext context) {
+    switch (booking.status) {
+      case BookingStatus.approved:
+        return const Color(0xFF10B981).withOpacity(0.1);
+      case BookingStatus.completed:
+        return const Color(0xFF3B82F6).withOpacity(0.1);
+      case BookingStatus.cancelled:
+        return const Color(0xFFEF4444).withOpacity(0.1);
+      case BookingStatus.pending:
+        return const Color(0xFFF59E0B).withOpacity(0.1);
     }
   }
 
@@ -39,143 +52,189 @@ class BookingListItem extends StatelessWidget {
     }
   }
 
+  IconData _statusIcon() {
+    switch (booking.status) {
+      case BookingStatus.approved:
+        return Icons.check_circle_outline;
+      case BookingStatus.completed:
+        return Icons.check_circle;
+      case BookingStatus.cancelled:
+        return Icons.cancel_outlined;
+      case BookingStatus.pending:
+        return Icons.access_time;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final df = DateFormat('MMM d, yyyy');
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-      elevation: 1.5,
-      color: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Car image (if available)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child:
-                  booking.car.image.isNotEmpty
-                      ? Image.asset(
-                        booking.car.image,
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
-                      )
-                      : Container(
-                        width: 48,
-                        height: 48,
-                        color: theme.colorScheme.primary.withOpacity(0.13),
-                        child: Icon(
-                          Icons.directions_car,
-                          size: 24,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-            ),
-            const SizedBox(width: 10),
-            // Booking details
-            Expanded(
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onViewDetails,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    booking.car.name,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Renter: ${booking.id}', // Placeholder for renter name (replace with real data)
-                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${df.format(booking.startDate)} – ${df.format(booking.endDate)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
+                  // Header row with car info and status
                   Row(
                     children: [
+                      // Car image with modern styling
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 2,
-                          horizontal: 10,
-                        ),
+                        width: 56,
+                        height: 56,
                         decoration: BoxDecoration(
-                          color: _statusColor(context),
                           borderRadius: BorderRadius.circular(12),
+                          color: theme.colorScheme.primary.withOpacity(0.1),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child:
+                              booking.car.image.isNotEmpty
+                                  ? Image.asset(
+                                    booking.car.image,
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                  )
+                                  : Icon(
+                                    Icons.directions_car_rounded,
+                                    size: 28,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Car name and renter info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SvgPicture.asset(
-                              booking.status == BookingStatus.approved
-                                  ? 'assets/svg/progress-check.svg'
-                                  : booking.status == BookingStatus.pending
-                                      ? 'assets/svg/waiting.svg'
-                                      : booking.status == BookingStatus.completed
-                                          ? 'assets/svg/circle-check.svg'
-                                          : 'assets/svg/alert-square-rounded.svg',
-                              width: 14,
-                              height: 14,
-                              color: Colors.black,
-                            ),
-                            const SizedBox(width: 4),
                             Text(
-                              _statusText(),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                              booking.car.name,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                letterSpacing: -0.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Booking ID: ${booking.id}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontSize: 13,
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.6,
+                                ),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: onViewDetails,
-                        style: TextButton.styleFrom(
-                          minimumSize: Size.zero,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+                      // Status badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _statusBackgroundColor(context),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            SvgPicture.asset(
-                              'assets/svg/binoculars.svg',
-                              width: 14,
-                              height: 14,
-                              color: Theme.of(context).primaryColor,
+                            Icon(
+                              _statusIcon(),
+                              size: 14,
+                              color: _statusColor(context),
                             ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'View Details',
-                              style: TextStyle(fontSize: 13),
+                            const SizedBox(width: 6),
+                            Text(
+                              _statusText(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: _statusColor(context),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                                letterSpacing: 0.2,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Date range with modern styling
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${df.format(booking.startDate)} – ${df.format(booking.endDate)}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: theme.colorScheme.primary.withOpacity(0.6),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

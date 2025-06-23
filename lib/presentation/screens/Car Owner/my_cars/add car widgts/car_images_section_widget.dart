@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:car_rental_app/presentation/screens/Car%20Owner/my_cars/add%20car%20widgts/form_section_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../../../config/theme.dart';
 
 class CarImagesSectionWidget extends StatefulWidget {
@@ -10,10 +9,10 @@ class CarImagesSectionWidget extends StatefulWidget {
   final Function(int) onImageSelected;
 
   const CarImagesSectionWidget({
-    Key? key,
+    super.key,
     required this.carImages,
     required this.onImageSelected,
-  }) : super(key: key);
+  });
 
   @override
   State<CarImagesSectionWidget> createState() => _CarImagesSectionWidgetState();

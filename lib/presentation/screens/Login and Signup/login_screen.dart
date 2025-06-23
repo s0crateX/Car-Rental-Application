@@ -302,8 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   // TODO: Navigate to admin dashboard when implemented
                                   Navigator.pushReplacementNamed(context, AppRoutes.home);
                                 } else if (authService.isCarOwner) {
-                                  // TODO: Navigate to car owner dashboard when implemented
-                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
+                                  Navigator.pushReplacementNamed(context, AppRoutes.carOwner);
                                 }
                               }
                             });

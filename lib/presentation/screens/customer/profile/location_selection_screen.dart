@@ -21,7 +21,7 @@ class LocationSelectionScreen extends StatefulWidget {
 
 class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
   final MapController _mapController = MapController();
-  LatLng _selectedLocation = LatLng(14.5995, 120.9842); // Default to Manila
+  LatLng _selectedLocation = LatLng(6.1164, 125.1716); // Default to General Santos (Gensan)
   bool _isLoading = false;
   bool _locationPermissionDenied = false;
 

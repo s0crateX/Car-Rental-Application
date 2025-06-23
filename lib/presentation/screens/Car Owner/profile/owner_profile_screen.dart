@@ -5,7 +5,9 @@ import '../../../../config/theme.dart';
 import '../../../../config/routes.dart';
 import '../../../../core/authentication/auth_service.dart';
 import '../../../../shared/common_widgets/snackbars/error_snackbar.dart';
+import 'owner_edit_profile_screen.dart';
 import 'widgets/owner_profile_menu_item.dart';
+import 'owner_document_verification_screen.dart';
 
 class OwnerProfileScreen extends StatefulWidget {
   const OwnerProfileScreen({super.key});
@@ -134,21 +136,55 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
+                    // Show car owner name directly under the profile icon
+                    Consumer<AuthService>(
+                      builder: (context, authService, _) {
+                        final userData = authService.userData;
+                        final fullName = (userData != null && userData['fullName'] != null && (userData['fullName'] as String).trim().isNotEmpty)
+                            ? userData['fullName'] as String
+                            : 'Car Owner';
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+                          child: Text(
+                            fullName,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.lightBlue,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Implement edit profile navigation
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder:
+                                (context) => const OwnerEditProfileScreen(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(120, 40),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        backgroundColor: AppTheme.mediumBlue,
+                        backgroundColor: AppTheme.lightBlue,
+                        foregroundColor: AppTheme.navy,
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'General Sans',
+                        ),
                       ),
                       icon: SvgPicture.asset(
                         'assets/svg/edit.svg',
                         width: 18,
                         height: 18,
+                        colorFilter: const ColorFilter.mode(
+                          AppTheme.navy,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       label: const Text('Edit Profile'),
                     ),
@@ -160,7 +196,12 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                 icon: 'assets/svg/note.svg',
                 title: 'Upload Documents',
                 onTap: () {
-                  // TODO: Implement document upload navigation
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder:
+                          (context) => const OwnerDocumentVerificationScreen(),
+                    ),
+                  );
                 },
               ),
               OwnerProfileMenuItem(

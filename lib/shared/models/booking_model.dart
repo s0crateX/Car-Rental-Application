@@ -1,5 +1,6 @@
 import 'car_model.dart';
 import 'customer_model.dart';
+import 'payment_method.dart';
 
 enum BookingStatus { pending, approved, completed, cancelled }
 
@@ -15,6 +16,8 @@ class BookingModel {
   final DateTime createdAt;
   final String? deliveryLocation; // Address where the car should be delivered
   final String? notes; // Special notes from the customer
+  final PaymentMethod? paymentMethod; // Payment method used
+  final String? receiptImageUrl; // Uploaded receipt image
 
   BookingModel({
     required this.id,
@@ -28,6 +31,8 @@ class BookingModel {
     required this.createdAt,
     this.deliveryLocation,
     this.notes,
+    this.paymentMethod,
+    this.receiptImageUrl,
   });
 
   BookingModel copyWith({
@@ -40,7 +45,10 @@ class BookingModel {
     Map<String, double>? extras,
     BookingStatus? status,
     DateTime? createdAt,
+    String? deliveryLocation,
     String? notes,
+    PaymentMethod? paymentMethod,
+    String? receiptImageUrl,
   }) {
     return BookingModel(
       id: id ?? this.id,
@@ -52,8 +60,10 @@ class BookingModel {
       extras: extras ?? Map.from(this.extras),
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
-      deliveryLocation: deliveryLocation ?? deliveryLocation,
+      deliveryLocation: deliveryLocation ?? this.deliveryLocation,
       notes: notes ?? this.notes,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      receiptImageUrl: receiptImageUrl ?? this.receiptImageUrl,
     );
   }
 }

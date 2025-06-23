@@ -1,4 +1,5 @@
 import '../models/booking_model.dart';
+import '../models/payment_method.dart';
 import 'sample_cars.dart';
 import 'sample_customers.dart';
 
@@ -17,7 +18,10 @@ class SampleBookings {
         status: BookingStatus.approved,
         createdAt: DateTime.now().subtract(const Duration(days: 3)),
         deliveryLocation: '1234 Sample Street, Makati City, Metro Manila',
-        notes: 'Please ensure the car has a full tank of gas. I will need a child seat for my 3-year-old.',
+        notes:
+            'Please ensure the car has a full tank of gas. I will need a child seat for my 3-year-old.',
+        paymentMethod: PaymentMethod.gcash,
+        receiptImageUrl: 'https://example.com/receipts/receipt1.jpg',
       ),
       BookingModel(
         id: 'B002',
@@ -31,6 +35,8 @@ class SampleBookings {
         createdAt: DateTime.now().subtract(const Duration(days: 11)),
         notes: 'Car was in good condition. No issues to report.',
         deliveryLocation: '5678 Sample Ave, Taguig City',
+        paymentMethod: PaymentMethod.paymaya,
+        receiptImageUrl: 'https://example.com/receipts/receipt2.jpg',
       ),
       BookingModel(
         id: 'B003',
@@ -42,8 +48,11 @@ class SampleBookings {
         extras: {},
         status: BookingStatus.pending,
         createdAt: DateTime.now(),
-        notes: 'I would like to request early check-in if possible. Please confirm if the car will be available by 8 AM.',
+        notes:
+            'I would like to request early check-in if possible. Please confirm if the car will be available by 8 AM.',
         deliveryLocation: '9101 Sample Blvd, BGC, Taguig',
+        paymentMethod: PaymentMethod.cash,
+        receiptImageUrl: null,
       ),
     ];
   }

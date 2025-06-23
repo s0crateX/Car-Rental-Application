@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../shared/data/sample_bookings.dart';
 import '../../../../../shared/models/booking_model.dart' show BookingModel, BookingStatus;
 import 'widgets/booking_list_item.dart';
@@ -43,18 +44,11 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           children: [
             const SizedBox(height: 16),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    'Bookings',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 26,
-                    ),
-                  ),
-                  TextButton(
+                  TextButton.icon(
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -62,7 +56,16 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                         ),
                       );
                     },
-                    child: Text(
+                    icon: SvgPicture.asset(
+                      'assets/svg/history.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: ColorFilter.mode(
+                        Theme.of(context).primaryColor,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    label: Text(
                       'View History',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).primaryColor,
@@ -75,7 +78,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 itemCount: _bookings.length,
                 itemBuilder: (context, index) {
                   return BookingListItem(

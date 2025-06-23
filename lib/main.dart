@@ -1,4 +1,4 @@
-//import 'package:car_rental_app/core/session_gate.dart';
+import 'package:car_rental_app/core/session_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -42,9 +42,8 @@ class MyApp extends StatelessWidget {
         title: 'Car Rental App',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
-
         onGenerateRoute: AppRoutes.generateRoute,
-        initialRoute: AppRoutes.carOwner,
+        home: const SessionGate(),
       ),
     );
   }

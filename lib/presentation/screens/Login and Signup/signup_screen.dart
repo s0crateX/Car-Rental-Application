@@ -69,12 +69,17 @@ class _SignupScreenState extends State<SignupScreen> {
       final authService = Provider.of<AuthService>(context, listen: false);
 
       // Use the AuthService to register the user
+      // Normalize role for backend logic
+      String normalizedRole = _selectedRole.toLowerCase() == 'car owner'
+          ? 'car_owner'
+          : 'customer';
+
       final success = await authService.signUpWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
         _nameController.text.trim(),
         _phoneController.text.trim(),
-        _selectedRole, // The AuthService now handles role normalization
+        normalizedRole,
       );
 
       if (success) {
@@ -180,8 +185,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Thank you for registering, ${_nameController.text}! We\'ve sent a verification link to ${_emailController.text}. Please check your inbox or spam folder and verify your account before logging in.',
-                  style: TextStyle(color: AppTheme.paleBlue, fontSize: 14),
+                  'Thank you for registering, ${_nameController.text}! We\'ve sent a verification link to ${_emailController.text}. Please check your inbox or spam folder and verify your account before logging in.\n\nYou can close this app and return later to complete the verification process.',
+                  style: TextStyle(color: AppTheme.paleBlue, fontSize: 14, height: 1.4),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -197,11 +202,10 @@ class _SignupScreenState extends State<SignupScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     onPressed: () {
-                      Navigator.of(context).pop();
-                      // Redirect to login screen
+                      // Close the dialog and go back to login
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },
-                    child: const Text('Okay'),
+                    child: const Text('OK'),
                   ),
                 ),
               ],
@@ -211,6 +215,7 @@ class _SignupScreenState extends State<SignupScreen> {
       },
     );
   }
+
 
   @override
   void dispose() {

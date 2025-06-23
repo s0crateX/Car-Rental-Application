@@ -66,7 +66,7 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
     return SafeArea(
       child: Scaffold(
         body: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(

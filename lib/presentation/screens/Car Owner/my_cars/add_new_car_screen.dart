@@ -1,7 +1,10 @@
 import 'package:car_rental_app/config/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
+import 'add car widgts/location_section_widget.dart';
 import 'add car widgts/progress_indicator_widget.dart';
 import 'add car widgts/form_section_widget.dart';
 import 'add car widgts/car_details_section_widget.dart';
@@ -41,6 +44,10 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _featureNameController = TextEditingController();
   final List<String> _featuresList = [];
+
+  // Location fields
+  final TextEditingController _addressController = TextEditingController();
+  LatLng? _selectedLocation;
 
   void _addFeature() {
     final name = _featureNameController.text.trim();
@@ -168,8 +175,18 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.lightBlue),
+          icon: SvgPicture.asset(
+            'assets/svg/arrow-left.svg',
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(
+              AppTheme.lightBlue,
+              BlendMode.srcIn,
+            ),
+          ),
           onPressed: () => Navigator.pop(context),
+          padding: const EdgeInsets.all(12),
+          constraints: const BoxConstraints(),
         ),
       ),
       backgroundColor: AppTheme.darkNavy,
@@ -206,6 +223,25 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
                   CarImagesSectionWidget(
                     carImages: _carImages,
                     onImageSelected: _pickImage,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Location Section
+                  FormSectionWidget(
+                    title: 'Location',
+                    icon: Icons.location_on,
+                    children: [
+                      LocationSectionWidget(
+                        addressController: _addressController,
+                        onLocationSelected: (location) {
+                          setState(() {
+                            _selectedLocation = location;
+                          });
+                        },
+                        initialLocation: _selectedLocation,
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 24),

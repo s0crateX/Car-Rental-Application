@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../../../shared/models/booking_model.dart';
+import '../../../../../../shared/models/payment_method.dart';
 
 class PaymentSummaryCard extends StatelessWidget {
   final BookingModel booking;
@@ -28,6 +29,59 @@ class PaymentSummaryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            if (booking.paymentMethod != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.account_balance_wallet_rounded, size: 18, color: Colors.blueGrey),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Paid via ',
+                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      booking.paymentMethod!.displayName,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (booking.receiptImageUrl != null && booking.receiptImageUrl!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.receipt_long_rounded, size: 18, color: Colors.blueGrey),
+                        const SizedBox(width: 8),
+                        Text('Receipt', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        booking.receiptImageUrl!,
+                        height: 100,
+                        width: 180,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300],
+                          height: 100,
+                          width: 180,
+                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             _buildPaymentRow(
               'Base Rate',
               currencyFormat.format(booking.totalAmount - _calculateExtrasTotal()),
