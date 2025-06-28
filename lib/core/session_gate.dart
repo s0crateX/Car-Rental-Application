@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:car_rental_app/presentation/screens/Login%20and%20Signup/login_screen.dart';
 import 'package:car_rental_app/presentation/screens/customer/customer_screen.dart';
-// TODO: Add imports for admin and car owner screens if needed
+import 'package:car_rental_app/presentation/screens/Car Owner/car_owner_screen.dart';
 
 class SessionGate extends StatefulWidget {
   const SessionGate({super.key});
@@ -30,9 +30,11 @@ class _SessionGateState extends State<SessionGate> {
       final role = await authService.getSavedRole();
       if (role == 'customer') {
         setState(() => _targetScreen = const CustomerScreen());
+      } else if (role == 'car_owner') {
+        setState(() => _targetScreen = const CarOwnerScreen());
       } else {
-        // TODO: Implement admin/car_owner screen routing
-        setState(() => _targetScreen = const CustomerScreen());
+        // Unknown role, fallback to login
+        setState(() => _targetScreen = const LoginScreen());
       }
     } else {
       setState(() => _targetScreen = const LoginScreen());

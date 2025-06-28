@@ -1,5 +1,7 @@
+import 'package:car_rental_app/presentation/screens/Car%20Owner/profile/document_verification_Carowner.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../config/theme.dart';
 import '../../../../config/routes.dart';
@@ -7,7 +9,6 @@ import '../../../../core/authentication/auth_service.dart';
 import '../../../../shared/common_widgets/snackbars/error_snackbar.dart';
 import 'owner_edit_profile_screen.dart';
 import 'widgets/owner_profile_menu_item.dart';
-import 'owner_document_verification_screen.dart';
 
 class OwnerProfileScreen extends StatefulWidget {
   const OwnerProfileScreen({super.key});
@@ -17,6 +18,37 @@ class OwnerProfileScreen extends StatefulWidget {
 }
 
 class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
+  Map<String, dynamic>? _ownerData;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOwnerData();
+  }
+
+  Future<void> _fetchOwnerData() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final uid = authService.user?.uid;
+    if (uid == null) return;
+    setState(() {
+      _loading = true;
+    });
+    try {
+      // Fetch from users collection instead of car_owners
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      setState(() {
+        _ownerData = doc.data();
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -52,6 +84,7 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
 
   Future<void> _performLogout() async {
     final authService = Provider.of<AuthService>(context, listen: false);
+    // This will sign out the user and clear the session (autologin) via AuthService
     await authService.signOut();
     Navigator.of(
       context,
@@ -77,7 +110,10 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
-        onRefresh: () => _refreshProfile(context),
+        onRefresh: () async {
+          await _fetchOwnerData();
+          await _refreshProfile(context);
+        },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -86,12 +122,9 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
               Center(
                 child: Column(
                   children: [
-                    Consumer<AuthService>(
-                      builder: (context, authService, _) {
-                        final userData = authService.userData;
-                        final profileImageUrl =
-                            userData?['profileImageUrl'] as String?;
-                        return Container(
+                    _loading
+                        ? const CircularProgressIndicator()
+                        : Container(
                           width: 110,
                           height: 110,
                           decoration: BoxDecoration(
@@ -111,20 +144,34 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(55),
                             child:
-                                profileImageUrl != null &&
-                                        profileImageUrl.isNotEmpty
+                                _ownerData != null &&
+                                        _ownerData!['profileImageUrl'] !=
+                                            null &&
+                                        (_ownerData!['profileImageUrl']
+                                                as String)
+                                            .isNotEmpty
                                     ? Image.network(
-                                      profileImageUrl,
+                                      _ownerData!['profileImageUrl'],
+                                      fit: BoxFit.cover,
                                       width: 110,
                                       height: 110,
-                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              SvgPicture.asset(
+                                                'assets/svg/user.svg',
+                                                width: 60,
+                                                height: 60,
+                                                colorFilter: ColorFilter.mode(
+                                                  AppTheme.lightBlue,
+                                                  BlendMode.srcIn,
+                                                ),
+                                              ),
                                     )
-                                    : Container(
-                                      color: AppTheme.navy,
+                                    : Center(
                                       child: SvgPicture.asset(
                                         'assets/svg/user.svg',
-                                        width: 10,
-                                        height: 10,
+                                        width: 60,
+                                        height: 60,
                                         colorFilter: ColorFilter.mode(
                                           AppTheme.lightBlue,
                                           BlendMode.srcIn,
@@ -132,30 +179,30 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                                       ),
                                     ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
                     const SizedBox(height: 16),
                     // Show car owner name directly under the profile icon
-                    Consumer<AuthService>(
-                      builder: (context, authService, _) {
-                        final userData = authService.userData;
-                        final fullName = (userData != null && userData['fullName'] != null && (userData['fullName'] as String).trim().isNotEmpty)
-                            ? userData['fullName'] as String
-                            : 'Car Owner';
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+                    _ownerData != null &&
+                            _ownerData!['fullName'] != null &&
+                            (_ownerData!['fullName'] as String)
+                                .trim()
+                                .isNotEmpty
+                        ? Padding(
+                          padding: const EdgeInsets.only(
+                            top: 8.0,
+                            bottom: 12.0,
+                          ),
                           child: Text(
-                            fullName,
+                            _ownerData!['fullName'],
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: AppTheme.lightBlue,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                        );
-                      },
-                    ),
+                        )
+                        : const SizedBox.shrink(),
                     ElevatedButton.icon(
                       onPressed: () {
                         Navigator.of(context).push(
@@ -199,7 +246,8 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder:
-                          (context) => const OwnerDocumentVerificationScreen(),
+                          (context) =>
+                              const DocumentVerificationCarOwnerScreen(),
                     ),
                   );
                 },

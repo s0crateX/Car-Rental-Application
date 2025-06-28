@@ -134,38 +134,23 @@ class AuthService with ChangeNotifier {
   Future<void> _fetchUserData() async {
     try {
       if (_user != null) {
-        final uid = _user!.uid;
-        final userDoc = await _firestore.collection('users').doc(uid).get();
-        String userRole = 'customer';
-        if (userDoc.exists && userDoc.data() != null && userDoc.data()!.containsKey('userRole')) {
-          userRole = userDoc.data()!['userRole'] ?? 'customer';
-        }
-        if (userRole == 'car_owner') {
-          final ownerDoc = await _firestore.collection('car_owners').doc(uid).get();
-          if (ownerDoc.exists) {
-            _userData = ownerDoc.data();
-          } else {
-            _userData = userDoc.data(); // fallback
-          }
-        } else if (userRole == 'customer') {
-          final customerDoc = await _firestore.collection('customers').doc(uid).get();
-          if (customerDoc.exists) {
-            _userData = customerDoc.data();
-          } else {
-            _userData = userDoc.data(); // fallback
+        final doc = await _firestore.collection('users').doc(_user!.uid).get();
+        if (doc.exists) {
+          _userData = doc.data();
+
+          // Update email verification status in Firestore if it has changed
+          if (_user!.emailVerified &&
+              _userData != null &&
+              _userData!['emailVerified'] == false) {
+            await _firestore.collection('users').doc(_user!.uid).update({
+              'emailVerified': true,
+            });
+            // Update local copy
+            _userData!['emailVerified'] = true;
           }
         } else {
-          _userData = userDoc.data();
-        }
-        // Optionally update email verification status in Firestore if it has changed
-        if (_user!.emailVerified &&
-            _userData != null &&
-            _userData!['emailVerified'] == false) {
-          await _firestore.collection('users').doc(uid).update({
-            'emailVerified': true,
-          });
-          // Update local copy
-          _userData!['emailVerified'] = true;
+          // Handle case where user exists in Auth but not in Firestore
+          print('User document does not exist in Firestore');
         }
       }
     } catch (e) {
@@ -222,7 +207,27 @@ class AuthService with ChangeNotifier {
 
       // Save session after successful login
       if (_user != null && _userData != null) {
-        await _saveSession(_user!.uid, _userData!['userRole'] as String? ?? 'customer');
+        String userRole = _userData!['userRole'] as String? ?? 'customer';
+        await _saveSession(_user!.uid, userRole);
+        
+        // Verify that the role-specific document exists
+        if (userRole == 'car_owner') {
+          final carOwnerDoc = await _firestore.collection('car_owners').doc(_user!.uid).get();
+          if (!carOwnerDoc.exists) {
+            // Create the car_owner document if it doesn't exist
+            await _firestore.collection('car_owners').doc(_user!.uid).set({
+              'userId': _user!.uid,
+              'businessName': '',
+              'businessAddress': '',
+              'documentsSubmitted': false,
+              'documentsApproved': false,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          }
+        } else if (userRole == 'customer') {
+          // Make sure a customer collection exists if we decide to use one in the future
+          // Currently, all customer data is stored in the users collection
+        }
       }
       return true;
     } on FirebaseAuthException catch (e) {
@@ -309,69 +314,68 @@ class AuthService with ChangeNotifier {
       if (userId != null) {
         try {
           // Use a transaction to ensure data consistency
-           print('[AuthService] Normalized userRole: $userRole');
-           await _firestore.runTransaction((transaction) async {
-            // Always create a minimal user document for authentication/session
+          await _firestore.runTransaction((transaction) async {
+            // Create user document
             final userDocRef = _firestore.collection('users').doc(userId);
-            print('[AuthService] Creating user doc at: users/$userId');
+
             transaction.set(userDocRef, {
+              'fullName': fullName,
               'email': email,
+              'phoneNumber': phoneNumber,
               'userRole': userRole,
+              'emailVerified': false,
               'createdAt': FieldValue.serverTimestamp(),
+              'lastLogin': FieldValue.serverTimestamp(),
+              'profileComplete': false,
+              'profileImageUrl': '', // Initialize with empty profile image URL
             });
 
-            // Store customer-specific or car-owner-specific info in their own collections
-            if (userRole == 'car_owner') {
-              // Create car owner profile document with all details
-              final ownerDocRef = _firestore
-                  .collection('car_owners')
+            // Create role-specific collections based on user type
+            // No longer create a car_owners document. All info stored in users collection.
+            if (userRole == 'customer') {
+              // Create customer profile document with additional fields
+              final customerDocRef = _firestore
+                  .collection('customers')
                   .doc(userId);
-              print('[AuthService] Creating car owner doc at: car_owners/$userId');
-              transaction.set(ownerDocRef, {
-                'userId': userId,
-                'fullName': fullName,
-                'email': email,
-                'phoneNumber': phoneNumber,
-                'businessName': '',
-                'businessAddress': '',
-                'documentsSubmitted': false,
-                'documentsApproved': false,
-                'createdAt': FieldValue.serverTimestamp(),
-              });
-            } else if (userRole == 'customer') {
-              // Create customer profile document
-              final customerDocRef = _firestore.collection('customers').doc(userId);
-              print('[AuthService] Creating customer doc at: customers/$userId');
               transaction.set(customerDocRef, {
                 'userId': userId,
-                'fullName': fullName,
-                'email': email,
-                'phoneNumber': phoneNumber,
-                'emailVerified': false,
-                'createdAt': FieldValue.serverTimestamp(),
-                'lastLogin': FieldValue.serverTimestamp(),
-                'profileComplete': false,
-              });
-            } else if (userRole == 'admin') {
-              // Create admin profile document
-              final adminDocRef = _firestore.collection('admins').doc(userId);
-              print('[AuthService] Creating admin doc at: admins/$userId');
-              transaction.set(adminDocRef, {
-                'userId': userId,
-                'department': '',
-                'adminLevel': 1, // Default admin level
+                'activeBookings': [],  // Track active bookings
+                'bookingHistory': [],  // Track booking history
+                'favoriteCarIds': [],  // Track favorite cars
+                'paymentMethods': [],  // Track payment methods
                 'createdAt': FieldValue.serverTimestamp(),
               });
             }
           });
 
+          // Save session immediately
+          await _saveSession(userId!, userRole);
+          
+          // Set the current user and user data
+          _user = _auth.currentUser;
+          _userData = {
+            'fullName': fullName,
+            'email': email,
+            'phoneNumber': phoneNumber,
+            'userRole': userRole,
+            'emailVerified': false,
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastLogin': FieldValue.serverTimestamp(),
+            'profileComplete': false,
+          };
+          
+          _status = AuthStatus.authenticated;
+          notifyListeners();
+          
           // Successfully created user and stored data
-          print('Firestore data created successfully for role: $userRole');
           return true;
         } catch (e) {
           print('Error storing user data in Firestore: $e');
-          _errorMessage = 'Error saving profile info in Firestore: ${e.toString()}';
-          return false;
+          // If Firestore fails, we should still return true since the auth account was created
+          // but we should note this as a partial success
+          _status = AuthStatus.authenticated;
+          notifyListeners();
+          return true;
         }
       }
 

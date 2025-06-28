@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../config/theme.dart';
 import '../../../../core/authentication/auth_service.dart';
@@ -60,34 +61,45 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final userData = Provider.of<AuthService>(context, listen: false).userData;
-    
-    fullNameController.text = userData?['fullName'] ?? '';
-    emailController.text = userData?['email'] ?? '';
-    mobileController.text = userData?['phoneNumber'] ?? '';
-    dobController.text = userData?['dob'] ?? '';
-    addressController.text = userData?['address'] ?? '';
-    companyNameController.text = userData?['companyName'] ?? '';
-    
-    _profileImageUrl = userData?['profileImageUrl'] as String?;
-    
-    final createdAt = userData?['createdAt'];
-    if (createdAt != null) {
-      DateTime? date;
-      if (createdAt.runtimeType.toString() == 'Timestamp') {
-        date = (createdAt as dynamic).toDate();
-      } else if (createdAt is String && createdAt.isNotEmpty) {
-        try {
-          date = DateTime.parse(createdAt);
-        } catch (_) {}
+    _loadCarOwnerProfile();
+  }
+
+  Future<void> _loadCarOwnerProfile() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final uid = authService.user?.uid;
+    if (uid == null) return;
+    try {
+      // Fetch from users collection instead of car_owners
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final ownerData = doc.data();
+      if (ownerData != null) {
+        fullNameController.text = ownerData['fullName'] ?? '';
+        emailController.text = ownerData['email'] ?? '';
+        mobileController.text = ownerData['phoneNumber'] ?? '';
+        dobController.text = ownerData['dob'] ?? '';
+        addressController.text = ownerData['address'] ?? '';
+        companyNameController.text = ownerData['companyName'] ?? '';
+        _profileImageUrl = ownerData['profileImageUrl'] as String?;
+        final createdAt = ownerData['createdAt'];
+        if (createdAt != null) {
+          DateTime? date;
+          if (createdAt.runtimeType.toString() == 'Timestamp') {
+            date = (createdAt as dynamic).toDate();
+          } else if (createdAt is String && createdAt.isNotEmpty) {
+            try {
+              date = DateTime.parse(createdAt);
+            } catch (_) {}
+          }
+          if (date != null) {
+            setState(() {
+              joinedDate = 'Joined ${_formatDate(date!)}';
+            });
+          }
+        }
       }
-      if (date != null) {
-        setState(() {
-          joinedDate = 'Joined ${_formatDate(date!)}';
-        });
-      }
+    } catch (e) {
+      // Optionally show error
     }
-    
     if (mounted) {
       setState(() {
         _hasChanges = false;
@@ -190,10 +202,11 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
     }
 
     try {
-      await Provider.of<AuthService>(
-        context,
-        listen: false,
-      ).updateUserProfileData(dataToUpdate);
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final uid = authService.user?.uid;
+      if (uid == null) throw Exception('User not found');
+      // Update users collection instead of car_owners
+      await FirebaseFirestore.instance.collection('users').doc(uid).update(dataToUpdate);
       
       if (mounted) {
         SuccessSnackbar.show(

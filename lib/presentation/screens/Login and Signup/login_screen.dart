@@ -295,14 +295,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             // Navigate based on user role
                             Future.delayed(const Duration(seconds: 1), () {
                               if (mounted) {
-                                // Implement role-based navigation
-                                if (authService.isCustomer) {
-                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
-                                } else if (authService.isAdmin) {
-                                  // TODO: Navigate to admin dashboard when implemented
-                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
-                                } else if (authService.isCarOwner) {
+                                if (userRole == 'car_owner') {
                                   Navigator.pushReplacementNamed(context, AppRoutes.carOwner);
+                                } else if (userRole == 'customer') {
+                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
+                                } else {
+                                  // Default fallback: go to home
+                                  Navigator.pushReplacementNamed(context, AppRoutes.home);
                                 }
                               }
                             });
