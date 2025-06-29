@@ -87,12 +87,19 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
       }
       if (permission == LocationPermission.deniedForever) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permissions are permanently denied.')),
+          const SnackBar(
+            content: Text('Location permissions are permanently denied.'),
+          ),
         );
         return;
       }
-      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      final LatLng currentLatLng = LatLng(position.latitude, position.longitude);
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      final LatLng currentLatLng = LatLng(
+        position.latitude,
+        position.longitude,
+      );
       if (fullScreen) {
         await _handleMapTap(currentLatLng);
       } else {
@@ -108,7 +115,6 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
       );
     }
   }
-
 
   late LatLng _selectedLocation;
   final MapController _mapController = MapController();
@@ -141,15 +147,22 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
     );
     try {
       // Use the geocoding package to get address from coordinates
-      final placemarks = await placemarkFromCoordinates(location.latitude, location.longitude);
+      final placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
         final address = [
           if (place.name != null && place.name!.isNotEmpty) place.name,
           if (place.street != null && place.street!.isNotEmpty) place.street,
-          if (place.subLocality != null && place.subLocality!.isNotEmpty) place.subLocality,
-          if (place.locality != null && place.locality!.isNotEmpty) place.locality,
-          if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) place.administrativeArea,
+          if (place.subLocality != null && place.subLocality!.isNotEmpty)
+            place.subLocality,
+          if (place.locality != null && place.locality!.isNotEmpty)
+            place.locality,
+          if (place.administrativeArea != null &&
+              place.administrativeArea!.isNotEmpty)
+            place.administrativeArea,
           if (place.country != null && place.country!.isNotEmpty) place.country,
         ].whereType<String>().join(', ');
         setState(() {
@@ -157,11 +170,14 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to get address: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to get address: $e')));
     } finally {
-      Navigator.of(context, rootNavigator: true).pop(); // Remove loading indicator
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pop(); // Remove loading indicator
     }
   }
 
@@ -231,7 +247,11 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.location_searching, color: AppTheme.lightBlue, size: 20),
+              const Icon(
+                Icons.location_searching,
+                color: AppTheme.lightBlue,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -264,7 +284,9 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
                 height: 200,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.mediumBlue.withOpacity(0.3)),
+                  border: Border.all(
+                    color: AppTheme.mediumBlue.withOpacity(0.3),
+                  ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -285,10 +307,20 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                   ),
-                  icon: const Icon(Icons.fullscreen, size: 18, color: Colors.white),
-                  label: const Text('Full Screen', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  icon: const Icon(
+                    Icons.fullscreen,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                  label: const Text(
+                    'Full Screen',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                   onPressed: _showFullScreenMap,
                 ),
               ),
@@ -300,8 +332,8 @@ class _LocationSectionWidgetState extends State<LocationSectionWidget> {
                   heroTag: 'center_location_btn',
                   mini: true,
                   backgroundColor: AppTheme.lightBlue,
-                  child: const Icon(Icons.my_location, color: Colors.white),
                   onPressed: _centerToCurrentLocation,
+                  child: const Icon(Icons.my_location, color: Colors.white),
                 ),
               ),
             ],

@@ -1,4 +1,8 @@
 import 'package:car_rental_app/config/theme.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:car_rental_app/core/services/imagekit_upload_service.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
@@ -140,26 +144,168 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
     super.dispose();
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Process data
+  Future<void> _submitForm() async {
+    // Validate form fields
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
+          content: Row(
+            children: const [
+              Icon(Icons.error, color: Colors.white),
               SizedBox(width: 12),
-              Text('Car added successfully!'),
+              Text('Please fill all required fields.'),
             ],
           ),
-          backgroundColor: Colors.green.shade600,
+          backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
       );
-      Navigator.pop(context);
+      return;
+    }
+
+    // Validate all 4 car image slots
+    if (_carImages.length < 4 || _carImages.any((img) => img == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: const [
+              Icon(Icons.error, color: Colors.white),
+              SizedBox(width: 12),
+              Text('Please select all 4 car images.'),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Upload all images to ImageKit
+      List<String> imageUrls = [];
+      for (final img in _carImages) {
+        final url = await ImageKitUploadService.uploadFile(img!);
+        if (url == null) {
+          Navigator.of(context).pop(); // Remove loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.error, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text('Failed to upload one or more images.'),
+                ],
+              ),
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+          return;
+        }
+        imageUrls.add(url);
+      }
+      final String imageUrl = imageUrls[0]; // Main image
+
+      // Get Firestore instance
+      final firestore = FirebaseFirestore.instance;
+
+      // Generate unique car ID
+      final carDocRef = firestore.collection('Cars').doc();
+      final carId = carDocRef.id;
+
+      // Get user info from AuthService
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userData = authService.userData;
+      final userFullName = userData != null ? userData['fullName'] ?? '' : '';
+      final userDocumentId = authService.user?.uid ?? '';
+
+      // Prepare car data
+      final Map<String, dynamic> carData = {
+        'carId': carId,
+        'name': _nameController.text.trim(),
+        'brand': _brandController.text.trim(),
+        'model': _modelController.text.trim(),
+        'year': _yearController.text.trim(),
+        'price6h': _price6hController.text.trim(),
+        'price12h': _price12hController.text.trim(),
+        'price1d': _price1dController.text.trim(),
+        'price1w': _price1wController.text.trim(),
+        'price1m': _price1mController.text.trim(),
+        'seats': _seatsController.text.trim(),
+        'luggage': _luggageController.text.trim(),
+        'features': _featuresList,
+        'description': _descriptionController.text.trim(),
+        'transmissionType': _transmissionType,
+        'fuelType': _fuelType,
+        'extraCharges': _extraCharges,
+        'address': _addressController.text.trim(),
+        'location': _selectedLocation != null
+            ? {'lat': _selectedLocation!.latitude, 'lng': _selectedLocation!.longitude}
+            : null,
+        'carImageGallery': imageUrls,
+        'carOwnerFullName': userFullName,
+        'carOwnerDocumentId': userDocumentId,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      // Save to Firestore
+      await carDocRef.set(carData);
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Remove loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text('Car added successfully!'),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // Remove loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 12),
+              Flexible(child: Text('Error saving car: $e')),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
     }
   }
 

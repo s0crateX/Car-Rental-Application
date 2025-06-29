@@ -1,18 +1,50 @@
 import 'package:car_rental_app/config/theme.dart';
-import 'package:car_rental_app/shared/models/car_model.dart';
+import 'package:car_rental_app/shared/models/Firebase_car_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
+class SampleCarData {
+  final String name;
+  final String brand;
+  final String model;
+  final String image; // Keep for backward compatibility
+  final List<String> imageGallery; // List of image URLs
+  final double price;
+  final String pricePeriod;
+  final String seatsCount;
+  final String luggageCapacity;
+  final String transmissionType;
+  final String fuelType;
+  final String year;
+  final bool isAvailable;
+
+  SampleCarData({
+    required this.name,
+    required this.brand,
+    required this.model,
+    required this.image,
+    required this.imageGallery,
+    required this.price,
+    required this.pricePeriod,
+    required this.seatsCount,
+    required this.luggageCapacity,
+    required this.transmissionType,
+    required this.fuelType,
+    required this.year,
+    required this.isAvailable,
+  });
+}
+
 class OwnerCarCard extends StatefulWidget {
-  final CarModel car;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onTap;
+  final CarModel carData; // Now required and of type CarModel
 
   const OwnerCarCard({
     super.key,
-    required this.car,
+    required this.carData,
     this.onEdit,
     this.onDelete,
     this.onTap,
@@ -27,10 +59,12 @@ class _OwnerCarCardState extends State<OwnerCarCard>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   bool _isPressed = false;
+  late CarModel car;
 
   @override
   void initState() {
     super.initState();
+    car = widget.carData;
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
@@ -151,46 +185,115 @@ class _OwnerCarCardState extends State<OwnerCarCard>
             top: 16,
             bottom: 16,
             child: Hero(
-              tag: 'car_image_${widget.car.name}_${widget.car.brand}',
+              tag: 'car_image_${car.name}_${car.brand}',
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  widget.car.image,
-                  width: 120,
-                  height: 108,
-                  fit: BoxFit.cover,
-                  errorBuilder:
-                      (context, error, stackTrace) => Container(
-                        width: 120,
-                        height: 108,
-                        decoration: BoxDecoration(
-                          color: AppTheme.darkNavy.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppTheme.lightBlue.withOpacity(0.3),
-                            width: 1,
+                child:
+                    (car.imageGallery.isNotEmpty)
+                        ? SizedBox(
+                          width: 120,
+                          height: 108,
+                          child: PageView.builder(
+                            itemCount: car.imageGallery.length,
+                            itemBuilder: (context, index) {
+                              return Image.network(
+                                car.imageGallery[index],
+                                width: 120,
+                                height: 108,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (
+                                  context,
+                                  child,
+                                  loadingProgress,
+                                ) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                },
+                                errorBuilder:
+                                    (context, error, stackTrace) => Container(
+                                      width: 120,
+                                      height: 108,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.darkNavy.withOpacity(
+                                          0.5,
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: AppTheme.lightBlue.withOpacity(
+                                            0.3,
+                                          ),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.directions_car,
+                                            color: AppTheme.lightBlue
+                                                .withOpacity(0.7),
+                                            size: 32,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'No Image',
+                                            style: TextStyle(
+                                              color: AppTheme.paleBlue
+                                                  .withOpacity(0.7),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                              );
+                            },
                           ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.directions_car,
-                              color: AppTheme.lightBlue.withOpacity(0.7),
-                              size: 32,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'No Image',
-                              style: TextStyle(
-                                color: AppTheme.paleBlue.withOpacity(0.7),
-                                fontSize: 12,
+                        )
+                        : Image.asset(
+                          car.image,
+                          width: 120,
+                          height: 108,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (context, error, stackTrace) => Container(
+                                width: 120,
+                                height: 108,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.darkNavy.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppTheme.lightBlue.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.directions_car,
+                                      color: AppTheme.lightBlue.withOpacity(
+                                        0.7,
+                                      ),
+                                      size: 32,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'No Image',
+                                      style: TextStyle(
+                                        color: AppTheme.paleBlue.withOpacity(
+                                          0.7,
+                                        ),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
                         ),
-                      ),
-                ),
               ),
             ),
           ),
@@ -205,7 +308,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                 _buildStatusChip(theme),
                 const SizedBox(height: 12),
                 Text(
-                  widget.car.name,
+                  car.name,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.white,
@@ -225,7 +328,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        '${widget.car.brand} ${widget.car.model}',
+                        '${car.brand} ${car.model}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppTheme.lightBlue,
                           fontWeight: FontWeight.w500,
@@ -291,7 +394,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                       ),
                       const SizedBox(width: 2),
                       Text(
-                        currencyFormat.format(widget.car.price).substring(1),
+                        currencyFormat.format(car.price).substring(1),
                         style: theme.textTheme.titleLarge?.copyWith(
                           color: AppTheme.lightBlue,
                           fontWeight: FontWeight.bold,
@@ -303,7 +406,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                       Padding(
                         padding: const EdgeInsets.only(bottom: 2),
                         child: Text(
-                          widget.car.pricePeriod,
+                          car.pricePeriod,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppTheme.paleBlue,
                             fontWeight: FontWeight.w500,
@@ -338,15 +441,16 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         children: [
           _buildStatItem(
             icon: Icons.event_seat,
-            value: widget.car.seatsCount.isNotEmpty ? widget.car.seatsCount : '5',
+            value: car.seatsCount.isNotEmpty ? car.seatsCount : '5',
             theme: theme,
           ),
           const SizedBox(height: 6),
           _buildStatItem(
             icon: Icons.luggage,
-            value: widget.car.luggageCapacity.isNotEmpty
-                ? widget.car.luggageCapacity.split(' ')[0]
-                : '2',
+            value:
+                car.luggageCapacity.isNotEmpty
+                    ? car.luggageCapacity.split(' ')[0]
+                    : '2',
             theme: theme,
           ),
         ],
@@ -383,9 +487,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
           child: _buildSpecChip(
             icon: Icons.settings,
             label: _truncateText(
-              widget.car.transmissionType.isNotEmpty
-                  ? widget.car.transmissionType
-                  : 'Auto',
+              car.transmissionType.isNotEmpty ? car.transmissionType : 'Auto',
               8,
             ),
             theme: theme,
@@ -396,7 +498,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
           child: _buildSpecChip(
             icon: Icons.local_gas_station,
             label: _truncateText(
-              widget.car.fuelType.isNotEmpty ? widget.car.fuelType : 'Petrol',
+              car.fuelType.isNotEmpty ? car.fuelType : 'Petrol',
               8,
             ),
             theme: theme,
@@ -406,7 +508,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         Flexible(
           child: _buildSpecChip(
             icon: Icons.calendar_today,
-            label: widget.car.year.isNotEmpty ? widget.car.year : '2023',
+            label: car.year.isNotEmpty ? car.year : '2023',
             theme: theme,
           ),
         ),
@@ -531,10 +633,14 @@ class _OwnerCarCardState extends State<OwnerCarCard>
   }
 
   Widget _buildStatusChip(ThemeData theme) {
-    // Mock status - in real app, this would come from the CarModel
-    bool isAvailable = true;
-    String statusText = isAvailable ? 'Available' : 'Rented';
-    Color statusColor = isAvailable ? Colors.green : Colors.orange;
+    String statusText =
+        car.availabilityStatus == AvailabilityStatus.available
+            ? 'Available'
+            : 'Rented';
+    Color statusColor =
+        car.availabilityStatus == AvailabilityStatus.available
+            ? Colors.green
+            : Colors.orange;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -592,7 +698,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
             ],
           ),
           content: Text(
-            'Are you sure you want to delete "${widget.car.name}"? This action cannot be undone.',
+            'Are you sure you want to delete "${car.name}"? This action cannot be undone.',
             style: TextStyle(color: AppTheme.paleBlue),
           ),
           actions: [

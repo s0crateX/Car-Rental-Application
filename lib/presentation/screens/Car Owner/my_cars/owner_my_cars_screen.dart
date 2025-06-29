@@ -1,7 +1,8 @@
 import 'package:car_rental_app/config/routes.dart';
-import 'package:car_rental_app/shared/data/sample_cars.dart';
-import 'package:car_rental_app/shared/models/car_model.dart';
+import 'package:car_rental_app/config/theme.dart';
+import 'package:car_rental_app/shared/models/Firebase_car_model.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets/widgets.dart';
 
 class OwnerMyCarsScreen extends StatefulWidget {
@@ -12,26 +13,24 @@ class OwnerMyCarsScreen extends StatefulWidget {
 }
 
 class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
-  late List<CarModel> _cars;
-
-  @override
-  void initState() {
-    super.initState();
-    _cars = SampleCars.getPopularCars();
-  }
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isLoading = false;
 
   void _navigateToAddCar() {
-    Navigator.pushNamed(context, AppRoutes.addNewCar).then((_) {
-      // Potentially refresh the list if a car was added
-      setState(() {
-        _cars = SampleCars.getPopularCars(); // Re-fetch or update list
-      });
-    });
+    Navigator.pushNamed(context, AppRoutes.addNewCar);
   }
 
   void _editCar(CarModel car) {
     // Navigate to an edit screen, similar to add car screen but pre-filled
     print('Editing car: ${car.name}');
+    // You can pass the car data to the edit screen
+    // Navigator.pushNamed(context, AppRoutes.editCar, arguments: car);
+  }
+
+  void _viewCarDetails(CarModel car) {
+    // Navigate to car details screen
+    print('Viewing car details: ${car.name}');
+    // Navigator.pushNamed(context, AppRoutes.carDetails, arguments: car);
   }
 
   void _deleteCar(CarModel car) {
@@ -40,20 +39,41 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Confirm Deletion'),
-            content: Text('Are you sure you want to delete ${car.name}?'),
+            backgroundColor: AppTheme.navy,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                const SizedBox(width: 12),
+                const Text(
+                  'Confirm Deletion',
+                  style: TextStyle(color: AppTheme.white),
+                ),
+              ],
+            ),
+            content: Text(
+              'Are you sure you want to delete "${car.name}"? This action cannot be undone.',
+              style: TextStyle(color: AppTheme.paleBlue),
+            ),
             actions: [
               TextButton(
-                child: const Text('Cancel'),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: AppTheme.lightBlue),
+                ),
                 onPressed: () => Navigator.of(ctx).pop(),
               ),
-              TextButton(
+              ElevatedButton(
                 child: const Text('Delete'),
-                onPressed: () {
-                  setState(() {
-                    _cars.remove(car);
-                  });
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
                   Navigator.of(ctx).pop();
+                  await _deleteCarFromFirestore(car);
                 },
               ),
             ],
@@ -61,30 +81,234 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
     );
   }
 
+  Future<void> _deleteCarFromFirestore(CarModel car) async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _firestore.collection('Cars').doc(car.id).delete();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${car.name} deleted successfully'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting car: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Widget _buildLoadingOverlay() {
+    return Container(
+      color: Colors.black54,
+      child: const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.lightBlue),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.directions_car_outlined,
+            size: 80,
+            color: AppTheme.lightBlue.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No Cars Found',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add your first car to get started',
+            style: TextStyle(fontSize: 16, color: AppTheme.paleBlue),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _navigateToAddCar,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Car'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.lightBlue,
+              foregroundColor: AppTheme.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 80,
+            color: Colors.red.withOpacity(0.7),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error Loading Cars',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(fontSize: 14, color: AppTheme.paleBlue),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => setState(() {}), // Trigger rebuild
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.lightBlue,
+              foregroundColor: AppTheme.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: AddCarButton(onPressed: _navigateToAddCar),
+        backgroundColor: AppTheme.darkNavy,
+        body: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Column(
+                children: [
+                  AddCarButton(onPressed: _navigateToAddCar),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream:
+                          _firestore
+                              .collection('Cars')
+                              .orderBy('createdAt', descending: true)
+                              .snapshots(),
+                      builder: (context, snapshot) {
+                        // Handle loading state
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppTheme.lightBlue,
+                              ),
+                            ),
+                          );
+                        }
+
+                        // Handle error state
+                        if (snapshot.hasError) {
+                          return _buildErrorState(snapshot.error.toString());
+                        }
+
+                        // Handle empty state
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return _buildEmptyState();
+                        }
+
+                        // Parse car data
+                        final cars =
+                            snapshot.data!.docs
+                                .map((doc) {
+                                  try {
+                                    return CarModel.fromFirestore(doc);
+                                  } catch (e) {
+                                    print(
+                                      'Error parsing car document ${doc.id}: $e',
+                                    );
+                                    return null;
+                                  }
+                                })
+                                .where((car) => car != null)
+                                .cast<CarModel>()
+                                .toList();
+
+                        // Handle case where all documents failed to parse
+                        if (cars.isEmpty) {
+                          return _buildErrorState('Unable to load car data');
+                        }
+
+                        // Build car list
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            // Refresh is handled automatically by StreamBuilder
+                            await Future.delayed(
+                              const Duration(milliseconds: 500),
+                            );
+                          },
+                          color: AppTheme.lightBlue,
+                          backgroundColor: AppTheme.navy,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: cars.length,
+                            itemBuilder: (context, index) {
+                              final car = cars[index];
+                              return OwnerCarCard(
+                                carData: car,
+                                onEdit: () => _editCar(car),
+                                onDelete: () => _deleteCar(car),
+                                onTap: () => _viewCarDetails(car),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final car = _cars[index];
-                  return OwnerCarCard(
-                    car: car,
-                    onEdit: () => _editCar(car),
-                    onDelete: () => _deleteCar(car),
-                  );
-                }, childCount: _cars.length),
-              ),
-            ],
-          ),
+            ),
+            // Loading overlay
+            if (_isLoading) _buildLoadingOverlay(),
+          ],
         ),
       ),
     );
