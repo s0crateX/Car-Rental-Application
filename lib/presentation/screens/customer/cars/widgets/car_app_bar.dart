@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
-import '../../../../../shared/models/Mock Model/car_model.dart';
+import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'image_gallery.dart';
 
 class CarAppBar extends StatelessWidget {
@@ -15,6 +15,29 @@ class CarAppBar extends StatelessWidget {
     required this.currentImageIndex,
     required this.onImageTap,
   });
+  
+  // Helper method to build car image based on URL or asset path
+  Widget _buildCarImage(String imagePath) {
+    // Always treat images from Firebase as URLs
+    return Image.network(
+      imagePath,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: CircularProgressIndicator(
+            value: loadingProgress.expectedTotalBytes != null
+                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                : null,
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) => Container(
+        color: Colors.grey[300],
+        child: const Center(child: Icon(Icons.error_outline, size: 40)),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,10 +68,9 @@ class CarAppBar extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               height: 320,
-              child: Image.asset(
-                car.imageGallery[currentImageIndex],
-                fit: BoxFit.cover,
-              ),
+              child: car.imageGallery.isNotEmpty
+                ? _buildCarImage(car.imageGallery[currentImageIndex])
+                : Container(color: Colors.grey[300]),
             ),
             // Image Gallery Thumbnails
             ImageGallery(

@@ -11,6 +11,34 @@ class ImageGallery extends StatelessWidget {
     required this.currentImageIndex,
     required this.onImageTap,
   });
+  
+  // Helper method to build gallery thumbnail image based on URL or asset path
+  Widget _buildGalleryImage(String imagePath) {
+    // Always treat images from Firebase as URLs
+    return Image.network(
+      imagePath,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) => Container(
+        color: Colors.grey[300],
+        child: const Icon(Icons.broken_image, size: 24),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +70,7 @@ class ImageGallery extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: Image.asset(
-                    imageGallery[index],
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildGalleryImage(imageGallery[index]),
                 ),
               ),
             );

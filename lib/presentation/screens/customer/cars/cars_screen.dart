@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../shared/common_widgets/car_card_compact.dart';
-import '../../../../shared/data/sample_cars.dart';
-import '../../../../shared/models/Mock Model/car_model.dart';
+// Ensure CarCardCompact uses Firebase_car_model.dart, not mock model
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'car_filter_bottom_sheet.dart';
 import 'car_details_screen.dart';
 
@@ -19,103 +21,8 @@ class CarsScreen extends StatefulWidget {
 class _CarsScreenState extends State<CarsScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
   bool _showScrollToTop = false;
-
-  List<CarModel> get _allCarsRaw => [...SampleCars.getPopularCars()];
-
-  CarFilter _filter = CarFilter();
-
-  LatLng? get _userLocation {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final userData = authService.userData;
-    final locData = userData != null ? userData['location'] : null;
-    if (locData != null && locData is Map) {
-      final lat = locData['latitude'];
-      final lng = locData['longitude'];
-      if (lat != null && lng != null) {
-        return LatLng(lat.toDouble(), lng.toDouble());
-      }
-    }
-    return null;
-  }
-
-  List<CarModel> get filteredCars {
-    List<CarModel> cars = _allCarsRaw;
-    final q = _searchQuery.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      cars =
-          cars
-              .where(
-                (car) =>
-                    car.name.toLowerCase().contains(q) ||
-                    car.type.toLowerCase().contains(q) ||
-                    car.transmissionType.toLowerCase().contains(q) ||
-                    car.fuelType.toLowerCase().contains(q) ||
-                    car.seatsCount.toLowerCase().contains(q),
-              )
-              .toList();
-    }
-    // Car Type
-    if (_filter.carType != null && _filter.carType != 'All') {
-      cars = cars.where((car) => car.type == _filter.carType).toList();
-    }
-    // Price Range
-    if (_filter.priceRange != null) {
-      cars =
-          cars
-              .where(
-                (car) =>
-                    car.price >= _filter.priceRange!.start &&
-                    car.price <= _filter.priceRange!.end,
-              )
-              .toList();
-    }
-    // Transmission
-    if (_filter.transmission != null && _filter.transmission != 'All') {
-      cars =
-          cars
-              .where((car) => car.transmissionType == _filter.transmission)
-              .toList();
-    }
-    // Fuel Type
-    if (_filter.fuelType != null && _filter.fuelType != 'All') {
-      cars = cars.where((car) => car.fuelType == _filter.fuelType).toList();
-    }
-    // Sort By
-    if (_filter.sortBy != null && _filter.sortBy != 'Default') {
-      if (_filter.sortBy == 'Price: Low to High') {
-        cars.sort((a, b) => a.price.compareTo(b.price));
-      } else if (_filter.sortBy == 'Price: High to Low') {
-        cars.sort((a, b) => b.price.compareTo(a.price));
-      }
-      // 'Newest' is omitted since CarModel has no year field.
-    }
-    // Distance filter and proximity sort
-    final userLoc = _userLocation;
-    if (userLoc != null) {
-      final Distance distance = Distance();
-      final carsWithDistance =
-          cars
-              .where((car) => car.location != null)
-              .map((car) {
-                final carLoc = car.location!;
-                final dist = distance.as(LengthUnit.Kilometer, userLoc, carLoc);
-                return {'car': car, 'distance': dist};
-              })
-              .where((entry) {
-                final maxDist = _filter.maxDistance;
-                return maxDist == null ||
-                    (entry['distance'] as double) <= maxDist;
-              })
-              .toList();
-      carsWithDistance.sort(
-        (a, b) => (a['distance'] as double).compareTo(b['distance'] as double),
-      );
-      return carsWithDistance.map((entry) => entry['car'] as CarModel).toList();
-    }
-    return cars;
-  }
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -224,7 +131,6 @@ class _CarsScreenState extends State<CarsScreen> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        // Removed border for a clean look
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -266,49 +172,12 @@ class _CarsScreenState extends State<CarsScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () async {
-              final result = await showModalBottomSheet<CarFilter>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder:
-                    (context) => CarFilterBottomSheet(initialFilter: _filter),
-              );
-              if (result != null) {
-                setState(() {
-                  _filter = result;
-                });
-              }
-            },
-            child: SvgPicture.asset(
-              'assets/svg/adjustments-horizontal.svg',
-              width: 22,
-              height: 22,
-              colorFilter: ColorFilter.mode(
-                theme.colorScheme.onSurface.withOpacity(0.7),
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
   Widget _buildCategoriesSection(ThemeData theme) {
-    final categories = [
-      {'name': 'All', 'icon': 'assets/svg/checks.svg', 'isSelected': true},
-      {'name': 'Sedan', 'icon': 'assets/svg/sedan.svg', 'isSelected': false},
-      {'name': 'SUV', 'icon': 'assets/svg/suv.svg', 'isSelected': false},
-      {
-        'name': 'Hatchback',
-        'icon': 'assets/svg/hatchback.svg',
-        'isSelected': false,
-      },
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -325,50 +194,49 @@ class _CarsScreenState extends State<CarsScreen> {
           height: 80,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
+            itemCount: 4,
             separatorBuilder: (context, index) => const SizedBox(width: 16),
             itemBuilder: (context, index) {
-              final category = categories[index];
+              // Hardcoded category info for now
+              const icons = [
+                'assets/svg/checks.svg',
+                'assets/svg/sedan.svg',
+                'assets/svg/suv.svg',
+                'assets/svg/hatchback.svg',
+              ];
+              const names = [
+                'All',
+                'Sedan',
+                'SUV',
+                'Hatchback',
+              ];
               return Column(
                 children: [
-                  Stack(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color:
-                              category['isSelected'] == true
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: theme.colorScheme.outline.withOpacity(0.1),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.shadowColor.withOpacity(0.04),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: SvgPicture.asset(
-                          category['icon'] as String,
-                          width: 32,
-                          height: 32,
-                          colorFilter: ColorFilter.mode(
-                            category['isSelected'] == true
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.onSurface,
-                            BlendMode.srcIn,
-                          ),
-                        ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.1),
                       ),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.shadowColor.withOpacity(0.04),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: SvgPicture.asset(
+                      icons[index],
+                      width: 32,
+                      height: 32,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    category['name'] as String,
+                    names[index],
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -413,36 +281,54 @@ class _CarsScreenState extends State<CarsScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.78,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: filteredCars.length,
-          itemBuilder: (context, index) {
-            final car = filteredCars[index];
-            return CarCardCompact(
-              car: car,
-              onBookNow: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder:
-                      (context) => FractionallySizedBox(heightFactor: 0.95),
-                );
-              },
-              onFavorite: () {},
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CarDetailsScreen(car: car),
-                  ),
+        FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance.collection('Cars').get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error loading cars'));
+            }
+            final docs = snapshot.data?.docs ?? [];
+            if (docs.isEmpty) {
+              return Center(child: Text('No cars available'));
+            }
+            final cars = docs.map((doc) => CarModel.fromFirestore(doc)).toList();
+final filteredCars = _searchQuery.isEmpty
+    ? cars
+    : cars.where((car) => car.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.78,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: filteredCars.length,
+              itemBuilder: (context, index) {
+                final car = filteredCars[index];
+                return CarCardCompact(
+                  car: car,
+                  onBookNow: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => FractionallySizedBox(heightFactor: 0.95),
+                    );
+                  },
+                  onFavorite: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CarDetailsScreen(car: car),
+                      ),
+                    );
+                  },
                 );
               },
             );

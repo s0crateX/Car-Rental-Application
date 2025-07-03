@@ -4,7 +4,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
-import '../../../../../shared/models/Mock Model/car_model.dart';
+import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../../core/services/routing_service.dart';
 
 class CarLocationMapScreen extends StatefulWidget {
   final CarModel car;
@@ -15,26 +16,176 @@ class CarLocationMapScreen extends StatefulWidget {
 }
 
 class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
-  // Removed _userLocation and _loadingUserLocation as they are no longer used.
+  List<LatLng> _routePoints = [];
+  bool _loadingRoute = false;
+  String _routeError = '';
 
   @override
   void initState() {
     super.initState();
-    // No async fetching needed; will read from Provider in build
+    // We'll fetch the route after the first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchRoute();
+    });
+  }
+  
+  /// Fetches a road-based route between the user and car locations
+  Future<void> _fetchRoute() async {
+    final userData = Provider.of<AuthService>(context, listen: false).userData;
+    
+    // Parse car location
+    LatLng? carLoc;
+    if (widget.car.location.isNotEmpty) {
+      // Car location uses lat/lng fields
+      if (widget.car.location.containsKey('lat') && 
+          widget.car.location.containsKey('lng')) {
+        carLoc = LatLng(
+          widget.car.location['lat']!, 
+          widget.car.location['lng']!
+        );
+      } 
+      // Fallback to latitude/longitude format
+      else if (widget.car.location.containsKey('latitude') && 
+               widget.car.location.containsKey('longitude')) {
+        carLoc = LatLng(
+          widget.car.location['latitude']!, 
+          widget.car.location['longitude']!
+        );
+      }
+    }
+    
+    // Parse user location
+    LatLng? userLoc;
+    
+    // Helper function to safely parse coordinate values
+    double? parseCoordinate(dynamic value) {
+      if (value == null) return null;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value);
+      return null;
+    }
+    
+    if (userData != null) {
+      // Check if location data exists
+      final locData = userData['location'];
+      if (locData != null && locData is Map) {
+        // User location uses latitude/longitude fields
+        if (locData.containsKey('latitude') && locData.containsKey('longitude')) {
+          final lat = parseCoordinate(locData['latitude']);
+          final lng = parseCoordinate(locData['longitude']);
+          if (lat != null && lng != null) {
+            userLoc = LatLng(lat, lng);
+          }
+        }
+        // Fallback to lat/lng format
+        else if (locData.containsKey('lat') && locData.containsKey('lng')) {
+          final lat = parseCoordinate(locData['lat']);
+          final lng = parseCoordinate(locData['lng']);
+          if (lat != null && lng != null) {
+            userLoc = LatLng(lat, lng);
+          }
+        }
+      }
+    }
+    
+    // If we have both locations, fetch the route
+    if (carLoc != null && userLoc != null) {
+      setState(() {
+        _loadingRoute = true;
+        _routeError = '';
+      });
+      
+      try {
+        // Both userLoc and carLoc are non-null at this point
+        if (userLoc != null && carLoc != null) {
+          final routePoints = await RoutingService.getRoute(userLoc, carLoc);
+          
+          setState(() {
+            _routePoints = routePoints;
+            _loadingRoute = false;
+          });
+        } else {
+          setState(() {
+            _routeError = 'Missing location data';
+            _loadingRoute = false;
+          });
+        }
+      } catch (e) {
+        setState(() {
+          _routeError = 'Failed to load route: $e';
+          _loadingRoute = false;
+          // Fallback to straight line if both locations are available
+          if (userLoc != null && carLoc != null) {
+            _routePoints = [userLoc, carLoc];
+          }
+        });
+      }
+    } else {
+      setState(() {
+        _routeError = 'Cannot calculate route: Missing location data';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final carLoc = widget.car.location;
+    // Convert Firebase car location to LatLng
+    LatLng? carLoc;
+    if (widget.car.location.isNotEmpty) {
+      // Car location uses lat/lng fields
+      if (widget.car.location.containsKey('lat') && 
+          widget.car.location.containsKey('lng')) {
+        carLoc = LatLng(
+          widget.car.location['lat']!, 
+          widget.car.location['lng']!
+        );
+        print('Car location found with lat/lng: ${carLoc.latitude}, ${carLoc.longitude}');
+      } 
+      // Fallback to latitude/longitude format
+      else if (widget.car.location.containsKey('latitude') && 
+               widget.car.location.containsKey('longitude')) {
+        carLoc = LatLng(
+          widget.car.location['latitude']!, 
+          widget.car.location['longitude']!
+        );
+        print('Car location found with latitude/longitude: ${carLoc.latitude}, ${carLoc.longitude}');
+      }
+    }
+    
     // Get user location from AuthService (Provider)
     final userData = Provider.of<AuthService>(context).userData;
     LatLng? userLoc;
-    final locData = userData != null ? userData['location'] : null;
-    if (locData != null && locData is Map) {
-      final lat = locData['latitude'];
-      final lng = locData['longitude'];
-      if (lat != null && lng != null) {
-        userLoc = LatLng(lat.toDouble(), lng.toDouble());
+    
+    // Helper function to safely parse coordinate values
+    double? parseCoordinate(dynamic value) {
+      if (value == null) return null;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value);
+      return null;
+    }
+    
+    if (userData != null) {
+      // Check if location data exists
+      final locData = userData['location'];
+      if (locData != null && locData is Map) {
+        // User location uses latitude/longitude fields
+        if (locData.containsKey('latitude') && locData.containsKey('longitude')) {
+          final lat = parseCoordinate(locData['latitude']);
+          final lng = parseCoordinate(locData['longitude']);
+          if (lat != null && lng != null) {
+            userLoc = LatLng(lat, lng);
+          }
+        }
+        // Fallback to lat/lng format
+        else if (locData.containsKey('lat') && locData.containsKey('lng')) {
+          final lat = parseCoordinate(locData['lat']);
+          final lng = parseCoordinate(locData['lng']);
+          if (lat != null && lng != null) {
+            userLoc = LatLng(lat, lng);
+          }
+        }
       }
     }
     final markers = <Marker>[];
@@ -77,35 +228,92 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Car & Your Location')),
-      body:
-          userLoc == null && carLoc == null
-              ? const Center(child: Text('No locations available'))
-              : FlutterMap(
-                options: MapOptions(
-                  initialCenter: center,
-                  initialZoom: 13,
-                  maxZoom: 18,
-                  minZoom: 3,
+      body: Stack(
+        children: [
+          if (userLoc == null && carLoc == null)
+            const Center(child: Text('No locations available'))
+          else
+            FlutterMap(
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: 13,
+                maxZoom: 18,
+                minZoom: 3,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.car_rental_app',
                 ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.car_rental_app',
+                // Display either the road-based route or a fallback straight line
+                if (_routePoints.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: _routePoints,
+                        color: Colors.blue,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  )
+                else if (userLoc != null && carLoc != null)
+                  // Fallback to straight line if no route is available yet but we have both locations
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: [userLoc, carLoc],
+                        color: Colors.grey,
+                        strokeWidth: 2,
+                        // Create a dotted effect with pattern
+                        strokeCap: StrokeCap.round,
+                        gradientColors: [Colors.grey, Colors.transparent],
+                      ),
+                    ],
                   ),
-                  MarkerLayer(markers: markers),
-                  if (userLoc != null && carLoc != null)
-                    PolylineLayer(
-                      polylines: [
-                        Polyline(
-                          points: [userLoc, carLoc],
-                          color: Colors.blueAccent,
-                          strokeWidth: 4,
-                        ),
+                MarkerLayer(markers: markers),
+              ],
+            ),
+          // Show loading indicator while fetching route
+          if (_loadingRoute)
+            const Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Card(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                        SizedBox(width: 12),
+                        Text('Calculating route...'),
                       ],
                     ),
-                ],
+                  ),
+                ),
               ),
+            ),
+          // Show error message if route calculation failed
+          if (_routeError.isNotEmpty)
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Card(
+                  color: Colors.red.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(_routeError, style: TextStyle(color: Colors.red.shade900)),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -133,10 +341,32 @@ class _MapMarker extends StatelessWidget {
         backgroundImage: NetworkImage(profileImageUrl!),
         backgroundColor: Colors.grey[200],
       );
-    } else if (carImage != null) {
-      markerVisual = ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.asset(carImage!, width: 32, height: 24, fit: BoxFit.cover),
+    } else if (carImage != null && carImage!.isNotEmpty) {
+      // Always treat car images from Firebase as URLs
+      markerVisual = Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.blue, width: 2),
+        ),
+        child: ClipOval(
+          child: Image.network(
+            carImage!,
+            width: 32,
+            height: 32,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[300],
+              ),
+              child: const Icon(Icons.car_rental, size: 16, color: Colors.grey),
+            ),
+          ),
+        ),
       );
     } else {
       markerVisual = SvgPicture.asset(

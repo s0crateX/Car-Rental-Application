@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/Mock Model/car_model.dart';
-import 'review_item.dart';
+import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 
 class ReviewsTabContent extends StatelessWidget {
   final CarModel car;
@@ -26,8 +25,9 @@ class ReviewsTabContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: sectionTitleBuilder('Customer Reviews')),
+              // Since Firebase model doesn't have rating, we'll use a placeholder
               Text(
-                'Average: ${car.rating}',
+                'Average: 4.5',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.amber[800]),
@@ -35,21 +35,35 @@ class ReviewsTabContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...car.reviews.map((review) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16.0),
-              child: ReviewItem(
-                name: review['userName'] as String,
-                avatar: review['userAvatar'] as String,
-                rating: (review['rating'] as double),
-                comment: review['comment'] as String,
-                date: review['date'] as String,
-                formattedDate: formatDate(
-                  DateTime.parse(review['date'] as String),
-                ),
+          // Since Firebase model doesn't have reviews, we'll show a placeholder message
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32.0),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.rate_review_outlined,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No reviews yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Be the first to review this car',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                  ),
+                ],
               ),
-            );
-          }),
+            ),
+          ),
           // Add some bottom padding to ensure content doesn't get cut off
           const SizedBox(height: 24),
         ],

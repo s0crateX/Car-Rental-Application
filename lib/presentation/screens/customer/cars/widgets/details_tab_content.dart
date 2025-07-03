@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
-import '../../../../../shared/models/Mock Model/car_model.dart';
+import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'extra_charge_item.dart';
 import 'pricing_option.dart';
 import 'rental_details_item.dart';
@@ -111,17 +111,43 @@ class DetailsTabContent extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // 6 hours pricing
+          if (car.price6h != '0')
+            PricingOption(
+              period: '6 Hours',
+              price: _buildPriceWidget(context, double.tryParse(car.price6h) ?? 0),
+            ),
+          if (car.price6h != '0') const Divider(),
+          
+          // 12 hours pricing
+          if (car.price12h != '0')
+            PricingOption(
+              period: '12 Hours',
+              price: _buildPriceWidget(context, double.tryParse(car.price12h) ?? 0),
+            ),
+          if (car.price12h != '0') const Divider(),
+          
+          // Daily pricing
           PricingOption(
-            period: 'Hourly',
-            price: _buildPriceWidget(context, car.price),
+            period: 'Daily',
+            price: _buildPriceWidget(context, double.tryParse(car.price1d) ?? 0),
           ),
           const Divider(),
-          ...car.priceOptions.entries.map((entry) {
-            return PricingOption(
-              period: entry.key,
-              price: _buildPriceWidget(context, entry.value),
-            );
-          }),
+          
+          // Weekly pricing
+          if (car.price1w != '0')
+            PricingOption(
+              period: 'Weekly',
+              price: _buildPriceWidget(context, double.tryParse(car.price1w) ?? 0),
+            ),
+          if (car.price1w != '0') const Divider(),
+          
+          // Monthly pricing
+          if (car.price1m != '0')
+            PricingOption(
+              period: 'Monthly',
+              price: _buildPriceWidget(context, double.tryParse(car.price1m) ?? 0),
+            ),
         ],
       ),
     );
@@ -159,68 +185,87 @@ class DetailsTabContent extends StatelessWidget {
           value:
               car.availabilityStatus == AvailabilityStatus.available
                   ? 'Available'
-                  : 'Unavailable',
+                  : car.availabilityStatus == AvailabilityStatus.rented
+                      ? 'Rented'
+                      : 'Under Maintenance',
         ),
         RentalDetailsItem(
-          title: 'Pickup Locations',
-          value: car.pickupLocations.join(', '),
+          title: 'Location',
+          value: car.address,
         ),
         RentalDetailsItem(
-          title: 'Return Locations',
-          value: car.returnLocations.join(', '),
+          title: 'Car Owner',
+          value: car.carOwnerFullName,
         ),
-        RentalDetailsItem(title: 'Fuel Policy', value: car.fuelPolicy),
         RentalDetailsItem(
-          title: 'Cancellation Policy',
-          value: car.cancellationPolicy,
+          title: 'Year',
+          value: car.year,
+        ),
+        RentalDetailsItem(
+          title: 'Listed Date',
+          value: formatDate(car.createdAt),
         ),
       ],
     );
   }
 
   Widget _buildInclusions(BuildContext context) {
+    // Using features as inclusions since Firebase model doesn't have specific inclusions
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children:
-            car.inclusions.map((inclusion) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Chip(
-                  label: Text(inclusion),
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  labelStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              );
-            }).toList(),
+        children: car.features.map((feature) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Chip(
+              label: Text(feature),
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              labelStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
   Widget _buildExtraCharges(BuildContext context) {
     return Column(
-      children:
-          car.extraCharges.entries.map((entry) {
-            return ExtraChargeItem(
-              title: entry.key,
-              price: _buildPriceWidget(context, entry.value),
-            );
-          }).toList(),
+      children: car.extraCharges.map((charge) {
+        final title = charge['title'] as String? ?? 'Additional Charge';
+        final amount = double.tryParse(charge['amount']?.toString() ?? '0') ?? 0.0;
+        
+        return ExtraChargeItem(
+          title: title,
+          price: _buildPriceWidget(context, amount),
+        );
+      }).toList(),
     );
   }
 
   Widget _buildRentalRequirements() {
+    // Since Firebase model doesn't have rental requirements, we'll show some standard ones
     return Column(
-      children:
-          car.rentalRequirements.entries.map((entry) {
-            return RentalRequirementItem(
-              title: entry.key,
-              requirement: entry.value,
-            );
-          }).toList(),
+      children: [
+        RentalRequirementItem(
+          title: "Driver's License",
+          requirement: 'Valid driver\'s license required',
+        ),
+        RentalRequirementItem(
+          title: 'Age',
+          requirement: 'Driver must be at least 21 years old',
+        ),
+        RentalRequirementItem(
+          title: 'Payment',
+          requirement: 'Credit card or debit card required for payment',
+        ),
+        RentalRequirementItem(
+          title: 'Security Deposit',
+          requirement: 'Refundable security deposit may be required',
+        ),
+      ],
     );
   }
 }

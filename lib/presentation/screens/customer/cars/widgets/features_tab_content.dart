@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../../shared/models/Mock Model/car_model.dart';
+import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 
 class FeaturesTabContent extends StatelessWidget {
   final CarModel car;

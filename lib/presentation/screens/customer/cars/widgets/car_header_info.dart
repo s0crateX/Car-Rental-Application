@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
-import '../../../../../shared/models/Mock Model/car_model.dart';
+import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'car_location_map_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
@@ -26,40 +25,109 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
     super.initState();
     _loadDistance();
   }
+  
+  // Helper method to safely parse coordinate values
+  double? _parseCoordinate(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
 
   Future<void> _loadDistance() async {
-    final carLoc = widget.car.location;
-    final userData = Provider.of<AuthService>(context, listen: false).userData;
-    LatLng? userLoc;
-    final locData = userData != null ? userData['location'] : null;
-    if (locData != null && locData is Map) {
-      final lat = locData['latitude'];
-      final lng = locData['longitude'];
-      if (lat != null && lng != null) {
-        userLoc = LatLng(lat.toDouble(), lng.toDouble());
-      }
-    }
-    if (carLoc == null || userLoc == null) {
-      setState(() {
-        _distanceText = 'N/A';
-        _isLoadingDistance = false;
-      });
-      return;
-    }
     setState(() {
       _isLoadingDistance = true;
     });
+    
     try {
+      // Get car location from the car model
+      final carLocMap = widget.car.location;
+      print('Car location data: $carLocMap');
+      LatLng? carLoc;
+      
+      // Check if the car location has valid coordinates
+      // Firebase stores location as 'lat' and 'lng'
+      if (carLocMap.isNotEmpty) {
+        if (carLocMap.containsKey('lat') && carLocMap.containsKey('lng')) {
+          carLoc = LatLng(carLocMap['lat']!, carLocMap['lng']!);
+        } else if (carLocMap.containsKey('latitude') && carLocMap.containsKey('longitude')) {
+          // Fallback for backward compatibility
+          carLoc = LatLng(carLocMap['latitude']!, carLocMap['longitude']!);
+        }
+      }
+      
+      // Get user location from AuthService
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userData = authService.userData;
+      print('User data available: ${userData != null}');
+      if (userData != null) {
+        print('User data keys: ${userData.keys.toList()}');
+        if (userData.containsKey('location')) {
+          print('User location data: ${userData['location']}');
+        }
+      }
+      LatLng? userLoc;
+      
+      // Check if user data contains location information
+      if (userData != null) {
+        Map<dynamic, dynamic>? locData;
+        
+        // Try different possible location field names
+        if (userData.containsKey('location')) {
+          locData = userData['location'] as Map?;
+        } else if (userData.containsKey('userLocation')) {
+          locData = userData['userLocation'] as Map?;
+        }
+        
+        if (locData != null) {
+          // Try different possible coordinate field names
+          double? latitude;
+          double? longitude;
+          
+          // User location uses 'latitude' and 'longitude' as seen in the Firebase screenshot
+          if (locData.containsKey('latitude') && locData.containsKey('longitude')) {
+            latitude = _parseCoordinate(locData['latitude']);
+            longitude = _parseCoordinate(locData['longitude']);
+          }
+          // Fallback to check for lat/lng format
+          else if (locData.containsKey('lat') && locData.containsKey('lng')) {
+            latitude = _parseCoordinate(locData['lat']);
+            longitude = _parseCoordinate(locData['lng']);
+          }
+          
+          // Create LatLng object if both coordinates are available
+          if (latitude != null && longitude != null) {
+            userLoc = LatLng(latitude, longitude);
+            print('User location found: $latitude, $longitude');
+          }
+        }
+      }
+      
+      // If either location is missing, show N/A
+      if (carLoc == null || userLoc == null) {
+        setState(() {
+          _distanceText = 'N/A';
+          _isLoadingDistance = false;
+        });
+        return;
+      }
+      
+      // Calculate distance between user and car
       final distanceMeters = Distance().as(LengthUnit.Meter, userLoc, carLoc);
       final distanceKm = distanceMeters / 1000.0;
+      
+      // Format distance text based on distance
       setState(() {
-        _distanceText =
-            distanceKm < 1
-                ? '${(distanceMeters).toStringAsFixed(0)} m'
-                : '${distanceKm.toStringAsFixed(2)} km';
+        if (distanceKm < 1) {
+          _distanceText = '${distanceMeters.toStringAsFixed(0)} m';
+        } else {
+          _distanceText = '${distanceKm.toStringAsFixed(2)} km';
+        }
         _isLoadingDistance = false;
       });
     } catch (e) {
+      print('Error calculating distance: $e');
       setState(() {
         _distanceText = 'N/A';
         _isLoadingDistance = false;
@@ -99,7 +167,7 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (widget.car.location != null) ...[
+                if (widget.car.location.isNotEmpty) ...[
                   const SizedBox(height: 10), // Reduced spacing
                   Row(
                     children: [
@@ -137,14 +205,14 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
                           ),
                     ],
                   ),
-                  if (widget.car.locationAddress.isNotEmpty) ...[
+                  if (widget.car.address.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Row(
                       children: [
                         const SizedBox(width: 18), // Adjusted for smaller icon
                         Expanded(
                           child: Text(
-                            widget.car.locationAddress,
+                            widget.car.address,
                             style: Theme.of(
                               context,
                             ).textTheme.bodySmall?.copyWith(
@@ -172,45 +240,25 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  RatingBar.builder(
-                    initialRating: widget.car.rating,
-                    minRating: 1,
-                    direction: Axis.horizontal,
-                    allowHalfRating: true,
-                    itemCount: 5,
-                    itemSize: 14, // Smaller stars
-                    ignoreGestures: true,
-                    itemBuilder:
-                        (context, _) => SvgPicture.asset(
-                          'assets/svg/star-filled.svg',
-                          width: 14,
-                          height: 14,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.amber,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                    onRatingUpdate: (rating) {},
-                  ),
-                  const SizedBox(width: 3),
                   Text(
-                    widget.car.rating.toString(),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.amber[800],
-                      fontSize: 12,
+                    '₱${widget.car.price6h} / 6h',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppTheme.mediumBlue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
-                '${widget.car.type} • ${widget.car.transmissionType}',
+                '${widget.car.brand} • ${widget.car.transmissionType}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.grey[600],
                   fontSize: 11,
                 ),
               ),
-              if (widget.car.location != null) ...[
+              if (widget.car.location.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 InkWell(
                   borderRadius: BorderRadius.circular(6),
