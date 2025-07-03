@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../../shared/models/booking_model.dart';
+import '../../../../../shared/models/Mock Model/booking_model.dart';
 
 class BookingListItem extends StatelessWidget {
   final BookingModel booking;

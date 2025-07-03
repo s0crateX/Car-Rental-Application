@@ -1,5 +1,5 @@
-import '../models/booking_model.dart';
-import '../models/payment_method.dart';
+import '../models/Mock Model/booking_model.dart';
+import '../models/Mock Model/payment_method.dart';
 import 'sample_cars.dart';
 import 'sample_customers.dart';
 

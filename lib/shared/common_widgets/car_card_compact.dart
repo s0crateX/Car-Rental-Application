@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../models/car_model.dart';
+import '../models/Mock Model/car_model.dart';
 import 'blinking_status_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
@@ -60,9 +60,10 @@ class _CarCardCompactState extends State<CarCardCompact> {
       final distanceMeters = Distance().as(LengthUnit.Meter, userLoc, carLoc);
       final distanceKm = distanceMeters / 1000.0;
       setState(() {
-        _distanceText = distanceKm < 1
-            ? '${(distanceMeters).toStringAsFixed(0)} m'
-            : '${distanceKm.toStringAsFixed(2)} km';
+        _distanceText =
+            distanceKm < 1
+                ? '${(distanceMeters).toStringAsFixed(0)} m'
+                : '${distanceKm.toStringAsFixed(2)} km';
         _isLoadingDistance = false;
       });
     } catch (e) {
@@ -368,20 +369,20 @@ class _CarCardCompactState extends State<CarCardCompact> {
                           const SizedBox(width: 2),
                           _isLoadingDistance
                               ? SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                )
-                              : Text(
-                                  _distanceText ?? 'Calculating...',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: theme.colorScheme.primary,
-                                  ),
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: theme.colorScheme.primary,
                                 ),
+                              )
+                              : Text(
+                                _distanceText ?? 'Calculating...',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
                         ],
                       ),
                     ],

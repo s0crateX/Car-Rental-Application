@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/car_model.dart';
+import '../../../../../shared/models/Mock Model/car_model.dart';
 import '../booking_details_screen.dart';
 
 class CurrentRentalWidget extends StatelessWidget {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../shared/data/sample_bookings.dart';
-import '../../../../../shared/models/booking_model.dart' show BookingModel, BookingStatus;
+import '../../../../shared/models/Mock Model/booking_model.dart'
+    show BookingModel, BookingStatus;
 import 'widgets/booking_list_item.dart';
 import 'booking_details_screen.dart';
 
@@ -8,10 +9,12 @@ class OwnerBookingsHistoryScreen extends StatefulWidget {
   const OwnerBookingsHistoryScreen({super.key});
 
   @override
-  State<OwnerBookingsHistoryScreen> createState() => _OwnerBookingsHistoryScreenState();
+  State<OwnerBookingsHistoryScreen> createState() =>
+      _OwnerBookingsHistoryScreenState();
 }
 
-class _OwnerBookingsHistoryScreenState extends State<OwnerBookingsHistoryScreen> {
+class _OwnerBookingsHistoryScreenState
+    extends State<OwnerBookingsHistoryScreen> {
   late List<BookingModel> _completedBookings;
   late List<BookingModel> _cancelledBookings;
   bool _showCompleted = true;
@@ -25,15 +28,17 @@ class _OwnerBookingsHistoryScreenState extends State<OwnerBookingsHistoryScreen>
 
   void _loadBookings() {
     final allBookings = SampleBookings.getSampleBookings();
-    _completedBookings = allBookings
-        .where((booking) => booking.status == BookingStatus.completed)
-        .toList()
-      ..sort((a, b) => b.endDate.compareTo(a.endDate)); // Most recent first
+    _completedBookings =
+        allBookings
+            .where((booking) => booking.status == BookingStatus.completed)
+            .toList()
+          ..sort((a, b) => b.endDate.compareTo(a.endDate)); // Most recent first
 
-    _cancelledBookings = allBookings
-        .where((booking) => booking.status == BookingStatus.cancelled)
-        .toList()
-      ..sort((a, b) => b.endDate.compareTo(a.endDate)); // Most recent first
+    _cancelledBookings =
+        allBookings
+            .where((booking) => booking.status == BookingStatus.cancelled)
+            .toList()
+          ..sort((a, b) => b.endDate.compareTo(a.endDate)); // Most recent first
   }
 
   @override
@@ -51,7 +56,10 @@ class _OwnerBookingsHistoryScreenState extends State<OwnerBookingsHistoryScreen>
         children: [
           // Filter chips
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(
+              vertical: 8.0,
+              horizontal: 16.0,
+            ),
             child: Row(
               children: [
                 _buildFilterChip(
@@ -94,8 +102,8 @@ class _OwnerBookingsHistoryScreenState extends State<OwnerBookingsHistoryScreen>
                       child: Text(
                         'No bookings found',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Colors.grey[600],
-                            ),
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ),
@@ -136,33 +144,36 @@ class _OwnerBookingsHistoryScreenState extends State<OwnerBookingsHistoryScreen>
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
-            ),
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).primaryColor,
+        ),
       ),
     );
   }
 
   List<Widget> _buildBookingList(List<BookingModel> bookings) {
     return bookings
-        .map((booking) => BookingListItem(
-              booking: booking,
-              onViewDetails: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => BookingDetailsScreen(
-                      booking: booking,
-                      onStatusUpdated: (newStatus) {
-                        // Refresh the list if status changes
-                        setState(() {
-                          _loadBookings();
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-            ))
+        .map(
+          (booking) => BookingListItem(
+            booking: booking,
+            onViewDetails: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder:
+                      (context) => BookingDetailsScreen(
+                        booking: booking,
+                        onStatusUpdated: (newStatus) {
+                          // Refresh the list if status changes
+                          setState(() {
+                            _loadBookings();
+                          });
+                        },
+                      ),
+                ),
+              );
+            },
+          ),
+        )
         .toList();
   }
 }

@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../../../../shared/models/car_model.dart';
+import '../../../../../shared/models/Mock Model/car_model.dart';
 
 class CarDetailsCard extends StatelessWidget {
   final CarModel car;
-  
-  const CarDetailsCard({
-    super.key,
-    required this.car,
-  });
+
+  const CarDetailsCard({super.key, required this.car});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),

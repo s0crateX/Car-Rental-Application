@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/booking_model.dart';
+import '../../../../../shared/models/Mock Model/booking_model.dart';
 
 class BookingActionsSection extends StatelessWidget {
   final BookingModel booking;

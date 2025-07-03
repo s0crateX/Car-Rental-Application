@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/models/car_model.dart';
+import '../../../../shared/models/Mock Model/car_model.dart';
 import 'widgets/car_app_bar.dart';
 import 'widgets/car_bottom_bar.dart';
 import 'widgets/car_header_info.dart';

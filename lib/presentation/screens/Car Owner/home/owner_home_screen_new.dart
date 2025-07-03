@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:car_rental_app/config/theme.dart';
 import 'package:car_rental_app/presentation/screens/Car%20Owner/home/widgets/widgets.dart';
-import 'package:car_rental_app/shared/models/rental_request.dart';
+import 'package:car_rental_app/shared/models/Mock%20Model/rental_request.dart';
 
 class OwnerHomeScreen extends StatelessWidget {
   const OwnerHomeScreen({super.key});

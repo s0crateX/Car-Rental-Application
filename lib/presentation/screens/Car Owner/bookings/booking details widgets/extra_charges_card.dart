@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/booking_model.dart';
+import '../../../../../shared/models/Mock Model/booking_model.dart';
 
 class ExtraChargesCard extends StatelessWidget {
   final BookingModel booking;
 
-  const ExtraChargesCard({
-    super.key,
-    required this.booking,
-  });
+  const ExtraChargesCard({super.key, required this.booking});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +21,11 @@ class ExtraChargesCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.miscellaneous_services, size: 20, color: Colors.blueGrey),
+                const Icon(
+                  Icons.miscellaneous_services,
+                  size: 20,
+                  color: Colors.blueGrey,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Requested Services',
@@ -35,7 +36,7 @@ class ExtraChargesCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             if (!hasServices) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -48,40 +49,50 @@ class ExtraChargesCard extends StatelessWidget {
                 ),
               ),
             ] else ...[
-              ...services.map((service) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.check_circle, size: 20, color: Colors.green),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (service.startsWith('Car Delivery to: '))
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Car Delivery to:', style: TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  service.substring('Car Delivery to: '.length),
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ],
-                            )
-                          else
-                            Text(
-                              service,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                        ],
+              ...services.map(
+                (service) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 20,
+                        color: Colors.green,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (service.startsWith('Car Delivery to: '))
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Car Delivery to:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    service.substring(
+                                      'Car Delivery to: '.length,
+                                    ),
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ],
+                              )
+                            else
+                              Text(service, style: theme.textTheme.bodyMedium),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              )),
+              ),
             ],
           ],
         ),
@@ -91,34 +102,44 @@ class ExtraChargesCard extends StatelessWidget {
 
   List<String> _getRequestedServices(BookingModel booking) {
     final services = <String>[];
-    
+
     // Check for common service requests
     if (booking.extras.containsKey('Driver Fee')) {
       services.add('With Driver');
     }
-    
+
     if (booking.extras.containsKey('Delivery Fee')) {
-      final deliveryText = booking.deliveryLocation != null
-          ? 'Car Delivery to: ${booking.deliveryLocation}'
-          : 'Car Delivery to Location';
+      final deliveryText =
+          booking.deliveryLocation != null
+              ? 'Car Delivery to: ${booking.deliveryLocation}'
+              : 'Car Delivery to Location';
       services.add(deliveryText);
     }
-    
+
     if (booking.extras.containsKey('Child Seat')) {
       services.add('Child Safety Seat');
     }
-    
+
     if (booking.extras.containsKey('GPS')) {
       services.add('GPS Navigation');
     }
-    
+
     // Add any other custom services
-    final customServices = booking.extras.keys
-        .where((key) => !['Driver Fee', 'Delivery Fee', 'Child Seat', 'GPS'].contains(key))
-        .toList();
-    
+    final customServices =
+        booking.extras.keys
+            .where(
+              (key) =>
+                  ![
+                    'Driver Fee',
+                    'Delivery Fee',
+                    'Child Seat',
+                    'GPS',
+                  ].contains(key),
+            )
+            .toList();
+
     services.addAll(customServices);
-    
+
     return services;
   }
 }

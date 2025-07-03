@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../../../shared/models/booking_model.dart';
+import '../../../../../shared/models/Mock Model/booking_model.dart';
 
 class RentalPeriodCard extends StatelessWidget {
   final BookingModel booking;
-  
-  const RentalPeriodCard({
-    super.key,
-    required this.booking,
-  });
+
+  const RentalPeriodCard({super.key, required this.booking});
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +55,7 @@ class RentalPeriodCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
         ),
         Text(
           value,

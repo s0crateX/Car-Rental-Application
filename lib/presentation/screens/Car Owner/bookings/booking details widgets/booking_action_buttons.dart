@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../../../shared/models/booking_model.dart';
+import '../../../../../shared/models/Mock Model/booking_model.dart';
 
 class BookingActionButtons extends StatelessWidget {
   final BookingStatus status;
   final Function(BookingStatus) onStatusUpdated;
-  
+
   const BookingActionButtons({
     super.key,
     required this.status,
@@ -37,10 +37,7 @@ class BookingActionButtons extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 side: const BorderSide(color: Colors.red),
               ),
-              child: const Text(
-                'Reject',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: const Text('Reject', style: TextStyle(color: Colors.red)),
             ),
           ),
         ],
@@ -55,7 +52,7 @@ class BookingActionButtons extends StatelessWidget {
         child: const Text('Mark as Completed'),
       );
     }
-    
+
     return const SizedBox.shrink();
   }
 }

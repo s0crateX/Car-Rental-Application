@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../../../shared/models/booking_model.dart';
-import '../../../../../../shared/models/payment_method.dart';
+import '../../../../../shared/models/Mock Model/booking_model.dart';
+import '../../../../../shared/models/Mock Model/payment_method.dart';
 
 class PaymentSummaryCard extends StatelessWidget {
   final BookingModel booking;
-  
-  const PaymentSummaryCard({
-    super.key,
-    required this.booking,
-  });
+
+  const PaymentSummaryCard({super.key, required this.booking});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '₱');
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -34,11 +31,17 @@ class PaymentSummaryCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
                   children: [
-                    const Icon(Icons.account_balance_wallet_rounded, size: 18, color: Colors.blueGrey),
+                    const Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 18,
+                      color: Colors.blueGrey,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Paid via ',
-                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     Text(
                       booking.paymentMethod!.displayName,
@@ -50,7 +53,8 @@ class PaymentSummaryCard extends StatelessWidget {
                   ],
                 ),
               ),
-            if (booking.receiptImageUrl != null && booking.receiptImageUrl!.isNotEmpty)
+            if (booking.receiptImageUrl != null &&
+                booking.receiptImageUrl!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: Column(
@@ -58,9 +62,18 @@ class PaymentSummaryCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.receipt_long_rounded, size: 18, color: Colors.blueGrey),
+                        const Icon(
+                          Icons.receipt_long_rounded,
+                          size: 18,
+                          color: Colors.blueGrey,
+                        ),
                         const SizedBox(width: 8),
-                        Text('Receipt', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                        Text(
+                          'Receipt',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -71,12 +84,18 @@ class PaymentSummaryCard extends StatelessWidget {
                         height: 100,
                         width: 180,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[300],
-                          height: 100,
-                          width: 180,
-                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                        ),
+                        errorBuilder:
+                            (context, error, stackTrace) => Container(
+                              color: Colors.grey[300],
+                              height: 100,
+                              width: 180,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
                       ),
                     ),
                   ],
@@ -84,14 +103,18 @@ class PaymentSummaryCard extends StatelessWidget {
               ),
             _buildPaymentRow(
               'Base Rate',
-              currencyFormat.format(booking.totalAmount - _calculateExtrasTotal()),
+              currencyFormat.format(
+                booking.totalAmount - _calculateExtrasTotal(),
+              ),
               theme,
             ),
-            ...booking.extras.entries.map((e) => _buildPaymentRow(
-                  e.key,
-                  currencyFormat.format(e.value),
-                  theme,
-                )),
+            ...booking.extras.entries.map(
+              (e) => _buildPaymentRow(
+                e.key,
+                currencyFormat.format(e.value),
+                theme,
+              ),
+            ),
             const Divider(height: 24),
             _buildPaymentRow(
               'Total Amount',
@@ -105,7 +128,12 @@ class PaymentSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentRow(String label, String value, ThemeData theme, {bool isTotal = false}) {
+  Widget _buildPaymentRow(
+    String label,
+    String value,
+    ThemeData theme, {
+    bool isTotal = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(

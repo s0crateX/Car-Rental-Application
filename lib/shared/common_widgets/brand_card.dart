@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../config/theme.dart';
-import '../models/car_brand_model.dart';
+import '../models/Mock Model/car_brand_model.dart';
 
 class BrandCard extends StatefulWidget {
   final CarBrandModel brand;
@@ -52,15 +52,22 @@ class _BrandCardState extends State<BrandCard> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         // --- COLOR COMBINATION: Adjust these for the BrandCard look ---
-                        colors: widget.isSelected
-                            ? [
-                                AppTheme.lightBlue, // <-- Selected gradient start
-                                AppTheme.paleBlue,  // <-- Selected gradient end
-                              ]
-                            : [
-                                AppTheme.white.withOpacity(0.92), // <-- Unselected gradient start
-                                AppTheme.paleBlue.withOpacity(0.6), // <-- Unselected gradient end
-                              ],
+                        colors:
+                            widget.isSelected
+                                ? [
+                                  AppTheme
+                                      .lightBlue, // <-- Selected gradient start
+                                  AppTheme
+                                      .paleBlue, // <-- Selected gradient end
+                                ]
+                                : [
+                                  AppTheme.white.withOpacity(
+                                    0.92,
+                                  ), // <-- Unselected gradient start
+                                  AppTheme.paleBlue.withOpacity(
+                                    0.6,
+                                  ), // <-- Unselected gradient end
+                                ],
                       ),
                       borderRadius: BorderRadius.circular(
                         12,

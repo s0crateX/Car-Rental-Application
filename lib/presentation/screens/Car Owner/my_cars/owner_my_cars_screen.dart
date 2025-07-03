@@ -1,8 +1,9 @@
 import 'package:car_rental_app/config/routes.dart';
 import 'package:car_rental_app/config/theme.dart';
-import 'package:car_rental_app/shared/models/Firebase_car_model.dart';
+import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'widgets/widgets.dart';
 
 class OwnerMyCarsScreen extends StatefulWidget {
@@ -14,10 +15,38 @@ class OwnerMyCarsScreen extends StatefulWidget {
 
 class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
+  String? _currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    // Get current user ID when screen initializes
+    _getCurrentUserId();
+  }
+
+  // Get current user ID from AuthService
+  void _getCurrentUserId() {
+    final user = _authService.user;
+    if (user != null && mounted) {
+      setState(() {
+        _currentUserId = user.uid;
+      });
+      print('Current user ID: $_currentUserId'); // Debug print
+
+      // Force refresh of the stream by triggering setState
+      setState(() {});
+    } else {
+      print('No user found or widget not mounted');
+    }
+  }
 
   void _navigateToAddCar() {
-    Navigator.pushNamed(context, AppRoutes.addNewCar);
+    Navigator.pushNamed(context, AppRoutes.addNewCar).then((_) {
+      // Refresh user ID when returning from add car screen
+      _getCurrentUserId();
+    });
   }
 
   void _editCar(CarModel car) {
@@ -66,7 +95,6 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
                 onPressed: () => Navigator.of(ctx).pop(),
               ),
               ElevatedButton(
-                child: const Text('Delete'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   foregroundColor: Colors.white,
@@ -75,6 +103,7 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
                   Navigator.of(ctx).pop();
                   await _deleteCarFromFirestore(car);
                 },
+                child: const Text('Delete'),
               ),
             ],
           ),
@@ -216,6 +245,7 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: AppTheme.darkNavy,
+
         body: Stack(
           children: [
             Padding(
@@ -254,12 +284,16 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
                           return _buildEmptyState();
                         }
 
-                        // Parse car data
-                        final cars =
+                        // Parse car data and filter by current user ID
+                        final allCars =
                             snapshot.data!.docs
                                 .map((doc) {
                                   try {
-                                    return CarModel.fromFirestore(doc);
+                                    final car = CarModel.fromFirestore(doc);
+                                    print(
+                                      'Car: ${car.name}, Owner ID: "${car.carOwnerDocumentId}", Doc ID: ${doc.id}',
+                                    );
+                                    return car;
                                   } catch (e) {
                                     print(
                                       'Error parsing car document ${doc.id}: $e',
@@ -270,6 +304,36 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
                                 .where((car) => car != null)
                                 .cast<CarModel>()
                                 .toList();
+
+                        // Filter cars by the current user ID with more flexible matching
+                        final cars =
+                            _currentUserId != null
+                                ? allCars
+                                    .where(
+                                      (car) =>
+                                          car.carOwnerDocumentId ==
+                                              _currentUserId ||
+                                          car.carOwnerDocumentId.trim() ==
+                                              _currentUserId ||
+                                          (_currentUserId != null &&
+                                              car
+                                                  .carOwnerDocumentId
+                                                  .isNotEmpty &&
+                                              _currentUserId!.contains(
+                                                car.carOwnerDocumentId,
+                                              )) ||
+                                          (car.carOwnerDocumentId.isNotEmpty &&
+                                              _currentUserId != null &&
+                                              car.carOwnerDocumentId.contains(
+                                                _currentUserId!,
+                                              )),
+                                    )
+                                    .toList()
+                                : allCars;
+
+                        print(
+                          'Found ${cars.length} cars for user "$_currentUserId" out of ${allCars.length} total cars',
+                        );
 
                         // Handle case where all documents failed to parse
                         if (cars.isEmpty) {

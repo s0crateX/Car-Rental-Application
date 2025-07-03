@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:car_rental_app/config/theme.dart';
-import 'package:car_rental_app/shared/models/rental_request.dart';
+import 'package:car_rental_app/shared/models/Mock%20Model/rental_request.dart';
 
 class RentalRequestItem extends StatelessWidget {
   final RentalRequest request;
@@ -137,14 +137,14 @@ class RentalRequestItem extends StatelessWidget {
             OutlinedButton(
               onPressed: onViewDetails,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(
-                  color: AppTheme.lightBlue,
-                  width: 1,
-                ),
+                side: const BorderSide(color: AppTheme.lightBlue, width: 1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
                 minimumSize: const Size(double.infinity, 40),
               ),
               child: const Text('View Details'),

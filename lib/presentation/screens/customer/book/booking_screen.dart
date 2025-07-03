@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/data/sample_cars.dart';
-import '../../../../shared/models/car_model.dart';
+import '../../../../shared/models/Mock Model/car_model.dart';
 import 'widgets/current_rental_widget.dart';
 import 'widgets/rental_history_widget.dart';
 

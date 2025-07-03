@@ -1,4 +1,4 @@
-import '../models/car_model.dart';
+import '../models/Mock Model/car_model.dart';
 import 'package:latlong2/latlong.dart';
 
 // Sample car data that will be replaced with Firebase data later

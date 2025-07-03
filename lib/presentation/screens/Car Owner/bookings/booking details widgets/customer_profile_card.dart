@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/customer_model.dart';
+import '../../../../../shared/models/Mock Model/customer_model.dart';
 
 class CustomerProfileCard extends StatelessWidget {
   final Customer customer;
 
-  const CustomerProfileCard({
-    super.key,
-    required this.customer,
-  });
+  const CustomerProfileCard({super.key, required this.customer});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -36,7 +33,9 @@ class CustomerProfileCard extends StatelessWidget {
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.1),
                   ),
                   child: Icon(
                     Icons.account_circle,
@@ -66,24 +65,30 @@ class CustomerProfileCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            constraints: const BoxConstraints(minWidth: 75), // Ensure minimum width for status
-                            margin: const EdgeInsets.only(left: 4), // Add some left margin
+                            constraints: const BoxConstraints(
+                              minWidth: 75,
+                            ), // Ensure minimum width for status
+                            margin: const EdgeInsets.only(
+                              left: 4,
+                            ), // Add some left margin
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: customer.isFullyVerified
-                                  ? Colors.green[100]
-                                  : Colors.orange[100],
+                              color:
+                                  customer.isFullyVerified
+                                      ? Colors.green[100]
+                                      : Colors.orange[100],
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               customer.isFullyVerified ? 'Verified' : 'Pending',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: customer.isFullyVerified
-                                    ? Colors.green[800]
-                                    : Colors.orange[800],
+                                color:
+                                    customer.isFullyVerified
+                                        ? Colors.green[800]
+                                        : Colors.orange[800],
                                 fontWeight: FontWeight.bold,
                               ),
                               textAlign: TextAlign.center,
@@ -140,25 +145,20 @@ class CustomerProfileCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Colors.grey[600],
-          ),
+          Icon(icon, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
+          Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
         ],
       ),
     );
   }
 
   Widget _buildSection(
-      String title, IconData icon, String content, ThemeData theme) {
+    String title,
+    IconData icon,
+    String content,
+    ThemeData theme,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
@@ -166,11 +166,7 @@ class CustomerProfileCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: theme.primaryColor,
-              ),
+              Icon(icon, size: 16, color: theme.primaryColor),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -183,10 +179,7 @@ class CustomerProfileCard extends StatelessWidget {
           const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.only(left: 24.0),
-            child: Text(
-              content,
-              style: theme.textTheme.bodySmall,
-            ),
+            child: Text(content, style: theme.textTheme.bodySmall),
           ),
         ],
       ),
@@ -195,50 +188,51 @@ class CustomerProfileCard extends StatelessWidget {
 
   Widget _buildDocumentStatusList() {
     final documentStatus = customer.documentStatus;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: DocumentType.values.map((docType) {
-        final isVerified = documentStatus[docType] ?? false;
-        final docName = Customer.getDocumentName(docType);
-        final status = isVerified ? 'Verified' : 'Pending';
-        final statusColor = isVerified ? Colors.green : Colors.orange;
+      children:
+          DocumentType.values.map((docType) {
+            final isVerified = documentStatus[docType] ?? false;
+            final docName = Customer.getDocumentName(docType);
+            final status = isVerified ? 'Verified' : 'Pending';
+            final statusColor = isVerified ? Colors.green : Colors.orange;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            children: [
-              Icon(
-                isVerified ? Icons.verified : Icons.pending,
-                color: statusColor,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  docName,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                children: [
+                  Icon(
+                    isVerified ? Icons.verified : Icons.pending,
                     color: statusColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    size: 20,
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(docName, style: const TextStyle(fontSize: 14)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      status,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
     );
   }
 
@@ -270,9 +264,7 @@ class CustomerProfileCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           '${(customer.verificationPercentage * 100).toInt()}% complete',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey[600]),
           textAlign: TextAlign.right,
         ),
       ],

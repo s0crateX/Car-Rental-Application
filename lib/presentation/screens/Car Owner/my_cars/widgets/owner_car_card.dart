@@ -1,8 +1,8 @@
 import 'package:car_rental_app/config/theme.dart';
-import 'package:car_rental_app/shared/models/Firebase_car_model.dart';
+import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit_car_details_screen.dart';
 
 class SampleCarData {
   final String name;
@@ -359,72 +359,54 @@ class _OwnerCarCardState extends State<OwnerCarCard>
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppTheme.lightBlue.withOpacity(0.2)),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.lightBlue.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/svg/peso.svg',
-                    width: 20,
-                    height: 20,
-                    colorFilter: ColorFilter.mode(
-                      AppTheme.lightBlue,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        '₱',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: AppTheme.lightBlue,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        currencyFormat.format(car.price).substring(1),
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: AppTheme.lightBlue,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(
-                          car.pricePeriod,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.paleBlue,
-                            fontWeight: FontWeight.w500,
-                            height: 1.2,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Price durations list
+                    Expanded(
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 6,
+                        children: [
+                          _PriceDurationLabel(
+                            label: '6h',
+                            price: double.tryParse(car.price6h ?? '0') ?? 0,
+                            currencyFormat: currencyFormat,
                           ),
-                        ),
+                          _PriceDurationLabel(
+                            label: '12h',
+                            price: double.tryParse(car.price12h ?? '0') ?? 0,
+                            currencyFormat: currencyFormat,
+                          ),
+                          _PriceDurationLabel(
+                            label: '1d',
+                            price: double.tryParse(car.price1d ?? '0') ?? 0,
+                            currencyFormat: currencyFormat,
+                          ),
+                          _PriceDurationLabel(
+                            label: '1w',
+                            price: double.tryParse(car.price1w ?? '0') ?? 0,
+                            currencyFormat: currencyFormat,
+                          ),
+                          _PriceDurationLabel(
+                            label: '1m',
+                            price: double.tryParse(car.price1m ?? '0') ?? 0,
+                            currencyFormat: currencyFormat,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    // Quick stats
+                    _buildQuickStats(theme),
+                  ],
                 ),
-                // Quick stats
-                _buildQuickStats(theme),
               ],
             ),
           ),
-
-          const SizedBox(height: 16),
-
+          const SizedBox(height: 12),
           // Car specifications preview
           _buildSpecsPreview(theme),
         ],
@@ -574,41 +556,30 @@ class _OwnerCarCardState extends State<OwnerCarCard>
       ),
       child: Row(
         children: [
-          // View details button
           Expanded(
-            child: TextButton.icon(
-              onPressed: widget.onTap,
-              icon: const Icon(Icons.visibility, size: 18),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
               label: const Text('View Details'),
-              style: TextButton.styleFrom(
+              style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.lightBlue,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: BorderSide(color: AppTheme.lightBlue.withOpacity(0.3)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: AppTheme.lightBlue.withOpacity(0.3)),
                 ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditCarDetailsScreen(car: car),
+                  ),
+                );
+              },
             ),
           ),
 
           const SizedBox(width: 12),
-
-          // Edit button
-          Container(
-            decoration: BoxDecoration(
-              color: AppTheme.lightBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.lightBlue.withOpacity(0.3)),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppTheme.lightBlue),
-              onPressed: widget.onEdit,
-              tooltip: 'Edit Car',
-              padding: const EdgeInsets.all(12),
-            ),
-          ),
-
-          const SizedBox(width: 8),
 
           // Delete button
           Container(
@@ -720,6 +691,57 @@ class _OwnerCarCardState extends State<OwnerCarCard>
           ],
         );
       },
+    );
+  }
+}
+
+// Helper widget for price duration display
+class _PriceDurationLabel extends StatelessWidget {
+  final String label;
+  final num price;
+  final NumberFormat currencyFormat;
+
+  const _PriceDurationLabel({
+    required this.label,
+    required this.price,
+    required this.currencyFormat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.navy.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.lightBlue.withOpacity(0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style:
+                Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.lightBlue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ) ??
+                const TextStyle(),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            currencyFormat.format(price),
+            style:
+                Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.paleBlue,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ) ??
+                const TextStyle(),
+          ),
+        ],
+      ),
     );
   }
 }

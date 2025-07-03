@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
-import '../../../../../shared/models/car_model.dart';
+import '../../../../../shared/models/Mock Model/car_model.dart';
 import 'car_location_map_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';

@@ -8,7 +8,7 @@ import 'payment_mode_section.dart';
 import '../../profile/document_verification_screen.dart';
 import 'payment_breakdown_section.dart';
 import 'package:car_rental_app/shared/data/sample_cars.dart';
-import 'package:car_rental_app/shared/models/car_model.dart';
+import 'package:car_rental_app/shared/models/Mock%20Model/car_model.dart';
 // Add dotted_border to pubspec.yaml if not present: dotted_border: ^2.0.0
 
 class RentCarScreen extends StatefulWidget {

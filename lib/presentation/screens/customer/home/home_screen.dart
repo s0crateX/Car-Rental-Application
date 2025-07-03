@@ -4,7 +4,7 @@ import '../../../../shared/common_widgets/car_card.dart';
 import '../../../../shared/common_widgets/brand_card.dart';
 import '../../../../shared/data/sample_cars.dart';
 import '../../../../shared/data/sample_brands.dart';
-import '../../../../shared/models/car_model.dart';
+import '../../../../shared/models/Mock Model/car_model.dart';
 import '../../../../utils/ui/address_utils.dart';
 import '../map_screen.dart';
 import 'package:latlong2/latlong.dart';

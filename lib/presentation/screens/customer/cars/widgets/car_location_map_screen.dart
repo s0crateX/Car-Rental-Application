@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
-import '../../../../../shared/models/car_model.dart';
+import '../../../../../shared/models/Mock Model/car_model.dart';
 
 class CarLocationMapScreen extends StatefulWidget {
   final CarModel car;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/booking_model.dart';
+import '../../../../shared/models/Mock Model/booking_model.dart';
 import 'booking details widgets/widgets.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
@@ -30,7 +30,7 @@ class BookingDetailsScreen extends StatelessWidget {
             // Customer Profile Card
             CustomerProfileCard(customer: booking.customer),
             const SizedBox(height: 16),
-            
+
             // Booking Status Card
             BookingStatusCard(booking: booking),
             const SizedBox(height: 16),
@@ -46,7 +46,7 @@ class BookingDetailsScreen extends StatelessWidget {
             // Payment Summary Card
             PaymentSummaryCard(booking: booking),
             const SizedBox(height: 16),
-            
+
             // Extra Charges Card
             ExtraChargesCard(booking: booking),
             const SizedBox(height: 16),

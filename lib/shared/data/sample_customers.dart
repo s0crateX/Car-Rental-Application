@@ -1,4 +1,4 @@
-import '../models/customer_model.dart';
+import '../models/Mock Model/customer_model.dart';
 
 class SampleCustomers {
   static Customer getSampleCustomer1() {

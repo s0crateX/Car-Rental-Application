@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/car_model.dart';
+import '../../../../../shared/models/Mock Model/car_model.dart';
 
 class RentalHistoryWidget extends StatelessWidget {
   final List<CarModel> history;

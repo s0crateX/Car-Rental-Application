@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:car_rental_app/shared/models/car_model.dart';
+import 'package:car_rental_app/shared/models/Mock%20Model/car_model.dart';
 import 'package:car_rental_app/shared/utils/price_utils.dart';
 
 class PaymentBreakdownSection extends StatelessWidget {

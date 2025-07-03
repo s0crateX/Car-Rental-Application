@@ -263,6 +263,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
         'carOwnerFullName': userFullName,
         'carOwnerDocumentId': userDocumentId,
         'createdAt': FieldValue.serverTimestamp(),
+        'availabilityStatus': 'available',
       };
 
       // Save to Firestore

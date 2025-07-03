@@ -5,7 +5,7 @@ import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../shared/common_widgets/car_card_compact.dart';
 import '../../../../shared/data/sample_cars.dart';
-import '../../../../shared/models/car_model.dart';
+import '../../../../shared/models/Mock Model/car_model.dart';
 import 'car_filter_bottom_sheet.dart';
 import 'car_details_screen.dart';
 
