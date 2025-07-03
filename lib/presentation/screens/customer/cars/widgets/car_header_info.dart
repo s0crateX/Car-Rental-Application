@@ -25,7 +25,7 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
     super.initState();
     _loadDistance();
   }
-  
+
   // Helper method to safely parse coordinate values
   double? _parseCoordinate(dynamic value) {
     if (value == null) return null;
@@ -39,24 +39,25 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
     setState(() {
       _isLoadingDistance = true;
     });
-    
+
     try {
       // Get car location from the car model
       final carLocMap = widget.car.location;
       print('Car location data: $carLocMap');
       LatLng? carLoc;
-      
+
       // Check if the car location has valid coordinates
       // Firebase stores location as 'lat' and 'lng'
       if (carLocMap.isNotEmpty) {
         if (carLocMap.containsKey('lat') && carLocMap.containsKey('lng')) {
           carLoc = LatLng(carLocMap['lat']!, carLocMap['lng']!);
-        } else if (carLocMap.containsKey('latitude') && carLocMap.containsKey('longitude')) {
+        } else if (carLocMap.containsKey('latitude') &&
+            carLocMap.containsKey('longitude')) {
           // Fallback for backward compatibility
           carLoc = LatLng(carLocMap['latitude']!, carLocMap['longitude']!);
         }
       }
-      
+
       // Get user location from AuthService
       final authService = Provider.of<AuthService>(context, listen: false);
       final userData = authService.userData;
@@ -68,25 +69,26 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
         }
       }
       LatLng? userLoc;
-      
+
       // Check if user data contains location information
       if (userData != null) {
         Map<dynamic, dynamic>? locData;
-        
+
         // Try different possible location field names
         if (userData.containsKey('location')) {
           locData = userData['location'] as Map?;
         } else if (userData.containsKey('userLocation')) {
           locData = userData['userLocation'] as Map?;
         }
-        
+
         if (locData != null) {
           // Try different possible coordinate field names
           double? latitude;
           double? longitude;
-          
+
           // User location uses 'latitude' and 'longitude' as seen in the Firebase screenshot
-          if (locData.containsKey('latitude') && locData.containsKey('longitude')) {
+          if (locData.containsKey('latitude') &&
+              locData.containsKey('longitude')) {
             latitude = _parseCoordinate(locData['latitude']);
             longitude = _parseCoordinate(locData['longitude']);
           }
@@ -95,7 +97,7 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
             latitude = _parseCoordinate(locData['lat']);
             longitude = _parseCoordinate(locData['lng']);
           }
-          
+
           // Create LatLng object if both coordinates are available
           if (latitude != null && longitude != null) {
             userLoc = LatLng(latitude, longitude);
@@ -103,7 +105,7 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
           }
         }
       }
-      
+
       // If either location is missing, show N/A
       if (carLoc == null || userLoc == null) {
         setState(() {
@@ -112,11 +114,11 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
         });
         return;
       }
-      
+
       // Calculate distance between user and car
       final distanceMeters = Distance().as(LengthUnit.Meter, userLoc, carLoc);
       final distanceKm = distanceMeters / 1000.0;
-      
+
       // Format distance text based on distance
       setState(() {
         if (distanceKm < 1) {
@@ -237,20 +239,6 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '₱${widget.car.price6h} / 6h',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppTheme.mediumBlue,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
               Text(
                 '${widget.car.brand} • ${widget.car.transmissionType}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

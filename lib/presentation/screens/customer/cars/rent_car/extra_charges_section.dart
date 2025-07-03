@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:car_rental_app/shared/utils/price_utils.dart';
 import 'package:car_rental_app/config/theme.dart';
+import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
 
 class ExtraChargesSection extends StatefulWidget {
-  final Map<String, double> extraCharges;
+  final CarModel car;
   final Map<String, bool> selectedExtras;
   final ValueChanged<String> onToggle;
   final String? title;
@@ -11,7 +12,7 @@ class ExtraChargesSection extends StatefulWidget {
 
   const ExtraChargesSection({
     super.key,
-    required this.extraCharges,
+    required this.car,
     required this.selectedExtras,
     required this.onToggle,
     this.title = 'Extra Charges (Optional)',
@@ -23,31 +24,47 @@ class ExtraChargesSection extends StatefulWidget {
 }
 
 class _ExtraChargesSectionState extends State<ExtraChargesSection>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _isExpanded = false;
   late AnimationController _animationController;
+  late AnimationController _countAnimationController;
   late Animation<double> _expandAnimation;
   late Animation<double> _rotationAnimation;
+  late Animation<double> _countAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+    _countAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     _expandAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutCubic,
     );
     _rotationAnimation = Tween<double>(begin: 0.0, end: 0.5).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOutCubic,
+      ),
+    );
+    _countAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _countAnimationController,
+        curve: Curves.elasticOut,
+      ),
     );
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _countAnimationController.dispose();
     super.dispose();
   }
 
@@ -62,15 +79,32 @@ class _ExtraChargesSectionState extends State<ExtraChargesSection>
     });
   }
 
+  // Convert Firebase extraCharges to Map<String, double> for calculations
+  Map<String, double> get _extraChargesMap {
+    final Map<String, double> result = {};
+    for (final charge in widget.car.extraCharges) {
+      if (charge.containsKey('name') && charge.containsKey('price')) {
+        final name = charge['name']?.toString() ?? '';
+        final price =
+            double.tryParse(charge['price']?.toString() ?? '0') ?? 0.0;
+        if (name.isNotEmpty) {
+          result[name] = price;
+        }
+      }
+    }
+    return result;
+  }
+
   int get _selectedCount {
     return widget.selectedExtras.values.where((selected) => selected).length;
   }
 
   double get _totalSelectedPrice {
     double total = 0;
+    final chargesMap = _extraChargesMap;
     widget.selectedExtras.forEach((key, selected) {
-      if (selected && widget.extraCharges.containsKey(key)) {
-        total += widget.extraCharges[key]!;
+      if (selected && chargesMap.containsKey(key)) {
+        total += chargesMap[key]!;
       }
     });
     return total;
@@ -79,378 +113,407 @@ class _ExtraChargesSectionState extends State<ExtraChargesSection>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      elevation: 1,
+    final extraChargesMap = _extraChargesMap;
+    final hasValidExtraCharges = extraChargesMap.isNotEmpty;
+
+    // Trigger count animation when selection changes
+    if (_selectedCount > 0) {
+      _countAnimationController.forward();
+    } else {
+      _countAnimationController.reverse();
+    }
+
+    return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: theme.cardColor,
-      child: Column(
-        children: [
-          InkWell(
-            onTap: _toggleDropdown,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.add_circle_outline,
-                    color: AppTheme.mediumBlue,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      widget.title ?? '',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.paleBlue,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  if (_selectedCount > 0)
-                    Container(
-                      margin: const EdgeInsets.only(right: 6),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.mediumBlue,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        '$_selectedCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  AnimatedBuilder(
-                    animation: _rotationAnimation,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: _rotationAnimation.value * 3.14159,
-                        child: Icon(
-                          Icons.keyboard_arrow_down,
-                          color: AppTheme.mediumBlue,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizeTransition(
-            sizeFactor: _expandAnimation,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Column(
-                children: [
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.extraCharges.length,
-                    itemBuilder: (context, index) {
-                      final entry = widget.extraCharges.entries.elementAt(
-                        index,
-                      );
-                      final isSelected =
-                          widget.selectedExtras[entry.key] ?? false;
-                      return ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 0,
-                        ),
-                        leading: Checkbox(
-                          value: isSelected,
-                          onChanged: (_) => widget.onToggle(entry.key),
-                          activeColor: AppTheme.mediumBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        title: Text(
-                          entry.key,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.paleBlue,
-                            fontWeight:
-                                isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                          ),
-                        ),
-                        trailing: Text(
-                          '+${PriceUtils.formatPrice(entry.value)}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color:
-                                isSelected
-                                    ? AppTheme.lightBlue
-                                    : AppTheme.paleBlue.withOpacity(0.7),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onTap: () => widget.onToggle(entry.key),
-                      );
-                    },
-                  ),
-                  if (_selectedCount > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, bottom: 2),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Total: ',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.lightBlue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            PriceUtils.formatPrice(_totalSelectedPrice),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.mediumBlue,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ExtraChargeItem extends StatefulWidget {
-  final String title;
-  final double price;
-  final bool isSelected;
-  final VoidCallback onToggle;
-
-  const _ExtraChargeItem({
-    required this.title,
-    required this.price,
-    required this.isSelected,
-    required this.onToggle,
-  });
-
-  @override
-  State<_ExtraChargeItem> createState() => _ExtraChargeItemState();
-}
-
-class _ExtraChargeItemState extends State<_ExtraChargeItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  bool _isPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: GestureDetector(
-            onTapDown: (_) {
-              setState(() => _isPressed = true);
-              _animationController.forward();
-            },
-            onTapUp: (_) {
-              setState(() => _isPressed = false);
-              _animationController.reverse();
-              widget.onToggle();
-            },
-            onTapCancel: () {
-              setState(() => _isPressed = false);
-              _animationController.reverse();
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color:
-                    widget.isSelected
-                        ? theme.primaryColor.withOpacity(0.1)
-                        : theme.cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color:
-                      widget.isSelected
-                          ? theme.primaryColor
-                          : theme.dividerColor.withOpacity(0.3),
-                  width: widget.isSelected ? 2 : 1,
+      child: Card(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: theme.cardColor,
+        child: Column(
+          children: [
+            // Header Section
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _toggleDropdown,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
                 ),
-                boxShadow:
-                    widget.isSelected
-                        ? [
-                          BoxShadow(
-                            color: theme.primaryColor.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                        : null,
-              ),
-              child: Row(
-                children: [
-                  // Custom checkbox
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color:
-                          widget.isSelected
-                              ? theme.primaryColor
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color:
-                            widget.isSelected
-                                ? theme.primaryColor
-                                : theme.dividerColor,
-                        width: 2,
-                      ),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
                     ),
-                    child:
-                        widget.isSelected
-                            ? const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 16,
-                            )
-                            : null,
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Title and price
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color:
-                                widget.isSelected ? theme.primaryColor : null,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Additional charge',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.bodySmall?.color
-                                ?.withOpacity(0.6),
-                          ),
-                        ),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.mediumBlue.withOpacity(0.05),
+                        AppTheme.lightBlue.withOpacity(0.02),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                   ),
-
-                  // Price badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          widget.isSelected
-                              ? theme.primaryColor
-                              : theme.dividerColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '+${PriceUtils.formatPrice(widget.price)}',
-                      style: TextStyle(
-                        color:
-                            widget.isSelected
-                                ? Colors.white
-                                : theme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                  child: Row(
+                    children: [
+                      // Icon with subtle animation
+                      AnimatedBuilder(
+                        animation: _expandAnimation,
+                        builder: (context, child) {
+                          return Transform.scale(
+                            scale: 1.0 + (_expandAnimation.value * 0.1),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.mediumBlue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.add_circle_outline,
+                                color: AppTheme.mediumBlue,
+                                size: 22,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
+                      const SizedBox(width: 16),
+                      // Title and subtitle
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title ?? '',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.paleBlue,
+                                fontSize: 17,
+                              ),
+                            ),
+                            if (widget.subtitle != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.subtitle!,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppTheme.paleBlue.withOpacity(0.6),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      // Selected count badge with animation
+                      if (_selectedCount > 0)
+                        AnimatedBuilder(
+                          animation: _countAnimation,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _countAnimation.value,
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.mediumBlue,
+                                      AppTheme.lightBlue,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.mediumBlue.withOpacity(
+                                        0.3,
+                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  '$_selectedCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      // Arrow with rotation animation
+                      AnimatedBuilder(
+                        animation: _rotationAnimation,
+                        builder: (context, child) {
+                          return Transform.rotate(
+                            angle: _rotationAnimation.value * 3.14159,
+                            child: Icon(
+                              Icons.keyboard_arrow_down,
+                              color: AppTheme.mediumBlue,
+                              size: 26,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        );
-      },
-    );
-  }
-}
+            // Content Section
+            SizeTransition(
+              sizeFactor: _expandAnimation,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // Divider
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            AppTheme.paleBlue.withOpacity(0.1),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // No extras message
+                    if (!hasValidExtraCharges)
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppTheme.paleBlue.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.paleBlue.withOpacity(0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: AppTheme.paleBlue.withOpacity(0.5),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'No extra charges available for this vehicle.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.paleBlue.withOpacity(0.7),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Extras list
+                    if (hasValidExtraCharges)
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: extraChargesMap.length,
+                        separatorBuilder:
+                            (context, index) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final entry = extraChargesMap.entries.elementAt(
+                            index,
+                          );
+                          final isSelected =
+                              widget.selectedExtras[entry.key] ?? false;
 
-// Example usage
-class ExtraChargesDemo extends StatefulWidget {
-  const ExtraChargesDemo({super.key});
-
-  @override
-  State<ExtraChargesDemo> createState() => _ExtraChargesDemoState();
-}
-
-class _ExtraChargesDemoState extends State<ExtraChargesDemo> {
-  final Map<String, double> extraCharges = {
-    'GPS Navigation': 5.99,
-    'Child Safety Seat': 12.50,
-    'Additional Driver': 8.00,
-    'Roadside Assistance': 6.99,
-    'Full Insurance Coverage': 15.99,
-    'Toll Pass': 4.50,
-    'Bluetooth Adapter': 3.99,
-    'USB Charger': 2.99,
-  };
-
-  Map<String, bool> selectedExtras = {};
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Car Rental Extras')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ExtraChargesSection(
-          extraCharges: extraCharges,
-          selectedExtras: selectedExtras,
-          onToggle: (key) {
-            setState(() {
-              selectedExtras[key] = !(selectedExtras[key] ?? false);
-            });
-          },
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              color:
+                                  isSelected
+                                      ? AppTheme.mediumBlue.withOpacity(0.08)
+                                      : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color:
+                                    isSelected
+                                        ? AppTheme.mediumBlue.withOpacity(0.2)
+                                        : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => widget.onToggle(entry.key),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      // Custom checkbox
+                                      AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              isSelected
+                                                  ? AppTheme.mediumBlue
+                                                  : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          border: Border.all(
+                                            color:
+                                                isSelected
+                                                    ? AppTheme.mediumBlue
+                                                    : AppTheme.paleBlue
+                                                        .withOpacity(0.3),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child:
+                                            isSelected
+                                                ? const Icon(
+                                                  Icons.check,
+                                                  color: Colors.white,
+                                                  size: 16,
+                                                )
+                                                : null,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      // Service name
+                                      Expanded(
+                                        child: Text(
+                                          entry.key,
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color: AppTheme.paleBlue,
+                                                fontWeight:
+                                                    isSelected
+                                                        ? FontWeight.w600
+                                                        : FontWeight.normal,
+                                                fontSize: 15,
+                                              ),
+                                        ),
+                                      ),
+                                      // Price
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              isSelected
+                                                  ? AppTheme.lightBlue
+                                                      .withOpacity(0.1)
+                                                  : AppTheme.paleBlue
+                                                      .withOpacity(0.05),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '+${PriceUtils.formatPrice(entry.value)}',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color:
+                                                    isSelected
+                                                        ? AppTheme.mediumBlue
+                                                        : AppTheme.paleBlue
+                                                            .withOpacity(0.7),
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 14,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    // Total section
+                    if (_selectedCount > 0) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.mediumBlue.withOpacity(0.08),
+                              AppTheme.lightBlue.withOpacity(0.05),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.mediumBlue.withOpacity(0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total Extra Charges',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: AppTheme.paleBlue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              PriceUtils.formatPrice(_totalSelectedPrice),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: AppTheme.mediumBlue,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -36,45 +36,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
     super.dispose();
   }
 
-  // Debug function to set a mock user location for testing distance calculation
-  Future<void> _setMockUserLocation() async {
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      
-      // Get car location
-      final carLoc = widget.car.location;
-      if (carLoc.isEmpty || !carLoc.containsKey('lat') || !carLoc.containsKey('lng')) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Car location not available'))
-        );
-        return;
-      }
-      
-      // Set user location to be 500 meters away from car
-      final double carLat = carLoc['lat']!;
-      final double carLng = carLoc['lng']!;
-      
-      // Offset by a small amount (roughly 500m)
-      final userLat = carLat + 0.004;
-      final userLng = carLng + 0.002;
-      
-      // Update user location in Firebase
-      await authService.updateUserProfileData({
-        'location': {
-          'latitude': userLat,
-          'longitude': userLng,
-        }
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mock user location set for testing'))
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error setting mock location: $e'))
-      );
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -128,32 +90,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
           ],
         ),
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Debug button for testing distance calculation
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: ElevatedButton(
-              onPressed: _setMockUserLocation,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[800],
-                foregroundColor: Colors.white,
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.location_on),
-                  SizedBox(width: 8),
-                  Text('Set Mock Location (Debug)'),
-                ],
-              ),
-            ),
-          ),
-          // Regular bottom bar
-          CarBottomBar(car: widget.car),
-        ],
-      ),
+      bottomNavigationBar: CarBottomBar(car: widget.car),
     );
   }
 

@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../../../config/theme.dart';
 
 class ExtraChargeItem extends StatelessWidget {
   final String title;
-  final Widget price;
+  final double amount;
+  final String? unit;
 
-  const ExtraChargeItem({super.key, required this.title, required this.price});
+  const ExtraChargeItem({
+    super.key, 
+    required this.title, 
+    required this.amount,
+    this.unit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +20,34 @@ class ExtraChargeItem extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: Theme.of(context).textTheme.bodyMedium),
-          price,
+          Expanded(
+            child: Text(
+              title, 
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildPriceWidget(context),
         ],
+      ),
+    );
+  }
+  
+  Widget _buildPriceWidget(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.mediumBlue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '₱ ${amount.toStringAsFixed(2)}${unit != null ? ' $unit' : ''}',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: AppTheme.mediumBlue,
+        ),
       ),
     );
   }

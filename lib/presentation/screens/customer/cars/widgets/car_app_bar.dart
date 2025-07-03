@@ -63,11 +63,10 @@ class CarAppBar extends StatelessWidget {
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
+          fit: StackFit.expand,
           children: [
-            // Main Image
-            SizedBox(
-              width: double.infinity,
-              height: 320,
+            // Main Image - Using Positioned.fill to ensure it covers the entire space
+            Positioned.fill(
               child: car.imageGallery.isNotEmpty
                 ? _buildCarImage(car.imageGallery[currentImageIndex])
                 : Container(color: Colors.grey[300]),

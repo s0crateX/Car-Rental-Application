@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
 import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'extra_charge_item.dart';
@@ -98,88 +97,75 @@ class DetailsTabContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.navy,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         children: [
           // 6 hours pricing
-          if (car.price6h != '0')
+          if (car.price6h != '0' && car.price6h != '')
             PricingOption(
               period: '6 Hours',
-              price: _buildPriceWidget(context, double.tryParse(car.price6h) ?? 0),
+              price: double.tryParse(car.price6h) ?? 0,
+              onTap: () {
+                // Handle selection - could navigate to booking screen with selected period
+              },
             ),
-          if (car.price6h != '0') const Divider(),
-          
           // 12 hours pricing
-          if (car.price12h != '0')
+          if (car.price12h != '0' && car.price12h != '')
             PricingOption(
               period: '12 Hours',
-              price: _buildPriceWidget(context, double.tryParse(car.price12h) ?? 0),
+              price: double.tryParse(car.price12h) ?? 0,
+              onTap: () {
+                // Handle 12-hour selection
+              },
             ),
-          if (car.price12h != '0') const Divider(),
-          
-          // Daily pricing
-          PricingOption(
-            period: 'Daily',
-            price: _buildPriceWidget(context, double.tryParse(car.price1d) ?? 0),
-          ),
-          const Divider(),
-          
+          // Daily pricing - recommended option
+          if (car.price1d != '0' && car.price1d != '')
+            PricingOption(
+              period: 'Daily',
+              price: double.tryParse(car.price1d) ?? 0,
+              isRecommended: true,
+              onTap: () {
+                // Handle daily selection
+              },
+            ),
           // Weekly pricing
-          if (car.price1w != '0')
+          if (car.price1w != '0' && car.price1w != '')
             PricingOption(
               period: 'Weekly',
-              price: _buildPriceWidget(context, double.tryParse(car.price1w) ?? 0),
+              price: double.tryParse(car.price1w) ?? 0,
+              onTap: () {
+                // Handle weekly selection
+              },
             ),
-          if (car.price1w != '0') const Divider(),
-          
           // Monthly pricing
-          if (car.price1m != '0')
+          if (car.price1m != '0' && car.price1m != '')
             PricingOption(
               period: 'Monthly',
-              price: _buildPriceWidget(context, double.tryParse(car.price1m) ?? 0),
+              price: double.tryParse(car.price1m) ?? 0,
+              onTap: () {
+                // Handle monthly selection
+              },
             ),
         ],
       ),
     );
   }
 
-  Widget _buildPriceWidget(BuildContext context, double price) {
-    return Row(
-      children: [
-        SvgPicture.asset(
-          'assets/svg/peso.svg',
-          width: 18,
-          height: 18,
-          colorFilter: ColorFilter.mode(
-            Theme.of(context).primaryColor,
-            BlendMode.srcIn,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          price.toStringAsFixed(2),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
+  // _buildPriceWidget method removed as it's now handled by the PricingOption widget
 
   Widget _buildRentalDetails() {
     return Column(
       children: [
+        RentalDetailsItem(
+          title: 'Brand',
+          value: car.brand,
+        ),
+        RentalDetailsItem(
+          title: 'Year',
+          value: car.year,
+        ),
         RentalDetailsItem(
           title: 'Availability',
           value:
@@ -196,14 +182,6 @@ class DetailsTabContent extends StatelessWidget {
         RentalDetailsItem(
           title: 'Car Owner',
           value: car.carOwnerFullName,
-        ),
-        RentalDetailsItem(
-          title: 'Year',
-          value: car.year,
-        ),
-        RentalDetailsItem(
-          title: 'Listed Date',
-          value: formatDate(car.createdAt),
         ),
       ],
     );
@@ -232,14 +210,23 @@ class DetailsTabContent extends StatelessWidget {
   }
 
   Widget _buildExtraCharges(BuildContext context) {
+    if (car.extraCharges.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Text('No extra charges for this vehicle'),
+      );
+    }
+    
     return Column(
       children: car.extraCharges.map((charge) {
-        final title = charge['title'] as String? ?? 'Additional Charge';
-        final amount = double.tryParse(charge['amount']?.toString() ?? '0') ?? 0.0;
+        final title = charge['name'] as String? ?? charge['title'] as String? ?? 'Additional Charge';
+        final amount = double.tryParse(charge['price']?.toString() ?? charge['amount']?.toString() ?? '0') ?? 0.0;
+        final unit = charge['unit'] as String?;
         
         return ExtraChargeItem(
           title: title,
-          price: _buildPriceWidget(context, amount),
+          amount: amount,
+          unit: unit,
         );
       }).toList(),
     );

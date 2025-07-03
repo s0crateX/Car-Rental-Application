@@ -5,35 +5,56 @@ import '../../../../../config/theme.dart';
 class SpecItem extends StatelessWidget {
   final String svgAssetPath;
   final String text;
+  final Color? iconColor;
+  final Color? backgroundColor;
 
-  const SpecItem({super.key, required this.svgAssetPath, required this.text});
+  const SpecItem({
+    super.key,
+    required this.svgAssetPath,
+    required this.text,
+    this.iconColor,
+    this.backgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final color = iconColor ?? AppTheme.mediumBlue;
+    final bgColor = backgroundColor ?? AppTheme.mediumBlue.withOpacity(0.1);
+
     return Expanded(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             decoration: BoxDecoration(
-              color: AppTheme.mediumBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: bgColor,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: SvgPicture.asset(
               svgAssetPath,
-              width: 28,
-              height: 28,
-              colorFilter: ColorFilter.mode(
-                AppTheme.mediumBlue,
-                BlendMode.srcIn,
-              ),
+              width: 35,
+              height: 35,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6), // Reduced from 8
           Text(
             text,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

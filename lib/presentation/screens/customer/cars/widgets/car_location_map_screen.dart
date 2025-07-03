@@ -28,35 +28,35 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
       _fetchRoute();
     });
   }
-  
+
   /// Fetches a road-based route between the user and car locations
   Future<void> _fetchRoute() async {
     final userData = Provider.of<AuthService>(context, listen: false).userData;
-    
+
     // Parse car location
     LatLng? carLoc;
     if (widget.car.location.isNotEmpty) {
       // Car location uses lat/lng fields
-      if (widget.car.location.containsKey('lat') && 
+      if (widget.car.location.containsKey('lat') &&
           widget.car.location.containsKey('lng')) {
         carLoc = LatLng(
-          widget.car.location['lat']!, 
-          widget.car.location['lng']!
+          widget.car.location['lat']!,
+          widget.car.location['lng']!,
         );
-      } 
+      }
       // Fallback to latitude/longitude format
-      else if (widget.car.location.containsKey('latitude') && 
-               widget.car.location.containsKey('longitude')) {
+      else if (widget.car.location.containsKey('latitude') &&
+          widget.car.location.containsKey('longitude')) {
         carLoc = LatLng(
-          widget.car.location['latitude']!, 
-          widget.car.location['longitude']!
+          widget.car.location['latitude']!,
+          widget.car.location['longitude']!,
         );
       }
     }
-    
+
     // Parse user location
     LatLng? userLoc;
-    
+
     // Helper function to safely parse coordinate values
     double? parseCoordinate(dynamic value) {
       if (value == null) return null;
@@ -65,13 +65,14 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
       if (value is String) return double.tryParse(value);
       return null;
     }
-    
+
     if (userData != null) {
       // Check if location data exists
       final locData = userData['location'];
       if (locData != null && locData is Map) {
         // User location uses latitude/longitude fields
-        if (locData.containsKey('latitude') && locData.containsKey('longitude')) {
+        if (locData.containsKey('latitude') &&
+            locData.containsKey('longitude')) {
           final lat = parseCoordinate(locData['latitude']);
           final lng = parseCoordinate(locData['longitude']);
           if (lat != null && lng != null) {
@@ -88,19 +89,19 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
         }
       }
     }
-    
+
     // If we have both locations, fetch the route
     if (carLoc != null && userLoc != null) {
       setState(() {
         _loadingRoute = true;
         _routeError = '';
       });
-      
+
       try {
         // Both userLoc and carLoc are non-null at this point
-        if (userLoc != null && carLoc != null) {
+        if (carLoc != null) {
           final routePoints = await RoutingService.getRoute(userLoc, carLoc);
-          
+
           setState(() {
             _routePoints = routePoints;
             _loadingRoute = false;
@@ -134,29 +135,33 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
     LatLng? carLoc;
     if (widget.car.location.isNotEmpty) {
       // Car location uses lat/lng fields
-      if (widget.car.location.containsKey('lat') && 
+      if (widget.car.location.containsKey('lat') &&
           widget.car.location.containsKey('lng')) {
         carLoc = LatLng(
-          widget.car.location['lat']!, 
-          widget.car.location['lng']!
+          widget.car.location['lat']!,
+          widget.car.location['lng']!,
         );
-        print('Car location found with lat/lng: ${carLoc.latitude}, ${carLoc.longitude}');
-      } 
+        print(
+          'Car location found with lat/lng: ${carLoc.latitude}, ${carLoc.longitude}',
+        );
+      }
       // Fallback to latitude/longitude format
-      else if (widget.car.location.containsKey('latitude') && 
-               widget.car.location.containsKey('longitude')) {
+      else if (widget.car.location.containsKey('latitude') &&
+          widget.car.location.containsKey('longitude')) {
         carLoc = LatLng(
-          widget.car.location['latitude']!, 
-          widget.car.location['longitude']!
+          widget.car.location['latitude']!,
+          widget.car.location['longitude']!,
         );
-        print('Car location found with latitude/longitude: ${carLoc.latitude}, ${carLoc.longitude}');
+        print(
+          'Car location found with latitude/longitude: ${carLoc.latitude}, ${carLoc.longitude}',
+        );
       }
     }
-    
+
     // Get user location from AuthService (Provider)
     final userData = Provider.of<AuthService>(context).userData;
     LatLng? userLoc;
-    
+
     // Helper function to safely parse coordinate values
     double? parseCoordinate(dynamic value) {
       if (value == null) return null;
@@ -165,13 +170,14 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
       if (value is String) return double.tryParse(value);
       return null;
     }
-    
+
     if (userData != null) {
       // Check if location data exists
       final locData = userData['location'];
       if (locData != null && locData is Map) {
         // User location uses latitude/longitude fields
-        if (locData.containsKey('latitude') && locData.containsKey('longitude')) {
+        if (locData.containsKey('latitude') &&
+            locData.containsKey('longitude')) {
           final lat = parseCoordinate(locData['latitude']);
           final lng = parseCoordinate(locData['longitude']);
           if (lat != null && lng != null) {
@@ -242,8 +248,7 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.car_rental_app',
                 ),
                 // Display either the road-based route or a fallback straight line
@@ -287,7 +292,11 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                         SizedBox(width: 12),
                         Text('Calculating route...'),
                       ],
@@ -306,8 +315,14 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
                 child: Card(
                   color: Colors.red.shade50,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(_routeError, style: TextStyle(color: Colors.red.shade900)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      _routeError,
+                      style: TextStyle(color: Colors.red.shade900),
+                    ),
                   ),
                 ),
               ),
@@ -356,15 +371,20 @@ class _MapMarker extends StatelessWidget {
             width: 32,
             height: 32,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey[300],
-              ),
-              child: const Icon(Icons.car_rental, size: 16, color: Colors.grey),
-            ),
+            errorBuilder:
+                (context, error, stackTrace) => Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey[300],
+                  ),
+                  child: const Icon(
+                    Icons.car_rental,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                ),
           ),
         ),
       );

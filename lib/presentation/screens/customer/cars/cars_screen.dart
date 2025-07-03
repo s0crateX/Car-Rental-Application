@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
-import 'package:car_rental_app/core/authentication/auth_service.dart';
-import 'package:latlong2/latlong.dart';
 import '../../../../shared/common_widgets/car_card_compact.dart';
 // Ensure CarCardCompact uses Firebase_car_model.dart, not mock model
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/models/Final Model/Firebase_car_model.dart';
-import 'car_filter_bottom_sheet.dart';
 import 'car_details_screen.dart';
 
 class CarsScreen extends StatefulWidget {
@@ -204,12 +200,7 @@ class _CarsScreenState extends State<CarsScreen> {
                 'assets/svg/suv.svg',
                 'assets/svg/hatchback.svg',
               ];
-              const names = [
-                'All',
-                'Sedan',
-                'SUV',
-                'Hatchback',
-              ];
+              const names = ['All', 'Sedan', 'SUV', 'Hatchback'];
               return Column(
                 children: [
                   Container(
@@ -294,10 +285,18 @@ class _CarsScreenState extends State<CarsScreen> {
             if (docs.isEmpty) {
               return Center(child: Text('No cars available'));
             }
-            final cars = docs.map((doc) => CarModel.fromFirestore(doc)).toList();
-final filteredCars = _searchQuery.isEmpty
-    ? cars
-    : cars.where((car) => car.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+            final cars =
+                docs.map((doc) => CarModel.fromFirestore(doc)).toList();
+            final filteredCars =
+                _searchQuery.isEmpty
+                    ? cars
+                    : cars
+                        .where(
+                          (car) => car.name.toLowerCase().contains(
+                            _searchQuery.toLowerCase(),
+                          ),
+                        )
+                        .toList();
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -317,7 +316,8 @@ final filteredCars = _searchQuery.isEmpty
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (context) => FractionallySizedBox(heightFactor: 0.95),
+                      builder:
+                          (context) => FractionallySizedBox(heightFactor: 0.95),
                     );
                   },
                   onFavorite: () {},
