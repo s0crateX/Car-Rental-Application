@@ -73,13 +73,16 @@ class _InteractiveMapState extends State<InteractiveMap> {
         if (widget.carMarkers != null)
           MarkerLayer(
             markers: widget.carMarkers!
-                .where((car) => car.location != null)
+                .where((car) => car.location != null && car.location.containsKey('lat') && car.location.containsKey('lng'))
                 .map<Marker>((car) => Marker(
-                      point: car.location,
+                      point: LatLng(
+                        car.location['lat'] ?? 0.0,
+                        car.location['lng'] ?? 0.0,
+                      ),
                       width: 54,
                       height: 54,
                       child: Tooltip(
-                        message: car.name,
+                        message: car.brand + ' ' + car.model,
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
@@ -93,13 +96,31 @@ class _InteractiveMapState extends State<InteractiveMap> {
                             ],
                           ),
                           child: ClipOval(
-                            child: Image.asset(
-                              car.image,
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Icon(Icons.directions_car, size: 32, color: Colors.redAccent),
-                            ),
+                            child: car.image.startsWith('http') || car.image.startsWith('https')
+                              ? Image.network(
+                                  car.image,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) => Icon(Icons.directions_car, size: 32, color: Colors.redAccent),
+                                )
+                              : Image.asset(
+                                  car.image,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Icon(Icons.directions_car, size: 32, color: Colors.redAccent),
+                                ),
                           ),
                         ),
                       ),

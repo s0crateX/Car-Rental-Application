@@ -7,7 +7,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class UserDocumentsScreen extends StatefulWidget {
-  const UserDocumentsScreen({Key? key}) : super(key: key);
+  const UserDocumentsScreen({super.key});
 
   @override
   State<UserDocumentsScreen> createState() => _UserDocumentsScreenState();
@@ -42,10 +42,8 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
         return;
       }
 
-      final DocumentSnapshot userDoc = await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
+      final DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(currentUser.uid).get();
 
       if (!userDoc.exists) {
         setState(() {
@@ -57,10 +55,10 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
 
       // Convert DocumentSnapshot to Map and ensure documents field exists
       Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-      
+
       // Debug print to see what data we're getting
       // print('User data: $userData');
-      
+
       setState(() {
         _userData = userData;
         _isLoading = false;
@@ -158,29 +156,29 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
       itemCount: documentTypes.length,
       itemBuilder: (context, index) {
         final String docType = documentTypes[index];
-        
+
         // Check if documents field exists in userData
         Map<String, dynamic>? documents = _userData?['documents'];
-        
+
         // Get document data based on document type
         Map<String, dynamic> docData = {};
         String docUrl = '';
         String status = 'pending';
-        
+
         if (documents != null && documents.containsKey(docType)) {
           docData = documents[docType] as Map<String, dynamic>;
           docUrl = docData['url'] as String? ?? '';
           status = docData['status'] as String? ?? 'pending';
-          
+
           // Ensure the URL is valid
           if (docUrl.isEmpty || !docUrl.startsWith('http')) {
             // print('Invalid URL for $docType: $docUrl');
             docUrl = '';
           }
         }
-        
+
         // print('Document $docType: url=$docUrl, status=$status');
-        
+
         return _buildDocumentCard(
           title: _getDocumentTitle(docType),
           imageUrl: docUrl,
@@ -236,49 +234,65 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
-                child: imageUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        memCacheWidth: 400,
-                        fadeInDuration: const Duration(milliseconds: 300),
-                        placeholder: (context, url) => Container(
-                          color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                          child: const Center(child: CircularProgressIndicator()),
-                        ),
-                        errorWidget: (context, url, error) {
-                          // print('Error loading image: $url, error: $error');
-                          return GestureDetector(
-                            onTap: onUpload,
-                            child: Container(
-                              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.broken_image, size: 40),
-                                  const SizedBox(height: 8),
-                                  Text('Tap to retry', style: TextStyle(fontSize: 12)),
-                                ],
+                child:
+                    imageUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          memCacheWidth: 400,
+                          fadeInDuration: const Duration(milliseconds: 300),
+                          placeholder:
+                              (context, url) => Container(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surface.withOpacity(0.5),
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               ),
+                          errorWidget: (context, url, error) {
+                            // print('Error loading image: $url, error: $error');
+                            return GestureDetector(
+                              onTap: onUpload,
+                              child: Container(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surface.withOpacity(0.5),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.broken_image, size: 40),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Tap to retry',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                        : GestureDetector(
+                          onTap: onUpload,
+                          child: Container(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withOpacity(0.5),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.upload_file, size: 40),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Upload Document',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                      )
-                    : GestureDetector(
-                        onTap: onUpload,
-                        child: Container(
-                          color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.upload_file, size: 40),
-                              const SizedBox(height: 8),
-                              Text('Upload Document', style: TextStyle(fontSize: 12)),
-                            ],
                           ),
                         ),
-                      ),
               ),
             ),
             Padding(
@@ -352,135 +366,145 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
     print('Showing document details: $docType, url=$imageUrl, status=$status');
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppBar(
-              title: Text(_getDocumentTitle(docType)),
-              automaticallyImplyLeading: false,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (imageUrl.isNotEmpty)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: InteractiveViewer(
-                        minScale: 0.5,
-                        maxScale: 3.0,
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.contain,
-                          width: double.infinity,
-                          height: 300,
-                          fadeInDuration: const Duration(milliseconds: 300),
-                          placeholder: (context, url) => Container(
-                            height: 300,
-                            color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                            child: const Center(child: CircularProgressIndicator()),
-                          ),
-                          errorWidget: (context, url, error) {
-                            // print('Error loading detail image: $url, error: $error');
-                            return Container(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppBar(
+                  title: Text(_getDocumentTitle(docType)),
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (imageUrl.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: InteractiveViewer(
+                            minScale: 0.5,
+                            maxScale: 3.0,
+                            child: CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              fit: BoxFit.contain,
+                              width: double.infinity,
                               height: 300,
-                              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.broken_image, size: 60),
-                                  const SizedBox(height: 16),
-                                  Text('Image could not be loaded'),
-                                  const SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                      _pickAndUploadDocument(docType);
-                                    },
-                                    child: const Text('Re-upload Document'),
+                              fadeInDuration: const Duration(milliseconds: 300),
+                              placeholder:
+                                  (context, url) => Container(
+                                    height: 300,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surface.withOpacity(0.5),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
                                   ),
-                                ],
+                              errorWidget: (context, url, error) {
+                                // print('Error loading detail image: $url, error: $error');
+                                return Container(
+                                  height: 300,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surface.withOpacity(0.5),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.broken_image, size: 60),
+                                      const SizedBox(height: 16),
+                                      Text('Image could not be loaded'),
+                                      const SizedBox(height: 16),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                          _pickAndUploadDocument(docType);
+                                        },
+                                        child: const Text('Re-upload Document'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          height: 300,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.image_not_supported, size: 60),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  _pickAndUploadDocument(docType);
+                                },
+                                child: const Text('Upload Document'),
                               ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
-                      ),
-                    )
-                  else
-                    Container(
-                      height: 300,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(Icons.image_not_supported, size: 60),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
+                          const Text(
+                            'Status:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          _buildStatusChip(status),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (imageUrl.isNotEmpty)
+                        Center(
+                          child: ElevatedButton.icon(
                             onPressed: () {
                               Navigator.of(context).pop();
                               _pickAndUploadDocument(docType);
                             },
-                            child: const Text('Upload Document'),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Replace Document'),
                           ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Status:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      _buildStatusChip(status),
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  if (imageUrl.isNotEmpty)
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _pickAndUploadDocument(docType);
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Replace Document'),
-                      ),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
   Widget _buildVerificationStatus() {
     // Get documents from userData if it exists
     final Map<String, dynamic>? documents = _userData?['documents'];
-    
+
     // Calculate verification progress
     int totalDocuments = 4; // We have 4 required documents
     int uploadedDocuments = 0;
     int verifiedDocuments = 0;
-    
+
     // Document types we want to check
     final List<String> documentTypes = [
       'government_id',
@@ -488,35 +512,37 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
       'license_back',
       'selfie_with_license',
     ];
-    
+
     if (documents != null) {
       for (String docType in documentTypes) {
         if (documents.containsKey(docType)) {
-          final Map<String, dynamic> docData = documents[docType] as Map<String, dynamic>;
+          final Map<String, dynamic> docData =
+              documents[docType] as Map<String, dynamic>;
           final String status = docData['status'] as String? ?? '';
-          
+
           if (docData.isNotEmpty) {
             uploadedDocuments++;
           }
-          
+
           if (status == 'verified') {
             verifiedDocuments++;
           }
         }
       }
     }
-    
+
     // Debug print verification status
-    print('Verification status: $uploadedDocuments/$totalDocuments uploaded, $verifiedDocuments/$totalDocuments verified');
-    
+    print(
+      'Verification status: $uploadedDocuments/$totalDocuments uploaded, $verifiedDocuments/$totalDocuments verified',
+    );
+
     // Calculate progress percentage
-    double progressPercentage = totalDocuments > 0 
-        ? (verifiedDocuments / totalDocuments) * 100 
-        : 0.0;
-    
+    double progressPercentage =
+        totalDocuments > 0 ? (verifiedDocuments / totalDocuments) * 100 : 0.0;
+
     // Format percentage as integer
     String progressText = '${progressPercentage.toInt()}%';
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -538,10 +564,7 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
             children: [
               const Text(
                 'Verification Progress',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               Text(
                 progressText,
@@ -556,7 +579,9 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
           const SizedBox(height: 12),
           LinearProgressIndicator(
             value: progressPercentage / 100,
-            backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surface.withOpacity(0.5),
             valueColor: AlwaysStoppedAnimation<Color>(
               Theme.of(context).colorScheme.primary,
             ),
@@ -568,8 +593,8 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
             uploadedDocuments < totalDocuments
                 ? 'Please upload all required documents for verification.'
                 : verifiedDocuments < totalDocuments
-                    ? 'Your documents are under review.'
-                    : 'All documents have been verified!',
+                ? 'Your documents are under review.'
+                : 'All documents have been verified!',
             style: TextStyle(
               color: Theme.of(context).colorScheme.secondary,
               fontSize: 14,
@@ -581,12 +606,11 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
     );
   }
 
-
   Future<void> _pickAndUploadDocument(String documentType) async {
     try {
       // Show loading indicator
       _showLoadingDialog('Selecting image...');
-      
+
       // Pick image
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
@@ -595,20 +619,20 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
         maxHeight: 1200,
         imageQuality: 85,
       );
-      
+
       // Hide loading dialog
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
-      
+
       if (image == null) {
         // User canceled image picking
         return;
       }
-      
+
       // Show loading indicator for upload
       _showLoadingDialog('Uploading document...');
-      
+
       // Get current user ID
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
@@ -618,7 +642,7 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
         _showErrorDialog('Authentication error', 'Please sign in again.');
         return;
       }
-      
+
       // Create file reference in Firebase Storage
       final storageRef = FirebaseStorage.instance
           .ref()
@@ -626,42 +650,42 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
           .child(userId)
           .child('documents')
           .child('$documentType.jpg');
-      
+
       // Upload file
       final File imageFile = File(image.path);
       final uploadTask = storageRef.putFile(imageFile);
-      
+
       // Wait for upload to complete
       final snapshot = await uploadTask.whenComplete(() {});
-      
+
       // Get download URL
       final String downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       // Create a nested map structure for the document data
       final Map<String, dynamic> docData = {
         'url': downloadUrl,
         'status': 'pending',
         'uploaded_at': FieldValue.serverTimestamp(),
       };
-      
+
       // Update Firestore document with the nested map
       await FirebaseFirestore.instance.collection('users').doc(userId).update({
         'documents.$documentType': docData,
       });
-      
+
       // print('Document updated successfully: $documentType with URL: $downloadUrl');
-      
+
       // Hide loading dialog
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
-      
+
       // Show success message
       _showSuccessDialog(
         'Document Uploaded',
         'Your document has been uploaded and is pending verification.',
       );
-      
+
       // Refresh user data
       _fetchUserData();
     } catch (e) {
@@ -670,7 +694,7 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
-      
+
       // Show error message
       _showErrorDialog('Upload Failed', 'Error: $e');
     }
@@ -680,51 +704,54 @@ class _UserDocumentsScreenState extends State<UserDocumentsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(message),
-            ],
+      builder:
+          (context) => Dialog(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(message),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 
   void _showErrorDialog(String title, String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+      builder:
+          (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showSuccessDialog(String title, String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+      builder:
+          (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

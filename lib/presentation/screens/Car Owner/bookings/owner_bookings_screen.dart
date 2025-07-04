@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../../shared/data/sample_bookings.dart';
+import '../../../../shared/data/mock data/sample_bookings.dart';
 import '../../../../shared/models/Mock Model/booking_model.dart'
     show BookingModel, BookingStatus;
 import 'widgets/booking_list_item.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../config/theme.dart';
-import '../../../../shared/data/sample_bookings.dart';
+import '../../../../shared/data/mock data/sample_bookings.dart';
 import '../../../../shared/models/Mock Model/booking_model.dart';
 
 import 'widgets/booking_info_section.dart';

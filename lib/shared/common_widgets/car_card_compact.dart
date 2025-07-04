@@ -33,7 +33,7 @@ class _CarCardCompactState extends State<CarCardCompact> {
     super.initState();
     _loadDistance();
   }
-  
+
   // Helper method to safely parse coordinate values
   double? _parseCoordinate(dynamic value) {
     if (value == null) return null;
@@ -47,46 +47,48 @@ class _CarCardCompactState extends State<CarCardCompact> {
     setState(() {
       _isLoadingDistance = true;
     });
-    
+
     try {
       // Get car location from the car model
       final locMap = widget.car.location;
       LatLng? carLoc;
-      
+
       // Check if the car location has valid coordinates
       // Firebase stores location as 'lat' and 'lng'
       if (locMap.isNotEmpty) {
         if (locMap.containsKey('lat') && locMap.containsKey('lng')) {
           carLoc = LatLng(locMap['lat']!, locMap['lng']!);
-        } else if (locMap.containsKey('latitude') && locMap.containsKey('longitude')) {
+        } else if (locMap.containsKey('latitude') &&
+            locMap.containsKey('longitude')) {
           // Fallback for backward compatibility
           carLoc = LatLng(locMap['latitude']!, locMap['longitude']!);
         }
       }
-      
+
       // Get user location from AuthService
       final authService = Provider.of<AuthService>(context, listen: false);
       final userData = authService.userData;
       LatLng? userLoc;
-      
+
       // Check if user data contains location information
       if (userData != null) {
         Map<dynamic, dynamic>? locData;
-        
+
         // Try different possible location field names
         if (userData.containsKey('location')) {
           locData = userData['location'] as Map?;
         } else if (userData.containsKey('userLocation')) {
           locData = userData['userLocation'] as Map?;
         }
-        
+
         if (locData != null) {
           // Try different possible coordinate field names
           double? latitude;
           double? longitude;
-          
+
           // User location uses 'latitude' and 'longitude' as seen in the Firebase screenshot
-          if (locData.containsKey('latitude') && locData.containsKey('longitude')) {
+          if (locData.containsKey('latitude') &&
+              locData.containsKey('longitude')) {
             latitude = _parseCoordinate(locData['latitude']);
             longitude = _parseCoordinate(locData['longitude']);
           }
@@ -95,7 +97,7 @@ class _CarCardCompactState extends State<CarCardCompact> {
             latitude = _parseCoordinate(locData['lat']);
             longitude = _parseCoordinate(locData['lng']);
           }
-          
+
           // Create LatLng object if both coordinates are available
           if (latitude != null && longitude != null) {
             userLoc = LatLng(latitude, longitude);
@@ -103,7 +105,7 @@ class _CarCardCompactState extends State<CarCardCompact> {
           }
         }
       }
-      
+
       // If either location is missing, show N/A
       if (carLoc == null || userLoc == null) {
         setState(() {
@@ -112,11 +114,11 @@ class _CarCardCompactState extends State<CarCardCompact> {
         });
         return;
       }
-      
+
       // Calculate distance between user and car
       final distanceMeters = Distance().as(LengthUnit.Meter, userLoc, carLoc);
       final distanceKm = distanceMeters / 1000.0;
-      
+
       // Format distance text based on distance
       setState(() {
         if (distanceKm < 1) {
@@ -170,19 +172,26 @@ class _CarCardCompactState extends State<CarCardCompact> {
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
+                        value:
+                            loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
                       ),
                     ),
                   );
                 },
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: double.infinity,
-                  height: 80,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.car_rental, size: 40, color: Colors.grey),
-                ),
+                errorBuilder:
+                    (context, error, stackTrace) => Container(
+                      width: double.infinity,
+                      height: 80,
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.car_rental,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    ),
               ),
             ),
             Padding(
@@ -235,39 +244,39 @@ class _CarCardCompactState extends State<CarCardCompact> {
                   ),
                   const SizedBox(height: 4),
                   Row(
-                      children: [
-                        _isLoadingDistance
-                            ? SizedBox(
-                              width: 10,
-                              height: 10,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                color: theme.colorScheme.primary,
-                              ),
-                            )
-                            : Row(
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/svg/location.svg',
-                                  width: 10,
-                                  height: 10,
-                                  colorFilter: ColorFilter.mode(
-                                    theme.colorScheme.primary,
-                                    BlendMode.srcIn,
-                                  ),
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  _distanceText ?? 'Calculating...',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ],
+                    children: [
+                      _isLoadingDistance
+                          ? SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: theme.colorScheme.primary,
                             ),
-                      ],
-                    ),
+                          )
+                          : Row(
+                            children: [
+                              SvgPicture.asset(
+                                'assets/svg/location.svg',
+                                width: 10,
+                                height: 10,
+                                colorFilter: ColorFilter.mode(
+                                  theme.colorScheme.primary,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                _distanceText ?? 'Calculating...',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                    ],
+                  ),
                   const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -384,7 +393,7 @@ class _CarCardCompactState extends State<CarCardCompact> {
                           Text(
                             widget.car.price.toStringAsFixed(0),
                             style: TextStyle(
-                              fontSize: 24,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,
                             ),

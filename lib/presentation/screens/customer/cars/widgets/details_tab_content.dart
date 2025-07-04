@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../config/theme.dart';
 import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'extra_charge_item.dart';
 import 'pricing_option.dart';
@@ -158,31 +157,19 @@ class DetailsTabContent extends StatelessWidget {
   Widget _buildRentalDetails() {
     return Column(
       children: [
-        RentalDetailsItem(
-          title: 'Brand',
-          value: car.brand,
-        ),
-        RentalDetailsItem(
-          title: 'Year',
-          value: car.year,
-        ),
+        RentalDetailsItem(title: 'Brand', value: car.brand),
+        RentalDetailsItem(title: 'Year', value: car.year),
         RentalDetailsItem(
           title: 'Availability',
           value:
               car.availabilityStatus == AvailabilityStatus.available
                   ? 'Available'
                   : car.availabilityStatus == AvailabilityStatus.rented
-                      ? 'Rented'
-                      : 'Under Maintenance',
+                  ? 'Rented'
+                  : 'Under Maintenance',
         ),
-        RentalDetailsItem(
-          title: 'Location',
-          value: car.address,
-        ),
-        RentalDetailsItem(
-          title: 'Car Owner',
-          value: car.carOwnerFullName,
-        ),
+        RentalDetailsItem(title: 'Location', value: car.address),
+        RentalDetailsItem(title: 'Car Owner', value: car.carOwnerFullName),
       ],
     );
   }
@@ -192,19 +179,20 @@ class DetailsTabContent extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: car.features.map((feature) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Chip(
-              label: Text(feature),
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
-              labelStyle: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          );
-        }).toList(),
+        children:
+            car.features.map((feature) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Chip(
+                  label: Text(feature),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              );
+            }).toList(),
       ),
     );
   }
@@ -216,19 +204,25 @@ class DetailsTabContent extends StatelessWidget {
         child: Text('No extra charges for this vehicle'),
       );
     }
-    
+
     return Column(
-      children: car.extraCharges.map((charge) {
-        final title = charge['name'] as String? ?? charge['title'] as String? ?? 'Additional Charge';
-        final amount = double.tryParse(charge['price']?.toString() ?? charge['amount']?.toString() ?? '0') ?? 0.0;
-        final unit = charge['unit'] as String?;
-        
-        return ExtraChargeItem(
-          title: title,
-          amount: amount,
-          unit: unit,
-        );
-      }).toList(),
+      children:
+          car.extraCharges.map((charge) {
+            final title =
+                charge['name'] as String? ??
+                charge['title'] as String? ??
+                'Additional Charge';
+            final amount =
+                double.tryParse(
+                  charge['price']?.toString() ??
+                      charge['amount']?.toString() ??
+                      '0',
+                ) ??
+                0.0;
+            final unit = charge['unit'] as String?;
+
+            return ExtraChargeItem(title: title, amount: amount, unit: unit);
+          }).toList(),
     );
   }
 

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../../shared/models/Final Model/Firebase_car_model.dart';
-import '../../../../core/authentication/auth_service.dart';
 import 'widgets/car_app_bar.dart';
 import 'widgets/car_bottom_bar.dart';
 import 'widgets/car_header_info.dart';
@@ -35,8 +33,6 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
     _tabController.dispose();
     super.dispose();
   }
-
-
 
   @override
   Widget build(BuildContext context) {

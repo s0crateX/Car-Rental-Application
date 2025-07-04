@@ -312,10 +312,10 @@ class _RentalDurationSelectorState extends State<RentalDurationSelector>
   ) {
     final bool isSelected =
         widget.selectedPeriod == period && !_isCustomDuration;
-    
+
     // Track original price from Firebase car model
     String originalPrice = '';
-    
+
     // Get price based on period
     switch (period) {
       case '6h':
@@ -434,7 +434,8 @@ class _RentalDurationSelectorState extends State<RentalDurationSelector>
                       Text(
                         '₱${double.tryParse(originalPrice)?.toStringAsFixed(0) ?? originalPrice}',
                         style: TextStyle(
-                          color: isSelected ? Colors.white : AppTheme.mediumBlue,
+                          color:
+                              isSelected ? Colors.white : AppTheme.mediumBlue,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -698,7 +699,7 @@ class _RentalDurationSelectorState extends State<RentalDurationSelector>
 
     final days = int.parse(match.group(1) ?? '0');
     final basePrice = double.tryParse(widget.car.price.toString()) ?? 0;
-    
+
     final dailyRate = basePrice * (_priceMultipliers['1d'] ?? 1.0);
     final daysPrice = days * dailyRate;
     final hours = 0; // Custom duration doesn't support hours currently
@@ -773,14 +774,14 @@ class _RentalDurationSelectorState extends State<RentalDurationSelector>
 
           if (days > 0)
             _buildBreakdownRow(
-              '${days} ${days == 1 ? 'Day' : 'Days'}',
+              '$days ${days == 1 ? 'Day' : 'Days'}',
               '₱${daysPrice.toStringAsFixed(0)}',
               Icons.calendar_today,
             ),
 
           if (hours > 0)
             _buildBreakdownRow(
-              '${hours} ${hours == 1 ? 'Hour' : 'Hours'}',
+              '$hours ${hours == 1 ? 'Hour' : 'Hours'}',
               '₱${hoursPrice.toStringAsFixed(0)}',
               Icons.access_time,
             ),

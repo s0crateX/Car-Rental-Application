@@ -99,19 +99,12 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
 
       try {
         // Both userLoc and carLoc are non-null at this point
-        if (carLoc != null) {
-          final routePoints = await RoutingService.getRoute(userLoc, carLoc);
+        final routePoints = await RoutingService.getRoute(userLoc, carLoc);
 
-          setState(() {
-            _routePoints = routePoints;
-            _loadingRoute = false;
-          });
-        } else {
-          setState(() {
-            _routeError = 'Missing location data';
-            _loadingRoute = false;
-          });
-        }
+        setState(() {
+          _routePoints = routePoints;
+          _loadingRoute = false;
+        });
       } catch (e) {
         setState(() {
           _routeError = 'Failed to load route: $e';

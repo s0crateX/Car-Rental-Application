@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../models/Mock Model/car_model.dart';
+import '../models/Final Model/Firebase_car_model.dart';
 import 'blinking_status_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
@@ -33,7 +33,22 @@ class _CarCardState extends State<CarCard> {
   }
 
   Future<void> _loadDistance() async {
-    final carLoc = widget.car.location;
+    // Only proceed if the car has location data
+    if (widget.car.location.isEmpty || 
+        !widget.car.location.containsKey('lat') || 
+        !widget.car.location.containsKey('lng')) {
+      setState(() {
+        _distanceText = 'N/A';
+        _isLoadingDistance = false;
+      });
+      return;
+    }
+    
+    final carLoc = LatLng(
+      widget.car.location['lat'] ?? 0.0,
+      widget.car.location['lng'] ?? 0.0,
+    );
+    
     final userData = Provider.of<AuthService>(context, listen: false).userData;
     LatLng? userLoc;
     final locData = userData != null ? userData['location'] : null;
@@ -44,16 +59,19 @@ class _CarCardState extends State<CarCard> {
         userLoc = LatLng(lat.toDouble(), lng.toDouble());
       }
     }
-    if (carLoc == null || userLoc == null) {
+    
+    if (userLoc == null) {
       setState(() {
         _distanceText = 'N/A';
         _isLoadingDistance = false;
       });
       return;
     }
+    
     setState(() {
       _isLoadingDistance = true;
     });
+    
     try {
       final distanceMeters = Distance().as(LengthUnit.Meter, userLoc, carLoc);
       final distanceKm = distanceMeters / 1000.0;
@@ -92,87 +110,66 @@ class _CarCardState extends State<CarCard> {
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                 ),
-                child: Image.asset(
-                  widget.car.image,
-                  width: double.infinity,
-                  height: 180,
-                  fit: BoxFit.cover,
-                ),
+                child: widget.car.image.startsWith('http') || widget.car.image.startsWith('https') 
+                  ? Image.network(
+                      widget.car.image,
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: double.infinity,
+                          height: 180,
+                          color: Colors.grey[300],
+                          child: Center(child: Icon(Icons.error)),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: double.infinity,
+                          height: 180,
+                          color: Colors.grey[300],
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      widget.car.image,
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
               ),
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/svg/star-filled.svg',
-                        width: 20,
-                        height: 20,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.amber,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.car.rating.toString(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Rating star section removed as requested
               Positioned(
                 top: 12,
                 right: 12,
-                child: GestureDetector(
-                  onTap: widget.onFavorite,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Row(
-                      children: [
-                        BlinkingStatusIndicator(
-                          isAvailable:
-                              widget.car.availabilityStatus ==
-                              AvailabilityStatus.available,
-                          size: 8,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
+                child: Row(
+                  children: [
+                    BlinkingStatusIndicator(
+                      isAvailable:
                           widget.car.availabilityStatus ==
-                                  AvailabilityStatus.available
-                              ? 'Available'
-                              : 'Unavailable',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color:
-                                widget.car.availabilityStatus ==
-                                        AvailabilityStatus.available
-                                    ? Colors.green
-                                    : Colors.red,
-                          ),
-                        ),
-                      ],
+                          AvailabilityStatus.available,
+                      size: 8,
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.car.availabilityStatus ==
+                              AvailabilityStatus.available
+                          ? 'Available'
+                          : 'Unavailable',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            widget.car.availabilityStatus ==
+                                    AvailabilityStatus.available
+                                ? Colors.green
+                                : Colors.red,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -185,7 +182,7 @@ class _CarCardState extends State<CarCard> {
                 Row(
                   children: [
                     Text(
-                      widget.car.type,
+                      '${widget.car.brand} ${widget.car.model}',
                       style: TextStyle(
                         fontSize: 12,
                         color: theme.colorScheme.onSurface.withOpacity(0.7),

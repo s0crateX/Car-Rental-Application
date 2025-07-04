@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../../config/theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../shared/common_widgets/car_card.dart';
 import '../../../../shared/common_widgets/brand_card.dart';
-import '../../../../shared/data/sample_cars.dart';
-import '../../../../shared/data/sample_brands.dart';
-import '../../../../shared/models/Mock Model/car_model.dart';
+import '../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../shared/models/Final Model/car_brand_model.dart';
 import '../../../../utils/ui/address_utils.dart';
 import '../map_screen.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import 'package:car_rental_app/core/authentication/auth_service.dart';
+import '../../../../core/authentication/auth_service.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../../../core/services/car_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,8 +23,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollToTop = false;
-
-  List<CarModel> get _allCars => SampleCars.getPopularCars();
+  final CarService _carService = CarService();
+  List<CarModel> _allCars = [];
+  bool _isLoading = true;
+  String _selectedLocationOption = 'Current Location';
 
   LatLng? get _userLocation {
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -38,32 +42,39 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
-  List<CarModel> get _nearbyCars {
-    final userLoc = _userLocation;
-    if (userLoc == null) return _allCars;
-    const double maxDistanceKm =
-        20000.0; // Car near to the user location, max 20km
-    final Distance distance = Distance();
-    final carsWithDistance =
-        _allCars
-            .where((car) => car.location != null)
-            .map((car) {
-              final carLoc = car.location!;
-              final dist = distance.as(LengthUnit.Kilometer, userLoc, carLoc);
-              return {'car': car, 'distance': dist};
-            })
-            .where((entry) => (entry['distance'] as double) <= maxDistanceKm)
-            .toList();
-    carsWithDistance.sort(
-      (a, b) => (a['distance'] as double).compareTo(b['distance'] as double),
-    );
-    return carsWithDistance.map((entry) => entry['car'] as CarModel).toList();
+  List<CarModel> _nearbyCars = [];
+
+  Future<void> _loadCarsData() async {
+    setState(() => _isLoading = true);
+    try {
+      final userLoc = _userLocation;
+
+      if (userLoc != null) {
+        // Get cars near user location
+        _nearbyCars = await _carService.getNearbyCars(
+          userLoc,
+          maxDistanceKm: 20000.0,
+        );
+        _allCars = await _carService.getCars();
+      } else {
+        // If no user location, just get all cars
+        _allCars = await _carService.getCars();
+        _nearbyCars = _allCars;
+      }
+    } catch (e) {
+      print('Error loading cars: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   void initState() {
     super.initState();
     _fetchAddressName();
+    _loadCarsData();
     _scrollController.addListener(_scrollListener);
   }
 
@@ -84,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _onRefresh() async {
     await _fetchAddressName();
-    setState(() {}); // Force rebuild to update UI (if needed)
+    await _loadCarsData();
   }
 
   @override
@@ -178,58 +189,192 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoadingAddress = true;
+    });
+
+    try {
+      // Check for location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          // Permissions are denied, show a message
+          setState(() {
+            _addressName = 'Location permissions are denied';
+            _isLoadingAddress = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        // Permissions are permanently denied
+        setState(() {
+          _addressName = 'Location permissions are permanently denied';
+          _isLoadingAddress = false;
+        });
+        return;
+      }
+
+      // Get current position
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Update user location directly in Firestore
+      final authService = Provider.of<AuthService>(context, listen: false);
+      if (authService.user != null) {
+        await authService.updateUserProfileData({
+          'location': {
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+          }
+        });
+      }
+
+      // Get address from coordinates
+      final address = await AddressUtils.getAddressFromLatLng(
+        position.latitude,
+        position.longitude,
+      );
+
+      // Update state
+      setState(() {
+        _addressName = address;
+        _isLoadingAddress = false;
+      });
+
+      // Reload cars based on new location
+      _loadCarsData();
+    } catch (e) {
+      setState(() {
+        _addressName = 'Error getting location: $e';
+        _isLoadingAddress = false;
+      });
+    }
+  }
+
+  void _showLocationBottomSheet(BuildContext context, ThemeData theme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.navy,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Where should we deliver your order?',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildLocationOption(
+                theme,
+                'Use my current location',
+                Icons.my_location,
+              ),
+              const Divider(height: 1),
+              _buildSavedLocationOption(
+                theme,
+                'Address',
+                '${_addressName ?? 'Unknown Location'}',
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // Navigate to add new address screen
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add a new address'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.lightBlue,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLocationHeader(ThemeData theme) {
     final userLoc = _userLocation;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          child: Row(
-            children: [
-              SvgPicture.asset(
-                'assets/svg/location.svg',
-                width: 20,
-                height: 20,
-                colorFilter: ColorFilter.mode(
-                  theme.colorScheme.primary,
-                  BlendMode.srcIn,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _isLoadingAddress
-                  ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: theme.colorScheme.primary,
-                    ),
-                  )
-                  : Flexible(
-                    fit: FlexFit.loose,
-                    child: Text(
-                      _addressName ?? 'Unknown Location',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      maxLines: 2,
-                      softWrap: true,
-                    ),
+          child: GestureDetector(
+            onTap: () {
+              _showLocationBottomSheet(context, theme);
+            },
+            child: Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/svg/location.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    theme.colorScheme.primary,
+                    BlendMode.srcIn,
                   ),
-            ],
+                ),
+                const SizedBox(width: 8),
+                _isLoadingAddress
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.primary,
+                        ),
+                      )
+                    : Flexible(
+                        fit: FlexFit.loose,
+                        child: Text(
+                          _addressName ?? 'Unknown Location',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+              ],
+            ),
           ),
         ),
         GestureDetector(
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder:
-                    (context) => MapScreen(
-                      cars: _nearbyCars,
-                      userLocation: userLoc ?? const LatLng(6.1164, 125.1716),
-                    ),
+                builder: (context) => MapScreen(
+                  cars: _nearbyCars,
+                  userLocation: userLoc ?? const LatLng(6.1164, 125.1716),
+                ),
               ),
             );
           },
@@ -257,8 +402,165 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildLocationOption(ThemeData theme, String option, IconData icon) {
+    final bool isSelected = _selectedLocationOption == option;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedLocationOption = option;
+        });
+        Navigator.pop(context);
+
+        // Handle location change based on selection
+        if (option == 'Use my current location') {
+          _getCurrentLocation();
+        } else if (option == 'Choose Location') {
+          // Navigate to map screen for location selection
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => MapScreen(
+                cars: _nearbyCars,
+                userLocation:
+                    _userLocation ?? const LatLng(6.1164, 125.1716),
+              ),
+            ),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color:
+                    isSelected
+                        ? AppTheme.mediumBlue.withOpacity(0.3)
+                        : AppTheme.navy.withOpacity(0.5),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isSelected ? AppTheme.lightBlue : AppTheme.paleBlue,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              option,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.white,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              Icon(
+                Icons.radio_button_checked,
+                size: 24,
+                color: AppTheme.lightBlue,
+              ),
+            if (!isSelected)
+              Icon(
+                Icons.radio_button_unchecked,
+                size: 24,
+                color: AppTheme.paleBlue,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedLocationOption(
+    ThemeData theme,
+    String title,
+    String subtitle,
+  ) {
+    final bool isSelected = _selectedLocationOption == title;
+    // isSelected is used for Radio value and styling
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedLocationOption = title;
+          Navigator.pop(context);
+          // Use the saved location
+          _addressName = title;
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+        child: Row(
+          children: [
+            Radio<String>(
+              value: title,
+              groupValue: _selectedLocationOption,
+              onChanged: (value) {
+                setState(() {
+                  _selectedLocationOption = value!;
+                  Navigator.pop(context);
+                  _addressName = title;
+                });
+              },
+              activeColor: AppTheme.lightBlue,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.white,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 14, color: AppTheme.paleBlue),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              onPressed: () {
+                // Edit address functionality
+                Navigator.pop(context);
+              },
+              color: Colors.grey[600],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBrandsSection(ThemeData theme) {
-    final brands = SampleBrands.getBrands();
+    // Hard-coded list of popular car brands
+    final brands = [
+      CarBrandModel(
+        name: 'Toyota',
+        logo: 'assets/svg/toyota-logo.svg',
+        count: 12,
+      ),
+      CarBrandModel(name: 'Honda', logo: 'assets/svg/honda-logo.svg', count: 8),
+      CarBrandModel(name: 'BMW', logo: 'assets/svg/bmw-logo.svg', count: 6),
+      CarBrandModel(
+        name: 'Mercedes',
+        logo: 'assets/svg/mercedes-logo.svg',
+        count: 5,
+      ),
+      CarBrandModel(name: 'Ford', logo: 'assets/svg/ford-logo.svg', count: 4),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -311,7 +613,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        if (cars.isEmpty)
+        if (_isLoading)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (cars.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24.0),
             child: Center(

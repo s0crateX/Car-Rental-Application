@@ -1,4 +1,4 @@
-import '../models/Mock Model/car_brand_model.dart';
+import '../../models/Mock Model/car_brand_model.dart';
 
 class SampleBrands {
   static List<CarBrandModel> getBrands() {

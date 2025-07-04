@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/data/sample_bookings.dart';
+import '../../../../shared/data/mock data/sample_bookings.dart';
 import '../../../../shared/models/Mock Model/booking_model.dart'
     show BookingModel, BookingStatus;
 import 'widgets/booking_list_item.dart';
