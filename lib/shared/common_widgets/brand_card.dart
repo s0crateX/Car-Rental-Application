@@ -24,6 +24,42 @@ class _BrandCardState extends State<BrandCard> {
   static const double _scaleFactor = 1.05;
   static const Duration _animationDuration = Duration(milliseconds: 200);
 
+  // Handle brand logo loading with error fallback
+  Widget _buildBrandLogo(String logoPath, bool isSelected) {
+    return Builder(
+      builder: (context) {
+        try {
+          return SvgPicture.asset(
+            logoPath,
+            width: 28,
+            height: 28,
+            colorFilter: isSelected
+                ? const ColorFilter.mode(
+                    AppTheme.white,
+                    BlendMode.srcIn,
+                  )
+                : null,
+            placeholderBuilder: (BuildContext context) => _buildFallbackLogo(isSelected),
+          );
+        } catch (e) {
+          // Return fallback for any exception
+          return _buildFallbackLogo(isSelected);
+        }
+      },
+    );
+  }
+
+  // Fallback icon when SVG can't be loaded
+  Widget _buildFallbackLogo(bool isSelected) {
+    return Icon(
+      Icons.directions_car_rounded,
+      size: 28,
+      color: isSelected 
+          ? AppTheme.white 
+          : Theme.of(context).colorScheme.primary,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -88,18 +124,7 @@ class _BrandCardState extends State<BrandCard> {
                           ),
                       ],
                     ),
-                    child: SvgPicture.asset(
-                      widget.brand.logo,
-                      width: 28, // <-- Adjust logo size here
-                      height: 28,
-                      colorFilter:
-                          widget.isSelected
-                              ? const ColorFilter.mode(
-                                AppTheme.white,
-                                BlendMode.srcIn,
-                              )
-                              : null,
-                    ),
+                    child: _buildBrandLogo(widget.brand.logo, widget.isSelected),
                   ),
                   const SizedBox(
                     height: 6,

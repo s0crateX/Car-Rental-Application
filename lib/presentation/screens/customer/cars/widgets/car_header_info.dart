@@ -152,7 +152,7 @@ class _CarHeaderInfoState extends State<CarHeaderInfo> {
                   MainAxisSize.min, // Important: minimize column height
               children: [
                 Text(
-                  widget.car.name,
+                  widget.car.type,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontSize: 28, // Slightly smaller font
                   ),

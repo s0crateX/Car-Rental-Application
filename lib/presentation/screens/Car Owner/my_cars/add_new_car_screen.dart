@@ -17,7 +17,9 @@ import 'add car widgts/pricing_section_widget.dart';
 import 'add car widgts/extra_charges_section_widget.dart';
 import 'add car widgts/description_section_widget.dart';
 import 'add car widgts/features_section_widget.dart';
+import 'add car widgts/rental_requirements_section_widget.dart';
 import 'add car widgts/car_images_section_widget.dart';
+import '../../../../shared/models/Final Model/Firebase_car_model.dart';
 
 class AddNewCarScreen extends StatefulWidget {
   const AddNewCarScreen({super.key});
@@ -33,7 +35,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
   late Animation<double> _fadeAnimation;
 
   // Form controllers
-  final _nameController = TextEditingController();
+  final _typeController = TextEditingController();
   final _brandController = TextEditingController();
   final _modelController = TextEditingController();
   final _yearController = TextEditingController();
@@ -48,6 +50,13 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _featureNameController = TextEditingController();
   final List<String> _featuresList = [];
+
+  // Rental Requirements
+  final TextEditingController _requirementController = TextEditingController();
+  final List<String> _rentalRequirementsList = [
+    '21+ years old',
+    'Verified Profile',
+  ];
 
   // Location fields
   final TextEditingController _addressController = TextEditingController();
@@ -68,24 +77,46 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
     });
   }
 
+  void _addRequirement() {
+    final requirement = _requirementController.text.trim();
+    if (requirement.isEmpty) return;
+    setState(() {
+      _rentalRequirementsList.add(requirement);
+      _requirementController.clear();
+    });
+  }
+
+  void _removeRequirement(String requirement) {
+    setState(() {
+      _rentalRequirementsList.remove(requirement);
+    });
+  }
+
+  void _addSuggestedRequirement(String requirement) {
+    if (_rentalRequirementsList.contains(requirement)) return;
+    setState(() {
+      _rentalRequirementsList.add(requirement);
+    });
+  }
+
   String _transmissionType = 'Automatic';
-  String _fuelType = 'Petrol';
+  String _fuelType = 'Gasoline';
 
   // Extra charges fields
   final TextEditingController _extraChargeNameController =
       TextEditingController();
-  final TextEditingController _extraChargePriceController =
+  final TextEditingController _extraChargeAmountController =
       TextEditingController();
   final List<Map<String, dynamic>> _extraCharges = [];
 
   void _addExtraCharge() {
     final name = _extraChargeNameController.text.trim();
-    final price = _extraChargePriceController.text.trim();
-    if (name.isEmpty || price.isEmpty) return;
+    final amount = _extraChargeAmountController.text.trim();
+    if (name.isEmpty || amount.isEmpty) return;
     setState(() {
-      _extraCharges.add({'name': name, 'price': price});
+      _extraCharges.add({'name': name, 'amount': amount});
       _extraChargeNameController.clear();
-      _extraChargePriceController.clear();
+      _extraChargeAmountController.clear();
     });
   }
 
@@ -125,7 +156,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
   @override
   void dispose() {
     _animationController.dispose();
-    _nameController.dispose();
+    _typeController.dispose();
     _brandController.dispose();
     _modelController.dispose();
     _yearController.dispose();
@@ -139,8 +170,10 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
     _featuresController.dispose();
     _descriptionController.dispose();
     _featureNameController.dispose();
+    _requirementController.dispose();
     _extraChargeNameController.dispose();
-    _extraChargePriceController.dispose();
+    _extraChargeAmountController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -236,37 +269,50 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
       final userFullName = userData != null ? userData['fullName'] ?? '' : '';
       final userDocumentId = authService.user?.uid ?? '';
 
-      // Prepare car data
-      final Map<String, dynamic> carData = {
-        'carId': carId,
-        'name': _nameController.text.trim(),
-        'brand': _brandController.text.trim(),
-        'model': _modelController.text.trim(),
-        'year': _yearController.text.trim(),
-        'price6h': _price6hController.text.trim(),
-        'price12h': _price12hController.text.trim(),
-        'price1d': _price1dController.text.trim(),
-        'price1w': _price1wController.text.trim(),
-        'price1m': _price1mController.text.trim(),
-        'seats': _seatsController.text.trim(),
-        'luggage': _luggageController.text.trim(),
-        'features': _featuresList,
-        'description': _descriptionController.text.trim(),
-        'transmissionType': _transmissionType,
-        'fuelType': _fuelType,
-        'extraCharges': _extraCharges,
-        'address': _addressController.text.trim(),
-        'location': _selectedLocation != null
-            ? {'lat': _selectedLocation!.latitude, 'lng': _selectedLocation!.longitude}
-            : null,
-        'carImageGallery': imageUrls,
-        'carOwnerFullName': userFullName,
-        'carOwnerDocumentId': userDocumentId,
-        'createdAt': FieldValue.serverTimestamp(),
-        'availabilityStatus': 'available',
-      };
+      // Create CarModel instance
+      final newCar = CarModel(
+        id: carId,
+        type: _typeController.text.trim(),
+        brand: _brandController.text.trim(),
+        model: _modelController.text.trim(),
+        year: _yearController.text.trim(),
+        image: imageUrls.isNotEmpty ? imageUrls.first : '',
+        imageGallery: imageUrls,
+        price: double.tryParse(_price1dController.text.trim()) ?? 0.0,
+        pricePeriod: '/day',
+        price6h: _price6hController.text.trim(),
+        price12h: _price12hController.text.trim(),
+        price1d: _price1dController.text.trim(),
+        price1w: _price1wController.text.trim(),
+        price1m: _price1mController.text.trim(),
+        seatsCount: _seatsController.text.trim(),
+        luggageCapacity: _luggageController.text.trim(),
+        transmissionType: _transmissionType,
+        fuelType: _fuelType,
+        description: _descriptionController.text.trim(),
+        features: _featuresList,
+        rentalRequirements: _rentalRequirementsList,
+        extraCharges: _extraCharges,
+        address: _addressController.text.trim(),
+        location:
+            _selectedLocation != null
+                ? {
+                  'latitude': _selectedLocation!.latitude,
+                  'longitude': _selectedLocation!.longitude,
+                }
+                : {},
+        availabilityStatus: AvailabilityStatus.available,
+        carOwnerDocumentId: userDocumentId,
+        carOwnerFullName: userFullName,
+        createdAt:
+            DateTime.now(), // Placeholder, will be replaced by server timestamp
+      );
 
-      // Save to Firestore
+      final carData = newCar.toMap();
+      carData['createdAt'] = FieldValue.serverTimestamp();
+      carData['carId'] = carId;
+
+      // Set car data in Firestore
       await carDocRef.set(carData);
 
       if (mounted) {
@@ -326,10 +372,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
             'assets/svg/arrow-left.svg',
             width: 24,
             height: 24,
-            colorFilter: ColorFilter.mode(
-              AppTheme.lightBlue,
-              BlendMode.srcIn,
-            ),
+            colorFilter: ColorFilter.mode(AppTheme.lightBlue, BlendMode.srcIn),
           ),
           onPressed: () => Navigator.pop(context),
           padding: const EdgeInsets.all(12),
@@ -356,10 +399,10 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
                     icon: Icons.directions_car,
                     children: [
                       CarDetailsSectionWidget(
-                        nameController: _nameController,
                         brandController: _brandController,
                         modelController: _modelController,
                         yearController: _yearController,
+                        typeController: _typeController,
                       ),
                     ],
                   ),
@@ -447,7 +490,8 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
                     children: [
                       ExtraChargesSectionWidget(
                         extraChargeNameController: _extraChargeNameController,
-                        extraChargePriceController: _extraChargePriceController,
+                        extraChargeAmountController:
+                            _extraChargeAmountController,
                         extraCharges: _extraCharges,
                         onAddExtraCharge: _addExtraCharge,
                         onRemoveExtraCharge: _removeExtraCharge,
@@ -480,6 +524,23 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
                         featuresList: _featuresList,
                         onAddFeature: _addFeature,
                         onRemoveFeature: _removeFeature,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Rental Requirements Section
+                  FormSectionWidget(
+                    title: 'Rental Requirements',
+                    icon: Icons.rule,
+                    children: [
+                      RentalRequirementsSectionWidget(
+                        requirementController: _requirementController,
+                        requirementsList: _rentalRequirementsList,
+                        onAddRequirement: _addRequirement,
+                        onRemoveRequirement: _removeRequirement,
+                        onAddSuggestedRequirement: _addSuggestedRequirement,
                       ),
                     ],
                   ),

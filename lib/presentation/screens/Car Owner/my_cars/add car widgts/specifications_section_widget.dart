@@ -40,7 +40,7 @@ class SpecificationsSectionWidget extends StatelessWidget {
               child: _buildDropdown(
                 label: 'Fuel Type',
                 value: fuelType,
-                items: const ['Petrol', 'Diesel', 'Electric', 'Hybrid'],
+                items: const ['Gasoline', 'Unleaded', 'Diesel', 'Electric', 'Hybrid'],
                 icon: 'assets/svg/gas-station.svg',
                 onChanged: onFuelChanged,
               ),

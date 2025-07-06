@@ -14,7 +14,7 @@ class DescriptionSectionWidget extends StatelessWidget {
       decoration: InputDecoration(
         labelText: 'Description',
         hintText: 'Describe your car highlights and special features...',
-        icon: const Icon(Icons.description_outlined, color: AppTheme.lightBlue),
+
         filled: true,
         fillColor: AppTheme.darkNavy,
         border: OutlineInputBorder(

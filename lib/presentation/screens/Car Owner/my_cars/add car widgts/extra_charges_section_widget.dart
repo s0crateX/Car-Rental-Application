@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
 
 class ExtraChargesSectionWidget extends StatelessWidget {
   final TextEditingController extraChargeNameController;
-  final TextEditingController extraChargePriceController;
+  final TextEditingController extraChargeAmountController;
   final List<Map<String, dynamic>> extraCharges;
   final VoidCallback onAddExtraCharge;
   final Function(Map<String, dynamic>) onRemoveExtraCharge;
   const ExtraChargesSectionWidget({
     super.key,
     required this.extraChargeNameController,
-    required this.extraChargePriceController,
+    required this.extraChargeAmountController,
     required this.extraCharges,
     required this.onAddExtraCharge,
     required this.onRemoveExtraCharge,
@@ -29,87 +30,78 @@ class ExtraChargesSectionWidget extends StatelessWidget {
 
   Widget _buildExtraChargesInput() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.darkNavy,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.mediumBlue.withOpacity(0.2)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: extraChargeNameController,
-                  style: const TextStyle(color: AppTheme.white),
-                  decoration: InputDecoration(
-                    labelText: 'Charge Name',
-                    hintText: 'e.g., Insurance',
-                    prefixIcon: const Icon(
-                      Icons.label_outline,
-                      size: 18,
-                      color: AppTheme.lightBlue,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.navy,
-                    labelStyle: TextStyle(
-                      color: AppTheme.lightBlue.withOpacity(0.8),
-                    ),
-                    hintStyle: TextStyle(
-                      color: AppTheme.paleBlue.withOpacity(0.6),
-                    ),
-                  ),
+          Expanded(
+            flex: 3,
+            child: TextFormField(
+              controller: extraChargeNameController,
+              style: const TextStyle(color: AppTheme.white),
+              decoration: InputDecoration(
+                labelText: 'Charge Name',
+                hintText: 'e.g., Driver',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 1,
-                child: TextFormField(
-                  controller: extraChargePriceController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: AppTheme.white),
-                  decoration: InputDecoration(
-                    labelText: 'Price',
-                    prefixText: '₱ ',
-                    prefixStyle: const TextStyle(
-                      color: AppTheme.lightBlue,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.navy,
-                    labelStyle: TextStyle(
-                      color: AppTheme.lightBlue.withOpacity(0.8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onAddExtraCharge,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Extra Charge'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.lightBlue,
-                foregroundColor: AppTheme.darkNavy,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: AppTheme.navy,
+                labelStyle: TextStyle(
+                  color: AppTheme.lightBlue.withOpacity(0.8),
+                ),
+                hintStyle: TextStyle(color: AppTheme.paleBlue.withOpacity(0.6)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: TextFormField(
+              controller: extraChargeAmountController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: AppTheme.white),
+              decoration: InputDecoration(
+                labelText: 'Amount',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: AppTheme.navy,
+                labelStyle: TextStyle(
+                  color: AppTheme.lightBlue.withOpacity(0.8),
                 ),
               ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.lightBlue,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: IconButton(
+              onPressed: onAddExtraCharge,
+              icon: const Icon(Icons.add, color: AppTheme.darkNavy),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
             ),
           ),
         ],
@@ -120,20 +112,21 @@ class ExtraChargesSectionWidget extends StatelessWidget {
   Widget _buildExtraChargesList() {
     if (extraCharges.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppTheme.darkNavy.withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppTheme.mediumBlue.withOpacity(0.2)),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.info_outline,
               color: AppTheme.paleBlue.withOpacity(0.7),
-              size: 20,
+              size: 18,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Text(
               'No extra charges added yet',
               style: TextStyle(
@@ -147,55 +140,51 @@ class ExtraChargesSectionWidget extends StatelessWidget {
     }
 
     return Column(
-      children: extraCharges
-          .map(
-            (charge) => Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.darkNavy,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.mediumBlue.withOpacity(0.2),
-                ),
-              ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
+      children:
+          extraCharges
+              .map(
+                (charge) => Container(
+                  margin: const EdgeInsets.only(bottom: 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.lightBlue.withOpacity(0.2),
+                    color: AppTheme.darkNavy,
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.mediumBlue.withOpacity(0.2),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.monetization_on,
-                    color: AppTheme.lightBlue,
-                    size: 16,
+                  child: ListTile(
+                    dense: true,
+                    leading: SvgPicture.asset(
+                      'assets/svg/peso.svg',
+                      color: AppTheme.lightBlue,
+                      width: 18,
+                      height: 18,
+                    ),
+                    title: Text(
+                      charge['name'],
+                      style: const TextStyle(
+                        color: AppTheme.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    subtitle: Text(
+                      charge['amount'],
+                      style: const TextStyle(
+                        color: AppTheme.lightBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(
+                        Icons.remove_circle_outline,
+                        color: Colors.redAccent,
+                      ),
+                      onPressed: () => onRemoveExtraCharge(charge),
+                    ),
                   ),
                 ),
-                title: Text(
-                  charge['name'],
-                  style: const TextStyle(
-                    color: AppTheme.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                subtitle: Text(
-                  '₱${charge['price']}',
-                  style: const TextStyle(
-                    color: AppTheme.lightBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.redAccent,
-                  ),
-                  onPressed: () => onRemoveExtraCharge(charge),
-                ),
-              ),
-            ),
-          )
-          .toList(),
+              )
+              .toList(),
     );
   }
 }

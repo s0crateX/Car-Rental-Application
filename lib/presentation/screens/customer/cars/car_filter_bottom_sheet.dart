@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'package:car_rental_app/shared/data/car_types.dart';
+
 class CarFilter {
   String? carType;
   RangeValues? priceRange;
@@ -36,11 +38,12 @@ class CarFilterBottomSheet extends StatefulWidget {
 class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
   late CarFilter _filter;
 
-  final List<String> carTypes = ['All', 'Sedan', 'SUV', 'Hatchback', 'Luxury'];
+  final List<String> carTypes = ['All', ...CarTypes.allTypes.toSet().toList()];
   final List<String> transmissions = ['All', 'Automatic', 'Manual'];
   final List<String> fuelTypes = [
     'All',
-    'Petrol',
+    'Gasoline',
+    'Unleaded',
     'Diesel',
     'Electric',
     'Hybrid',
@@ -52,7 +55,7 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
     'Newest',
   ];
 
-  RangeValues priceRange = const RangeValues(10, 500);
+  RangeValues priceRange = const RangeValues(10, 10000);
 
   double _distanceKm = 20;
 
@@ -61,7 +64,8 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
     super.initState();
     _filter = CarFilter(
       carType: widget.initialFilter.carType ?? 'All',
-      priceRange: widget.initialFilter.priceRange ?? const RangeValues(10, 500),
+      priceRange:
+          widget.initialFilter.priceRange ?? const RangeValues(10, 10000),
       transmission: widget.initialFilter.transmission ?? 'All',
       fuelType: widget.initialFilter.fuelType ?? 'All',
       sortBy: widget.initialFilter.sortBy ?? 'Default',
@@ -74,21 +78,21 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -125,6 +129,7 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
                 ],
               ),
               const SizedBox(height: 24),
+
               _buildDropdown(
                 'Car Type',
                 carTypes,
@@ -145,49 +150,61 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Price Range (₱${priceRange.start.toInt()} - ₱${priceRange.end.toInt()})',
+                    'Price Range',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  const Spacer(),
+                  Text(
+                    '₱${priceRange.start.round()} - ₱${priceRange.end.round()}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                 ],
               ),
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withOpacity(0.2),
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: theme.colorScheme.primary,
+                  inactiveTrackColor: theme.colorScheme.primary.withOpacity(
+                    0.2,
                   ),
+                  thumbColor: theme.colorScheme.primary,
+                  overlayColor: theme.colorScheme.primary.withOpacity(0.2),
+                  valueIndicatorColor: theme.colorScheme.primary,
+                  valueIndicatorTextStyle: const TextStyle(color: Colors.white),
                 ),
                 child: RangeSlider(
-                  values: priceRange,
-                  min: 0,
-                  max: 1000,
-                  divisions: 20,
+                  min: 10,
+                  max: 10000,
+                  divisions: 49,
                   labels: RangeLabels(
-                    '₱${priceRange.start.toInt()}',
-                    '₱${priceRange.end.toInt()}',
+                    '₱${priceRange.start.round()}',
+                    '₱${priceRange.end.round()}',
                   ),
+                  values: priceRange,
                   onChanged: (values) {
                     setState(() {
                       priceRange = values;
                       _filter.priceRange = values;
                     });
                   },
-                  activeColor: theme.colorScheme.primary,
-                  inactiveColor: theme.colorScheme.primary.withOpacity(0.2),
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Icon(Icons.place, color: theme.colorScheme.secondary),
+                  SvgPicture.asset(
+                    'assets/svg/location.svg',
+                    height: 20,
+                    width: 20,
+                    colorFilter: ColorFilter.mode(
+                      theme.colorScheme.secondary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Show cars within ${_distanceKm.round()} km',
@@ -198,18 +215,20 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
                 ],
               ),
               Slider(
-                value: _distanceKm,
                 min: 1,
-                max: 2000, // update this if needed.default is 100km
-                divisions: 99, // update this if needed.default is 99
+                max: 100,
+                divisions: 99,
                 label: '${_distanceKm.round()} km',
-                onChanged:
-                    (v) => setState(() {
-                      _distanceKm = v;
-                      _filter.maxDistance = v;
-                    }),
+                value: _distanceKm,
+                onChanged: (value) {
+                  setState(() {
+                    _distanceKm = value;
+                    _filter.maxDistance = value;
+                  });
+                },
               ),
               const SizedBox(height: 16),
+
               _buildDropdown(
                 'Transmission',
                 transmissions,
@@ -230,24 +249,14 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
                 _filter.sortBy!,
                 (val) => setState(() => _filter.sortBy = val),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        setState(() {
-                          _filter = CarFilter(
-                            carType: 'All',
-                            priceRange: const RangeValues(10, 500),
-                            transmission: 'All',
-                            fuelType: 'All',
-                            sortBy: 'Default',
-                            maxDistance: 20,
-                          );
-                          priceRange = _filter.priceRange!;
-                          _distanceKm = _filter.maxDistance!;
-                        });
+                        // Pop with a new, empty CarFilter object to signify a reset.
+                        Navigator.pop(context, CarFilter());
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -379,18 +388,13 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
             border: Border.all(
               color: theme.colorScheme.primary.withOpacity(0.2),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
+              elevation: 0,
+              dropdownColor: theme.colorScheme.surface,
               icon: SvgPicture.asset(
                 'assets/svg/chevron-compact-down.svg',
                 height: 18,

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/authentication/auth_service.dart';
 import '../../../../shared/common_widgets/car_card_compact.dart';
 // Ensure CarCardCompact uses Firebase_car_model.dart, not mock model
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'car_details_screen.dart';
+import 'car_filter_bottom_sheet.dart';
 
 class CarsScreen extends StatefulWidget {
   const CarsScreen({super.key});
@@ -19,7 +23,9 @@ class _CarsScreenState extends State<CarsScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _showScrollToTop = false;
   String _searchQuery = '';
+  CarFilter _currentFilter = CarFilter();
 
+    @override
   @override
   void initState() {
     super.initState();
@@ -42,8 +48,51 @@ class _CarsScreenState extends State<CarsScreen> {
     super.dispose();
   }
 
-  Future<void> _onRefresh() async {
+    Future<void> _onRefresh() async {
     setState(() {}); // Triggers rebuild and re-sorts cars
+  }
+
+
+
+  Position? get _userLocation {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userData = authService.userData;
+    final locData = userData != null ? userData['location'] : null;
+    if (locData != null && locData is Map) {
+      final lat = locData['latitude'];
+      final lng = locData['longitude'];
+      if (lat != null && lng != null) {
+        return Position(
+          latitude: lat.toDouble(),
+          longitude: lng.toDouble(),
+          timestamp: DateTime.now(),
+          accuracy: 0,
+          altitude: 0,
+          heading: 0,
+          speed: 0,
+          speedAccuracy: 0,
+          altitudeAccuracy: 0.0,
+          headingAccuracy: 0.0,
+        );
+      }
+    }
+    return null;
+  }
+
+  double _calculateDistance(CarModel car) {
+    final userLoc = _userLocation;
+    if (userLoc == null ||
+        car.location.isEmpty ||
+        car.location['latitude'] == null ||
+        car.location['longitude'] == null) {
+      return double.infinity;
+    }
+    return Geolocator.distanceBetween(
+      userLoc.latitude,
+      userLoc.longitude,
+      car.location['latitude']!,
+      car.location['longitude']!,
+    );
   }
 
   @override
@@ -69,8 +118,7 @@ class _CarsScreenState extends State<CarsScreen> {
                       _buildHeader(theme),
                       const SizedBox(height: 16),
                       _buildSearchBar(theme),
-                      const SizedBox(height: 24),
-                      _buildCategoriesSection(theme),
+
                       const SizedBox(height: 24),
                       _buildAllCarsSection(theme),
                     ],
@@ -168,108 +216,60 @@ class _CarsScreenState extends State<CarsScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: _showFilterBottomSheet,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SvgPicture.asset(
+                'assets/svg/filter.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(
+                  theme.colorScheme.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoriesSection(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Categories',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 80,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: 4,
-            separatorBuilder: (context, index) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              // Hardcoded category info for now
-              const icons = [
-                'assets/svg/checks.svg',
-                'assets/svg/sedan.svg',
-                'assets/svg/suv.svg',
-                'assets/svg/hatchback.svg',
-              ];
-              const names = ['All', 'Sedan', 'SUV', 'Hatchback'];
-              return Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withOpacity(0.1),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.shadowColor.withOpacity(0.04),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: SvgPicture.asset(
-                      icons[index],
-                      width: 32,
-                      height: 32,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    names[index],
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
+  void _showFilterBottomSheet() async {
+    final result = await showModalBottomSheet<CarFilter>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CarFilterBottomSheet(
+        initialFilter: _currentFilter,
+      ),
     );
+
+    if (result != null) {
+      setState(() {
+        _currentFilter = result;
+      });
+    }
   }
 
   Widget _buildAllCarsSection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'All Cars',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                'View All',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-          ],
+        Text(
+          'All Cars',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 16),
         FutureBuilder<QuerySnapshot>(
@@ -285,18 +285,71 @@ class _CarsScreenState extends State<CarsScreen> {
             if (docs.isEmpty) {
               return Center(child: Text('No cars available'));
             }
-            final cars =
+            var cars =
                 docs.map((doc) => CarModel.fromFirestore(doc)).toList();
-            final filteredCars =
-                _searchQuery.isEmpty
-                    ? cars
-                    : cars
-                        .where(
-                          (car) => car.name.toLowerCase().contains(
-                            _searchQuery.toLowerCase(),
-                          ),
-                        )
-                        .toList();
+
+            // Apply search query
+            if (_searchQuery.isNotEmpty) {
+              cars = cars
+                  .where((car) =>
+                      (car.brand.toLowerCase() + " " + car.model.toLowerCase())
+                          .contains(_searchQuery.toLowerCase()) ||
+                      car.type
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()))
+                  .toList();
+            }
+
+            // Apply filters from bottom sheet
+            // Car Type
+            if (_currentFilter.carType != null &&
+                _currentFilter.carType != 'All') {
+              cars = cars
+                  .where((car) => car.type == _currentFilter.carType)
+                  .toList();
+            }
+
+            // Price Range
+            if (_currentFilter.priceRange != null) {
+              cars = cars
+                  .where((car) =>
+                      car.price >= _currentFilter.priceRange!.start &&
+                      car.price <= _currentFilter.priceRange!.end)
+                  .toList();
+            }
+
+            // Transmission
+            if (_currentFilter.transmission != null &&
+                _currentFilter.transmission != 'All') {
+              cars = cars
+                  .where((car) => car.transmissionType == _currentFilter.transmission)
+                  .toList();
+            }
+
+            // Fuel Type
+            if (_currentFilter.fuelType != null &&
+                _currentFilter.fuelType != 'All') {
+              cars = cars
+                  .where((car) => car.fuelType == _currentFilter.fuelType)
+                  .toList();
+            }
+
+            // Apply sorting
+            if (_currentFilter.sortBy != null) {
+              switch (_currentFilter.sortBy) {
+                case 'Price: Low to High':
+                  cars.sort((a, b) => a.price.compareTo(b.price));
+                  break;
+                case 'Price: High to Low':
+                  cars.sort((a, b) => b.price.compareTo(a.price));
+                  break;
+              }
+            } else {
+              // Default sort by distance
+              cars.sort((a, b) =>
+                  _calculateDistance(a).compareTo(_calculateDistance(b)));
+            }
+            final filteredCars = cars;
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -309,8 +362,10 @@ class _CarsScreenState extends State<CarsScreen> {
               itemCount: filteredCars.length,
               itemBuilder: (context, index) {
                 final car = filteredCars[index];
+                final distance = _calculateDistance(car);
                 return CarCardCompact(
                   car: car,
+                  distanceInMeters: distance,
                   onBookNow: () {
                     showModalBottomSheet(
                       context: context,

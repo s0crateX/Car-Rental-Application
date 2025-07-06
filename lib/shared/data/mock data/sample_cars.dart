@@ -50,7 +50,7 @@ class SampleCars {
           'assets/images/cars/hyundai_verna.png',
         ],
         type: 'Sedan',
-        name: 'Hyundai Verna',
+
         brand: 'Hyundai',
         model: 'Verna',
         year: '2023',
@@ -115,7 +115,7 @@ class SampleCars {
           'assets/images/cars/hyundai_verna.png',
         ],
         type: 'MPV',
-        name: 'Toyota Innova',
+
         brand: 'Toyota',
         model: 'Innova',
         year: '2023',
@@ -176,7 +176,7 @@ class SampleCars {
           'assets/images/cars/hyundai_verna.png',
         ],
         type: 'Sedan',
-        name: 'Honda City',
+
         brand: 'Honda',
         model: 'City',
         year: '2023',

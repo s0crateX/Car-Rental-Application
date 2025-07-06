@@ -51,14 +51,14 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
 
   void _editCar(CarModel car) {
     // Navigate to an edit screen, similar to add car screen but pre-filled
-    print('Editing car: ${car.name}');
+    print('Editing car: ${car.type}');
     // You can pass the car data to the edit screen
     // Navigator.pushNamed(context, AppRoutes.editCar, arguments: car);
   }
 
   void _viewCarDetails(CarModel car) {
     // Navigate to car details screen
-    print('Viewing car details: ${car.name}');
+    print('Viewing car details: ${car.type}');
     // Navigator.pushNamed(context, AppRoutes.carDetails, arguments: car);
   }
 
@@ -83,7 +83,7 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
               ],
             ),
             content: Text(
-              'Are you sure you want to delete "${car.name}"? This action cannot be undone.',
+              'Are you sure you want to delete "${car.type}"? This action cannot be undone.',
               style: TextStyle(color: AppTheme.paleBlue),
             ),
             actions: [
@@ -119,7 +119,7 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${car.name} deleted successfully'),
+            content: Text('${car.type} deleted successfully'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
@@ -176,20 +176,6 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
           Text(
             'Add your first car to get started',
             style: TextStyle(fontSize: 16, color: AppTheme.paleBlue),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _navigateToAddCar,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Car'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.lightBlue,
-              foregroundColor: AppTheme.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
           ),
         ],
       ),
@@ -291,7 +277,7 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
                                   try {
                                     final car = CarModel.fromFirestore(doc);
                                     print(
-                                      'Car: ${car.name}, Owner ID: "${car.carOwnerDocumentId}", Doc ID: ${doc.id}',
+                                      'Car: ${car.type}, Owner ID: "${car.carOwnerDocumentId}", Doc ID: ${doc.id}',
                                     );
                                     return car;
                                   } catch (e) {

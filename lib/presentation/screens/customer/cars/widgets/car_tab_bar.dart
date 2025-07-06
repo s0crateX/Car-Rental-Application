@@ -29,7 +29,6 @@ class CarTabBar extends StatelessWidget {
         indicatorColor: Theme.of(context).primaryColor,
         tabs: const [
           Tab(text: 'Details'),
-          Tab(text: 'Features'),
           Tab(text: 'Reviews'),
         ],
       ),

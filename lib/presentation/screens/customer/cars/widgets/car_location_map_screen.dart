@@ -198,7 +198,7 @@ class _CarLocationMapScreenState extends State<CarLocationMapScreen> {
           child: _MapMarker(
             carImage: widget.car.image,
             icon: 'assets/svg/car.svg',
-            label: widget.car.name,
+            label: widget.car.type,
             color: Colors.blue,
           ),
         ),

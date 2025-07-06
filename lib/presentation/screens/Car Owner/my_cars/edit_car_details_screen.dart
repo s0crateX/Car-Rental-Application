@@ -3,6 +3,7 @@ import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car w
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/features_section.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/price_section.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/add car widgts/location_section_widget.dart';
+import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/add car widgts/rental_requirements_section_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,7 +23,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   final _scrollController = ScrollController();
 
   // Controllers
-  late TextEditingController _nameController;
+  late TextEditingController _typeController;
   late TextEditingController _brandController;
   late TextEditingController _modelController;
   late TextEditingController _yearController;
@@ -40,12 +41,36 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   late TextEditingController _carOwnerFullNameController;
   late TextEditingController _latController;
   late TextEditingController _lngController;
+  late TextEditingController _rentalRequirementController;
 
   List<String> _features = [];
   List<Map<String, dynamic>> _extraCharges = [];
   List<String> _carImageGallery = [];
+  List<String> _rentalRequirements = [];
   bool _isLoading = false;
   int _currentStep = 0;
+
+  void _addRequirement() {
+    if (_rentalRequirementController.text.isNotEmpty) {
+      setState(() {
+        _rentalRequirements.add(_rentalRequirementController.text);
+        _rentalRequirementController.clear();
+      });
+    }
+  }
+
+  void _removeRequirement(String requirement) {
+    setState(() {
+      _rentalRequirements.remove(requirement);
+    });
+  }
+
+  void _addSuggestedRequirement(String requirement) {
+    if (_rentalRequirements.contains(requirement)) return;
+    setState(() {
+      _rentalRequirements.add(requirement);
+    });
+  }
 
   @override
   void initState() {
@@ -54,7 +79,12 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   }
 
   void _initializeControllers() {
-    _nameController = TextEditingController(text: widget.car.name);
+    _features = List<String>.from(widget.car.features);
+    _extraCharges = List<Map<String, dynamic>>.from(widget.car.extraCharges);
+    _carImageGallery = List<String>.from(widget.car.imageGallery);
+    _rentalRequirements = List<String>.from(widget.car.rentalRequirements);
+
+    _typeController = TextEditingController(text: widget.car.type);
     _brandController = TextEditingController(text: widget.car.brand);
     _modelController = TextEditingController(text: widget.car.model);
     _yearController = TextEditingController(text: widget.car.year);
@@ -71,14 +101,12 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
       text: widget.car.description,
     );
     _addressController = TextEditingController(text: widget.car.address ?? '');
-    _fuelTypeController = TextEditingController(
-      text: widget.car.fuelType.toString() ?? '',
-    );
+    _fuelTypeController = TextEditingController(text: widget.car.fuelType);
     _transmissionTypeController = TextEditingController(
-      text: widget.car.transmissionType.toString() ?? '',
+      text: widget.car.transmissionType,
     );
     _carOwnerFullNameController = TextEditingController(
-      text: widget.car.carOwnerFullName.toString() ?? '',
+      text: widget.car.carOwnerFullName,
     );
     _latController = TextEditingController(
       text: widget.car.location['lat']?.toString() ?? '',
@@ -86,11 +114,15 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
     _lngController = TextEditingController(
       text: widget.car.location['lng']?.toString() ?? '',
     );
+    _rentalRequirementController = TextEditingController();
     _features = List<String>.from(widget.car.features ?? []);
     _extraCharges = List<Map<String, dynamic>>.from(
       widget.car.extraCharges ?? [],
     );
     _carImageGallery = List<String>.from(widget.car.imageGallery);
+    _rentalRequirements = List<String>.from(
+      widget.car.rentalRequirements ?? [],
+    );
   }
 
   @override
@@ -101,7 +133,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   }
 
   void _disposeControllers() {
-    _nameController.dispose();
+    _typeController.dispose();
     _brandController.dispose();
     _modelController.dispose();
     _yearController.dispose();
@@ -119,6 +151,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
     _carOwnerFullNameController.dispose();
     _latController.dispose();
     _lngController.dispose();
+    _rentalRequirementController.dispose();
   }
 
   Future<void> _updateCar() async {
@@ -134,7 +167,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
           .collection('Cars')
           .doc(widget.car.id)
           .update({
-            'name': _nameController.text.trim(),
+            'type': _typeController.text.trim(),
             'brand': _brandController.text.trim(),
             'model': _modelController.text.trim(),
             'year': _yearController.text.trim(),
@@ -159,8 +192,9 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
                 _extraCharges
                     .where((ec) => ec['name']?.isNotEmpty == true)
                     .toList(),
-            'carImageGallery':
+            'imageGallery':
                 _carImageGallery.where((img) => img.isNotEmpty).toList(),
+            'rentalRequirements': _rentalRequirements,
           });
 
       if (mounted) {
@@ -207,6 +241,42 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
+    );
+  }
+
+  Future<void> _showConfirmationDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.darkNavy,
+          title: const Text('Confirm Save', style: TextStyle(color: Colors.white)),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to save these changes?',
+                    style: TextStyle(color: Colors.white70)),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.lightBlue)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save', style: TextStyle(color: AppTheme.lightBlue)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _updateCar();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -286,7 +356,14 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   }
 
   Widget _buildProgressIndicator() {
-    const steps = ['Basic Info', 'Images', 'Pricing', 'Features', 'Location'];
+    const steps = [
+      'Basic Info',
+      'Images',
+      'Pricing',
+      'Features',
+      'Location',
+      'Rental Requirements',
+    ];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -325,7 +402,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
     switch (_currentStep) {
       case 0:
         return BasicInfoSection(
-          nameController: _nameController,
+          typeController: _typeController,
           brandController: _brandController,
           modelController: _modelController,
           yearController: _yearController,
@@ -368,6 +445,14 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
           },
           initialLocation: null, // or provide your current LatLng if available
         );
+      case 5:
+        return RentalRequirementsSectionWidget(
+          requirementController: _rentalRequirementController,
+          requirementsList: _rentalRequirements,
+          onAddRequirement: _addRequirement,
+          onRemoveRequirement: _removeRequirement,
+          onAddSuggestedRequirement: _addSuggestedRequirement,
+        );
       default:
         return const SizedBox();
     }
@@ -380,7 +465,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () => setState(() => _currentStep--),
-              icon: const Icon(Icons.arrow_back),
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
               label: const Text('Previous'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[700],
@@ -396,11 +481,14 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
         Expanded(
           child: ElevatedButton.icon(
             onPressed:
-                _currentStep < 4
+                _currentStep < 5
                     ? () => setState(() => _currentStep++)
-                    : _updateCar,
-            icon: Icon(_currentStep < 4 ? Icons.arrow_forward : Icons.save),
-            label: Text(_currentStep < 4 ? 'Next' : 'Save Changes'),
+                    : _showConfirmationDialog,
+            icon: Icon(
+              _currentStep < 5 ? Icons.arrow_forward : Icons.save,
+              color: Colors.black,
+            ),
+            label: Text(_currentStep < 5 ? 'Next' : 'Save Changes'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.lightBlue,
               foregroundColor: AppTheme.darkNavy,

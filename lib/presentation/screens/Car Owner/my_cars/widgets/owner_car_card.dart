@@ -185,7 +185,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
             top: 16,
             bottom: 16,
             child: Hero(
-              tag: 'car_image_${car.name}_${car.brand}',
+              tag: 'car_image_${car.type}_${car.brand}',
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child:
@@ -308,7 +308,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                 _buildStatusChip(theme),
                 const SizedBox(height: 12),
                 Text(
-                  car.name,
+                  car.type,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.white,
@@ -669,7 +669,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
             ],
           ),
           content: Text(
-            'Are you sure you want to delete "${car.name}"? This action cannot be undone.',
+            'Are you sure you want to delete "${car.type}"? This action cannot be undone.',
             style: TextStyle(color: AppTheme.paleBlue),
           ),
           actions: [

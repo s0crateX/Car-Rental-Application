@@ -3,7 +3,6 @@ import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
 import 'extra_charge_item.dart';
 import 'pricing_option.dart';
 import 'rental_details_item.dart';
-import 'rental_requirement_item.dart';
 import 'spec_item.dart';
 
 class DetailsTabContent extends StatelessWidget {
@@ -45,10 +44,10 @@ class DetailsTabContent extends StatelessWidget {
             _buildRentalDetails(),
             const SizedBox(height: 16),
 
-            // Inclusions
-            sectionTitleBuilder('Inclusions'),
+            // Features
+            sectionTitleBuilder('Features'),
             const SizedBox(height: 12),
-            _buildInclusions(context),
+            _buildFeatures(context),
             const SizedBox(height: 16),
 
             // Extra Charges
@@ -60,7 +59,7 @@ class DetailsTabContent extends StatelessWidget {
             // Rental Requirements
             sectionTitleBuilder('Rental Requirements'),
             const SizedBox(height: 12),
-            _buildRentalRequirements(),
+            _buildRentalRequirements(context),
           ],
         ),
       ),
@@ -174,7 +173,7 @@ class DetailsTabContent extends StatelessWidget {
     );
   }
 
-  Widget _buildInclusions(BuildContext context) {
+  Widget _buildFeatures(BuildContext context) {
     // Using features as inclusions since Firebase model doesn't have specific inclusions
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -226,27 +225,41 @@ class DetailsTabContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRentalRequirements() {
-    // Since Firebase model doesn't have rental requirements, we'll show some standard ones
+  Widget _buildRentalRequirements(BuildContext context) {
+    if (car.rentalRequirements.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Text('No rental requirements specified.'),
+      );
+    }
+
     return Column(
-      children: [
-        RentalRequirementItem(
-          title: "Driver's License",
-          requirement: 'Valid driver\'s license required',
-        ),
-        RentalRequirementItem(
-          title: 'Age',
-          requirement: 'Driver must be at least 21 years old',
-        ),
-        RentalRequirementItem(
-          title: 'Payment',
-          requirement: 'Credit card or debit card required for payment',
-        ),
-        RentalRequirementItem(
-          title: 'Security Deposit',
-          requirement: 'Refundable security deposit may be required',
-        ),
-      ],
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: car.rentalRequirements.map((requirement) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2.0),
+                child: Icon(
+                  Icons.check_circle_outline,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  requirement,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

@@ -73,11 +73,14 @@ class _InteractiveMapState extends State<InteractiveMap> {
         if (widget.carMarkers != null)
           MarkerLayer(
             markers: widget.carMarkers!
-                .where((car) => car.location != null && car.location.containsKey('lat') && car.location.containsKey('lng'))
+                .where((car) =>
+                    car.location != null &&
+                    car.location.containsKey('latitude') &&
+                    car.location.containsKey('longitude'))
                 .map<Marker>((car) => Marker(
                       point: LatLng(
-                        car.location['lat'] ?? 0.0,
-                        car.location['lng'] ?? 0.0,
+                        car.location['latitude'] ?? 0.0,
+                        car.location['longitude'] ?? 0.0,
                       ),
                       width: 54,
                       height: 54,
@@ -132,13 +135,18 @@ class _InteractiveMapState extends State<InteractiveMap> {
           markers: [
             Marker(
               point: _selectedLocation,
-              width: 40,
-              height: 40,
-              child: widget.userProfileImageUrl != null && widget.userProfileImageUrl!.isNotEmpty
+              width: 44,
+              height: 44,
+              child: widget.userProfileImageUrl != null &&
+                      widget.userProfileImageUrl!.isNotEmpty
                   ? CircleAvatar(
-                      radius: 20,
-                      backgroundImage: NetworkImage(widget.userProfileImageUrl!),
-                      backgroundColor: Colors.white,
+                      radius: 22,
+                      backgroundColor: AppTheme.mediumBlue,
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundImage:
+                            NetworkImage(widget.userProfileImageUrl!),
+                      ),
                     )
                   : const Icon(
                       Icons.location_on,

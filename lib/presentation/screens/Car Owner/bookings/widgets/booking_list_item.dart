@@ -135,7 +135,7 @@ class BookingListItem extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              booking.car.name,
+                              '${booking.car.brand} ${booking.car.model}',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,

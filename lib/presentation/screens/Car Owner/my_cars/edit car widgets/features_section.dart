@@ -148,7 +148,7 @@ class _FeaturesSectionState extends State<FeaturesSection> {
 
         // Features section
         _buildFeaturesSection(),
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
 
         // Extra charges section
         _buildExtraChargesSection(),
@@ -377,42 +377,28 @@ class _FeaturesSectionState extends State<FeaturesSection> {
       );
     }
 
-    return Column(
-      children: _features.map((feature) => _buildFeatureCard(feature)).toList(),
-    );
-  }
-
-  Widget _buildFeatureCard(String feature) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.navy.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: AppTheme.lightBlue, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              feature,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 4.0,
+      children: _features.map((feature) {
+        return Chip(
+          label: Text(feature),
+          backgroundColor: AppTheme.lightBlue.withOpacity(0.15),
+          labelStyle: TextStyle(
+            color: AppTheme.lightBlue,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
-          IconButton(
-            onPressed: () => _removeFeature(feature),
-            icon: const Icon(Icons.close, color: Colors.red, size: 18),
-            tooltip: 'Remove feature',
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          onDeleted: () => _removeFeature(feature),
+          deleteIcon: Icon(Icons.close,
+              size: 18, color: AppTheme.lightBlue.withOpacity(0.7)),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: AppTheme.lightBlue.withOpacity(0.3)),
           ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 
@@ -489,7 +475,7 @@ class _FeaturesSectionState extends State<FeaturesSection> {
                 color: AppTheme.navy.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.orangeAccent.withOpacity(0.3),
+                  color: AppTheme.lightBlue.withOpacity(0.3),
                   style: BorderStyle.solid,
                 ),
               ),
@@ -527,168 +513,91 @@ class _FeaturesSectionState extends State<FeaturesSection> {
             ),
           )
         else
-          Column(
-            children:
-                _extraCharges
-                    .asMap()
-                    .entries
-                    .map(
-                      (entry) => _buildExtraChargeCard(entry.key, entry.value),
-                    )
-                    .toList(),
-          ),
+          ..._extraCharges
+              .asMap()
+              .entries
+              .map((entry) => _buildExtraChargeCard(entry.key, entry.value)),
       ],
     );
   }
 
   Widget _buildExtraChargeCard(int index, Map<String, dynamic> charge) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.navy.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Header with charge number and delete button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.orangeAccent.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.receipt_long, color: Colors.orangeAccent, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Charge ${index + 1}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => _removeExtraCharge(index),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Icon(Icons.close, color: Colors.red, size: 16),
-                  ),
-                ),
-              ],
+          Expanded(
+            flex: 3,
+            child: _buildCompactTextField(
+              initialValue: charge['name']?.toString() ?? '',
+              hint: 'e.g., Insurance',
+              onChanged: (value) => _updateExtraCharge(index, 'name', value),
             ),
           ),
-
-          // Input fields
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Charge name field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  child: TextFormField(
-                    initialValue: charge['name']?.toString() ?? '',
-                    onChanged:
-                        (value) => _updateExtraCharge(index, 'name', value),
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                    decoration: const InputDecoration(
-                      labelText: 'Charge Name',
-                      labelStyle: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                      hintText: 'e.g., Insurance, GPS, Child Seat',
-                      hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.label_outline,
-                        color: Colors.white54,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Amount field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  child: TextFormField(
-                    initialValue:
-                        charge['amount'] == 0.0
-                            ? ''
-                            : charge['amount']?.toString() ?? '',
-                    onChanged:
-                        (value) => _updateExtraCharge(index, 'amount', value),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Amount',
-                      labelStyle: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                      hintText: '0.00',
-                      hintStyle: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 13,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: SvgPicture.asset(
-                          'assets/svg/peso.svg',
-                          width: 8,
-                          height: 8,
-                          color: Colors.orangeAccent,
-                        ),
-                      ),
-                      prefixText: '₱ ',
-                      prefixStyle: const TextStyle(
-                        color: Colors.orangeAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: _buildCompactTextField(
+              initialValue:
+                  charge['amount'] == 0.0 ? '' : charge['amount']?.toString() ?? '',
+              hint: '0.00',
+              prefixIcon: 'assets/svg/peso.svg',
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (value) => _updateExtraCharge(index, 'amount', value),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _removeExtraCharge(index),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.close, color: Colors.red, size: 16),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCompactTextField({
+    required String initialValue,
+    required String hint,
+    required Function(String) onChanged,
+    TextInputType? keyboardType,
+    String? prefixIcon,
+  }) {
+    return TextFormField(
+      initialValue: initialValue,
+      onChanged: onChanged,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white, fontSize: 14),
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        prefixIcon: prefixIcon != null
+            ? Padding(
+                padding: const EdgeInsets.all(8),
+                child: SvgPicture.asset(
+                  prefixIcon,
+                  width: 8,
+                  height: 8,
+                  color: AppTheme.lightBlue,
+                ),
+              )
+            : null,
       ),
     );
   }

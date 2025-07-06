@@ -53,22 +53,13 @@ class CarDetailsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${car.brand} ${car.name} ${car.year}',
+                '${car.brand} ${car.model} (${car.year})',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (car.model.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  car.model,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
             ],
           ),
         ),

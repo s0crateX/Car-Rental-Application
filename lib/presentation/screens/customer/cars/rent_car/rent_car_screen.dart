@@ -5,6 +5,7 @@ import 'rental_duration_selector.dart';
 import 'extra_charges_section.dart';
 import 'payment_mode_section.dart';
 import 'payment_breakdown_section.dart';
+import 'booking_dialogs.dart';
 import 'package:car_rental_app/shared/models/Final Model/Firebase_car_model.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:provider/provider.dart';
@@ -666,22 +667,15 @@ class _RentCarScreenState extends State<RentCarScreen> {
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder:
-                        (context) => AlertDialog(
-                          title: const Text('Confirm Booking'),
-                          content: const Text(
-                            'Are you sure you want to proceed with this booking?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: const Text('Confirm'),
-                            ),
-                          ],
-                        ),
+  (context) => ConfirmBookingDialog(
+    period: _getPeriodDisplayText(_selectedPeriod),
+    paymentMode: _selectedPaymentMode,
+    startDate: DateTime.now().toString().substring(0, 16),
+    endDate: DateTime.now().add(const Duration(days: 1)).toString().substring(0, 16),
+    notes: _notes,
+    onCancel: () => Navigator.of(context).pop(false),
+    onConfirm: () => Navigator.of(context).pop(true),
+  ),
                   );
                   if (confirmed == true) {
                     _onBookNow();
@@ -693,61 +687,161 @@ class _RentCarScreenState extends State<RentCarScreen> {
     );
   }
 
-  void _onBookNow() {
+  void _onBookNow() async {
     // Require receipt image for GCash/PayMaya
     if ((_selectedPaymentMode == 'GCash' ||
             _selectedPaymentMode == 'PayMaya') &&
         _receiptImage == null) {
       showDialog(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Receipt Required'),
-              content: const Text('Please upload your payment receipt.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
+        builder: (context) => AlertDialog(
+          title: const Text('Receipt Required'),
+          content: const Text('Please upload your payment receipt.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
             ),
+          ],
+        ),
       );
       return;
     }
+    
+    // Show loading indicator
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Booking Confirmed'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Your booking has been submitted!'),
-                const SizedBox(height: 12),
-                Text('Rental Period: ${_getPeriodDisplayText(_selectedPeriod)}'),
-                Text('Payment Mode: $_selectedPaymentMode'),
-                if (_notes.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text('Notes: $_notes'),
-                ],
-                if (_receiptImage != null) ...[
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Receipt uploaded!',
-                    style: TextStyle(color: Colors.green),
-                  ),
-                ],
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Processing your booking...'),
+          ],
+        ),
+      ),
     );
+    
+    try {
+      // Get current user
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userId = authService.user?.uid;
+      
+      if (userId == null) {
+        throw Exception('User not logged in');
+      }
+      
+      // Get user data for the booking
+      Map<String, dynamic>? userData = authService.userData;
+      String customerName = userData?['fullName'] ?? 'Unknown Customer';
+      String customerPhone = userData?['phoneNumber'] ?? 'No Phone';
+      
+      // Calculate rental dates
+      final DateTime startDate = DateTime.now();
+      DateTime endDate;
+      
+      switch (_selectedPeriod) {
+        case '6h':
+          endDate = startDate.add(const Duration(hours: 6));
+          break;
+        case '12h':
+          endDate = startDate.add(const Duration(hours: 12));
+          break;
+        case '1d':
+          endDate = startDate.add(const Duration(days: 1));
+          break;
+        case '1w':
+          endDate = startDate.add(const Duration(days: 7));
+          break;
+        case '1m':
+          endDate = startDate.add(const Duration(days: 30));
+          break;
+        default:
+          endDate = startDate.add(const Duration(days: 1));
+      }
+      
+      // Prepare selected extras
+      List<Map<String, dynamic>> selectedExtraCharges = [];
+      for (var entry in _selectedExtras.entries) {
+        if (entry.value) { // If this extra is selected
+          // Find the corresponding extra charge in the car's extraCharges list
+          for (var charge in _car.extraCharges) {
+            if (charge['name'] == entry.key) {
+              selectedExtraCharges.add(charge);
+              break;
+            }
+          }
+        }
+      }
+      
+      // Create booking document
+      final bookingRef = await FirebaseFirestore.instance.collection('rentals').add({
+        'carId': _car.id,
+        'carName': '${_car.brand} ${_car.model}',
+        'carImage': _car.imageGallery.isNotEmpty ? _car.imageGallery[0] : '',
+        'customerId': userId,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+        'carOwnerId': _car.carOwnerDocumentId,
+        'carOwnerName': _car.carOwnerFullName,
+        'paymentMode': _selectedPaymentMode,
+        'rentalPeriod': _selectedPeriod,
+        'rentalPeriodDisplay': _getPeriodDisplayText(_selectedPeriod),
+        'price': _car.getFormattedPrice(_selectedPeriod),
+        'startDate': startDate,
+        'endDate': endDate,
+        'status': 'pending', // pending, active, completed, cancelled
+        'createdAt': FieldValue.serverTimestamp(),
+        'notes': _notes,
+        'extraCharges': selectedExtraCharges,
+        'location': _car.location,
+        'address': _car.address,
+      });
+      
+      // Update car availability status to rented
+      await FirebaseFirestore.instance.collection('Cars').doc(_car.id).update({
+        'availabilityStatus': 'rented'
+      });
+      
+      // Close loading dialog
+      Navigator.of(context).pop();
+      // Show success dialog
+      showDialog(
+        context: context,
+        builder: (context) => BookingConfirmedDialog(
+          bookingId: bookingRef.id,
+          period: _getPeriodDisplayText(_selectedPeriod),
+          paymentMode: _selectedPaymentMode,
+          startDate: startDate.toString().substring(0, 16),
+          endDate: endDate.toString().substring(0, 16),
+          notes: _notes.isNotEmpty ? _notes : null,
+          receiptUploaded: _receiptImage != null,
+          onOk: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pop(); // Go back to previous screen
+          },
+        ),
+      );
+    } catch (e) {
+      // Close loading dialog
+      Navigator.of(context).pop();
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('Failed to create booking: ${e.toString()}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Future<void> _pickReceiptImage() async {

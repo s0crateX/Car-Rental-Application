@@ -169,16 +169,9 @@ class BookingInfoSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        car.name,
+                        '${car.brand} ${car.model}',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${car.brand} • ${car.model}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.hintColor,
                         ),
                       ),
                       const SizedBox(height: 10),

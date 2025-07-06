@@ -38,14 +38,10 @@ class CurrentRentalWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      car.name,
+                      '${car.brand} ${car.model}',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    Text(
-                      '${car.brand} • ${car.model}',
-                      style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 4),
                     Row(

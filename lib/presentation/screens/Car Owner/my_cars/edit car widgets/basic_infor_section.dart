@@ -3,7 +3,7 @@ import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.da
 import 'package:car_rental_app/config/theme.dart';
 
 class BasicInfoSection extends StatelessWidget {
-  final TextEditingController nameController;
+  final TextEditingController typeController;
   final TextEditingController brandController;
   final TextEditingController modelController;
   final TextEditingController yearController;
@@ -17,7 +17,7 @@ class BasicInfoSection extends StatelessWidget {
 
   const BasicInfoSection({
     super.key,
-    required this.nameController,
+    required this.typeController,
     required this.brandController,
     required this.modelController,
     required this.yearController,
@@ -41,59 +41,63 @@ class BasicInfoSection extends StatelessWidget {
             _buildSectionHeader('Basic Information', Icons.info_outline),
             const SizedBox(height: 16),
 
-            // Car name and brand
-            Row(
-              children: [
-                Expanded(
-                  child: _buildModernTextField(
-                    controller: nameController,
-                    label: 'Car Name',
-                    hint: 'e.g., SocrateX',
-                    icon: Icons.directions_car,
-                    isRequired: true,
+            // Vehicle Identity Section (Read-only)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.navy.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      'Vehicle Identity (Cannot be changed)',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildModernTextField(
+                  _buildModernTextField(
+                    controller: typeController,
+                    label: 'Car Type',
+                    icon: Icons.directions_car,
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 10),
+                  _buildModernTextField(
                     controller: brandController,
                     label: 'Brand',
-                    hint: 'e.g., BMW',
                     icon: Icons.branding_watermark,
-                    isRequired: true,
+                    readOnly: true,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            // Model and year
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildModernTextField(
+                  const SizedBox(height: 10),
+                  _buildModernTextField(
                     controller: modelController,
                     label: 'Model',
-                    hint: 'e.g., M5',
                     icon: Icons.model_training,
-                    isRequired: true,
+                    readOnly: true,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildModernTextField(
-                    controller: yearController,
-                    label: 'Year',
-                    hint: '2024',
-                    icon: Icons.calendar_today,
-                    isRequired: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
+
+            // Editable fields
+            _buildModernTextField(
+              controller: yearController,
+              label: 'Year',
+              hint: '2024',
+              icon: Icons.calendar_today,
+              isRequired: true,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 10),
 
             // Seats and luggage
             Row(
@@ -116,22 +120,22 @@ class BasicInfoSection extends StatelessWidget {
                     hint: '2 bags',
                     icon: Icons.luggage,
                     isRequired: true,
+                    keyboardType: TextInputType.number,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
             // Fuel type and transmission
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: _buildDropdownField(
                     controller: fuelTypeController,
                     label: 'Fuel',
                     icon: Icons.local_gas_station,
-                    items: ['Gasoline', 'Diesel', 'Electric', 'Hybrid'],
+                    items: ['Gasoline', 'Unleaded', 'Diesel', 'Electric', 'Hybrid'],
                     isRequired: true,
                   ),
                 ),
@@ -141,31 +145,30 @@ class BasicInfoSection extends StatelessWidget {
                     controller: transmissionTypeController,
                     label: 'Trans.',
                     icon: Icons.settings,
-                    items: ['Manual', 'Automatic', 'CVT'],
+                    items: ['Automatic', 'Manual'],
                     isRequired: true,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
             // Car owner
             _buildModernTextField(
               controller: carOwnerFullNameController,
               label: 'Car Owner Full Name',
-              hint: 'Enter owner\'s full name',
               icon: Icons.person,
-              isRequired: false,
+              readOnly: true,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
             // Description
             _buildModernTextField(
               controller: descriptionController,
               label: 'Description',
-              hint: 'Describe the car features, condition, etc.',
+              hint: 'Tell us about your car',
+              icon: Icons.description,
               maxLines: 4,
-              isRequired: false,
             ),
             const SizedBox(height: 20),
           ],
@@ -175,30 +178,19 @@ class BasicInfoSection extends StatelessWidget {
   }
 
   Widget _buildSectionHeader(String title, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.lightBlue.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: AppTheme.lightBlue, size: 20),
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.lightBlue, size: 24),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -210,87 +202,64 @@ class BasicInfoSection extends StatelessWidget {
     bool isRequired = false,
     TextInputType? keyboardType,
     int maxLines = 1,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label with required indicator
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Row(
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (isRequired) ...[
-                const SizedBox(width: 4),
-                const Text(
-                  '*',
-                  style: TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ],
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
-        // Input field
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: AppTheme.navy.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(12),
+            color: readOnly
+                ? AppTheme.navy.withOpacity(0.2)
+                : AppTheme.navy.withOpacity(0.4),
             border: Border.all(
               color: Colors.white.withOpacity(0.2),
-              width: 1.5,
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: TextFormField(
             controller: controller,
+            readOnly: readOnly,
             keyboardType: keyboardType,
             maxLines: maxLines,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: readOnly ? Colors.white70 : Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w400,
             ),
-            validator:
-                isRequired
-                    ? (v) =>
-                        v == null || v.isEmpty ? '$label is required' : null
-                    : null,
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
                 color: Colors.white.withOpacity(0.5),
                 fontSize: 15,
               ),
-              prefixIcon:
-                  icon != null
-                      ? Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Icon(icon, color: AppTheme.lightBlue, size: 22),
-                      )
-                      : null,
+              prefixIcon: icon != null
+                  ? Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Icon(icon, color: AppTheme.lightBlue, size: 22),
+                    )
+                  : null,
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: maxLines > 1 ? 14 : 16,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
               ),
             ),
+            validator: isRequired && !readOnly
+                ? (v) => v == null || v.isEmpty ? '$label is required' : null
+                : null,
           ),
         ),
       ],
@@ -307,52 +276,25 @@ class BasicInfoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label with required indicator
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isRequired) ...[
-                const SizedBox(width: 4),
-                const Text(
-                  '*',
-                  style: TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ],
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
-        // Dropdown field
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             color: AppTheme.navy.withOpacity(0.4),
             border: Border.all(
               color: Colors.white.withOpacity(0.2),
-              width: 1.5,
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: DropdownButtonFormField<String>(
             value: items.contains(controller.text) ? controller.text : null,
@@ -362,6 +304,7 @@ class BasicInfoSection extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
             dropdownColor: AppTheme.navy.withOpacity(0.95),
+            elevation: 0,
             isExpanded: true,
             decoration: InputDecoration(
               hintText:
@@ -378,8 +321,8 @@ class BasicInfoSection extends StatelessWidget {
               contentPadding: const EdgeInsets.only(
                 left: 14,
                 right: 10,
-                top: 14,
-                bottom: 14,
+                top: 12,
+                bottom: 12,
               ),
             ),
             icon: Icon(
@@ -403,11 +346,9 @@ class BasicInfoSection extends StatelessWidget {
                 controller.text = newValue;
               }
             },
-            validator:
-                isRequired
-                    ? (v) =>
-                        v == null || v.isEmpty ? '$label is required' : null
-                    : null,
+            validator: isRequired
+                ? (v) => v == null || v.isEmpty ? '$label is required' : null
+                : null,
           ),
         ),
       ],

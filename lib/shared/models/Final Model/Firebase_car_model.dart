@@ -4,7 +4,7 @@ enum AvailabilityStatus { available, rented, maintenance }
 
 class CarModel {
   final String id; // Document ID from Firestore
-  final String name;
+  final String type;
   final String brand;
   final String model;
   final String image; // Keep for backward compatibility
@@ -24,6 +24,7 @@ class CarModel {
   final DateTime createdAt;
   final List<String> features;
   final List<Map<String, dynamic>> extraCharges;
+  final List<String> rentalRequirements;
   final Map<String, double> location;
 
   // Pricing fields
@@ -35,7 +36,7 @@ class CarModel {
 
   CarModel({
     required this.id,
-    required this.name,
+    required this.type,
     required this.brand,
     required this.model,
     required this.image,
@@ -55,6 +56,7 @@ class CarModel {
     required this.createdAt,
     required this.features,
     required this.extraCharges,
+    required this.rentalRequirements,
     required this.location,
     required this.price12h,
     required this.price1d,
@@ -73,7 +75,7 @@ class CarModel {
   factory CarModel.fromMap(Map<String, dynamic> map, [String? documentId]) {
     return CarModel(
       id: documentId ?? map['carId'] ?? '',
-      name: map['name'] ?? '',
+      type: map['type'] ?? map['name'] ?? '',
       brand: map['brand'] ?? '',
       model: map['model'] ?? '',
       image: _getImageFromGallery(
@@ -94,6 +96,7 @@ class CarModel {
       carOwnerFullName: map['carOwnerFullName'] ?? '',
       createdAt: _parseDateTime(map['createdAt']),
       features: _parseFeatures(map['features']),
+      rentalRequirements: _parseFeatures(map['rentalRequirements']),
       extraCharges: _parseExtraCharges(map['extraCharges']),
       location: _parseLocation(map['location']),
       price12h: map['price12h']?.toString() ?? '0',
@@ -107,7 +110,7 @@ class CarModel {
   // Convert CarModel to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
-      'name': name,
+      'type': type,
       'brand': brand,
       'model': model,
       'carImageGallery': imageGallery,
@@ -127,6 +130,7 @@ class CarModel {
       'carOwnerFullName': carOwnerFullName,
       'createdAt': Timestamp.fromDate(createdAt),
       'features': features,
+      'rentalRequirements': rentalRequirements,
       'extraCharges': extraCharges,
       'location': location,
     };
@@ -250,7 +254,7 @@ class CarModel {
   // Copy with method for updates
   CarModel copyWith({
     String? id,
-    String? name,
+    String? type,
     String? brand,
     String? model,
     String? image,
@@ -269,6 +273,7 @@ class CarModel {
     String? carOwnerFullName,
     DateTime? createdAt,
     List<String>? features,
+    List<String>? rentalRequirements,
     List<Map<String, dynamic>>? extraCharges,
     Map<String, double>? location,
     String? price12h,
@@ -279,7 +284,7 @@ class CarModel {
   }) {
     return CarModel(
       id: id ?? this.id,
-      name: name ?? this.name,
+      type: type ?? this.type,
       brand: brand ?? this.brand,
       model: model ?? this.model,
       image: image ?? this.image,
@@ -298,6 +303,7 @@ class CarModel {
       carOwnerFullName: carOwnerFullName ?? this.carOwnerFullName,
       createdAt: createdAt ?? this.createdAt,
       features: features ?? this.features,
+      rentalRequirements: rentalRequirements ?? this.rentalRequirements,
       extraCharges: extraCharges ?? this.extraCharges,
       location: location ?? this.location,
       price12h: price12h ?? this.price12h,

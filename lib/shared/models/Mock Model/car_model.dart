@@ -7,7 +7,7 @@ class CarModel {
   final String image;
   final List<String> imageGallery; // Additional car images
   final String type; // Sedan, SUV, etc.
-  final String name;
+
   final String brand; // Toyota, Honda, etc.
   final String model; // Vios, Civic, etc.
   final String year; // 2023, 2022, etc.
@@ -39,7 +39,7 @@ class CarModel {
     required this.image,
     this.imageGallery = const [],
     required this.type,
-    required this.name,
+
     this.brand = '',
     this.model = '',
     this.year = '',
@@ -85,7 +85,7 @@ class CarModel {
       image: map['image'] ?? '',
       imageGallery: List<String>.from(map['imageGallery'] ?? []),
       type: map['type'] ?? '',
-      name: map['name'] ?? '',
+
       brand: map['brand'] ?? '',
       model: map['model'] ?? '',
       year: map['year'] ?? '',
@@ -126,7 +126,7 @@ class CarModel {
       'image': image,
       'imageGallery': imageGallery,
       'type': type,
-      'name': name,
+
       'brand': brand,
       'model': model,
       'year': year,
@@ -170,7 +170,7 @@ class CarModel {
     String? image,
     List<String>? imageGallery,
     String? type,
-    String? name,
+
     String? brand,
     String? model,
     String? year,
@@ -202,7 +202,7 @@ class CarModel {
       image: image ?? this.image,
       imageGallery: imageGallery ?? this.imageGallery,
       type: type ?? this.type,
-      name: name ?? this.name,
+
       brand: brand ?? this.brand,
       model: model ?? this.model,
       year: year ?? this.year,

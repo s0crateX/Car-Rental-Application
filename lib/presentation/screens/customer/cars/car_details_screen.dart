@@ -5,7 +5,6 @@ import 'widgets/car_bottom_bar.dart';
 import 'widgets/car_header_info.dart';
 import 'widgets/car_tab_bar.dart';
 import 'widgets/details_tab_content.dart';
-import 'widgets/features_tab_content.dart';
 import 'widgets/reviews_tab_content.dart';
 
 class CarDetailsScreen extends StatefulWidget {
@@ -68,12 +67,6 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
             DetailsTabContent(
               car: widget.car,
               formatDate: _formatDate,
-              sectionTitleBuilder: _sectionTitle,
-            ),
-
-            // Features Tab
-            FeaturesTabContent(
-              car: widget.car,
               sectionTitleBuilder: _sectionTitle,
             ),
 

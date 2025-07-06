@@ -39,8 +39,7 @@ class RentalHistoryWidget extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              title: Text(car.name, style: theme.textTheme.titleSmall),
-              subtitle: Text('${car.brand} • ${car.model}'),
+              title: Text('${car.brand} ${car.model}', style: theme.textTheme.titleSmall),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
