@@ -292,7 +292,7 @@ class _CarsScreenState extends State<CarsScreen> {
             if (_searchQuery.isNotEmpty) {
               cars = cars
                   .where((car) =>
-                      (car.brand.toLowerCase() + " " + car.model.toLowerCase())
+                      ("${car.brand.toLowerCase()} ${car.model.toLowerCase()}")
                           .contains(_searchQuery.toLowerCase()) ||
                       car.type
                           .toLowerCase()
@@ -313,8 +313,8 @@ class _CarsScreenState extends State<CarsScreen> {
             if (_currentFilter.priceRange != null) {
               cars = cars
                   .where((car) =>
-                      car.price >= _currentFilter.priceRange!.start &&
-                      car.price <= _currentFilter.priceRange!.end)
+                      car.hourlyRate >= _currentFilter.priceRange!.start &&
+                      car.hourlyRate <= _currentFilter.priceRange!.end)
                   .toList();
             }
 
@@ -338,10 +338,10 @@ class _CarsScreenState extends State<CarsScreen> {
             if (_currentFilter.sortBy != null) {
               switch (_currentFilter.sortBy) {
                 case 'Price: Low to High':
-                  cars.sort((a, b) => a.price.compareTo(b.price));
+                  cars.sort((a, b) => a.hourlyRate.compareTo(b.hourlyRate));
                   break;
                 case 'Price: High to Low':
-                  cars.sort((a, b) => b.price.compareTo(a.price));
+                  cars.sort((a, b) => b.hourlyRate.compareTo(a.hourlyRate));
                   break;
               }
             } else {

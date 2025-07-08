@@ -180,27 +180,49 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                                     ),
                           ),
                         ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     // Show car owner name directly under the profile icon
                     _ownerData != null &&
                             _ownerData!['fullName'] != null &&
                             (_ownerData!['fullName'] as String)
                                 .trim()
                                 .isNotEmpty
-                        ? Padding(
-                          padding: const EdgeInsets.only(
-                            top: 8.0,
-                            bottom: 12.0,
-                          ),
-                          child: Text(
-                            _ownerData!['fullName'],
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.lightBlue,
+                        ? Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                _ownerData!['fullName'],
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.lightBlue,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
+                            if (_ownerData!['organizationName'] != null &&
+                                (_ownerData!['organizationName'] as String)
+                                    .trim()
+                                    .isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 4.0,
+                                  bottom: 12.0,
+                                ),
+                                child: Text(
+                                  _ownerData!['organizationName'],
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: AppTheme.paleBlue,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            else
+                              const SizedBox(height: 12.0),
+                          ],
                         )
                         : const SizedBox.shrink(),
                     ElevatedButton.icon(

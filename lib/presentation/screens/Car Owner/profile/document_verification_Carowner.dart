@@ -24,116 +24,46 @@ class _DocumentVerificationCarOwnerScreenState
     with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
-  bool _notRegisteredOwner = false;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
   // Document field config: key, label, required, conditional
   final List<Map<String, dynamic>> documentFields = [
     {
-      'key': 'proof_of_identity',
-      'label': 'Valid Government ID',
-      'description':
-          'Driver\'s License, Passport, UMID, Voter\'s ID, or PhilSys ID',
+      'key': 'government_id',
+      'label': 'Owner\'s Government ID',
+      'description': 'A valid government-issued ID of the registered owner. The name must match the registered profile name.',
       'required': true,
-      'conditional': false,
       'icon': 'assets/svg/id-card.svg',
     },
     {
-      'key': 'cr',
-      'label': 'Certificate of Registration (CR)',
-      'description': 'Official vehicle registration document',
+      'key': 'business_registration_certificate',
+      'label': 'DTI/SEC Registration',
+      'description': 'Certificate of Registration from DTI or SEC.',
       'required': true,
-      'conditional': false,
-      'icon': 'assets/svg/document.svg',
-    },
-    {
-      'key': 'or',
-      'label': 'Latest Official Receipt (OR)',
-      'description': 'From LTO registration payment',
-      'required': true,
-      'conditional': false,
-      'icon': 'assets/svg/receipt.svg',
-    },
-    {
-      'key': 'notarized_authorization_letter',
-      'label': 'Notarized Authorization Letter',
-      'description': 'Legal authorization from registered owner',
-      'required': true,
-      'conditional': true,
-      'icon': 'assets/svg/legal.svg',
-    },
-    {
-      'key': 'registered_owner_id',
-      'label': 'Registered Owner\'s Valid ID',
-      'description': 'Government-issued identification',
-      'required': true,
-      'conditional': true,
-      'icon': 'assets/svg/id-card.svg',
-    },
-    {
-      'key': 'inspection_certificate',
-      'label': 'LTO MVIS Certificate',
-      'description': 'Or Emission Test Certificate',
-      'required': true,
-      'conditional': false,
-      'icon': 'assets/svg/certificate.svg',
-    },
-    {
-      'key': 'ctpl_insurance',
-      'label': 'CTPL Insurance',
-      'description': 'Compulsory Third Party Liability',
-      'required': true,
-      'conditional': false,
-      'icon': 'assets/svg/insurance.svg',
-    },
-    {
-      'key': 'comprehensive_insurance',
-      'label': 'Comprehensive Car Insurance',
-      'description': 'Full coverage protection',
-      'required': false,
-      'conditional': false,
-      'icon': 'assets/svg/shield.svg',
-    },
-    {
-      'key': 'dti_certificate',
-      'label': 'DTI Certificate',
-      'description': 'If operating as a business',
-      'required': false,
-      'conditional': false,
       'icon': 'assets/svg/business.svg',
     },
     {
-      'key': 'business_permit',
-      'label': 'Business Permit / Mayor\'s Permit',
-      'description': 'Local business authorization',
-      'required': false,
-      'conditional': false,
+      'key': 'mayors_permit',
+      'label': "Mayor's / Business Permit",
+      'description': 'Valid business permit from the local government unit.',
+      'required': true,
       'icon': 'assets/svg/permit.svg',
     },
     {
       'key': 'bir_2303',
-      'label': 'BIR Form 2303',
-      'description': 'Tax compliance document',
-      'required': false,
-      'conditional': false,
+      'label': 'BIR Certificate (Form 2303)',
+      'description': 'Official registration with the Bureau of Internal Revenue.',
+      'required': true,
       'icon': 'assets/svg/tax.svg',
     },
     {
-      'key': 'drivers_license',
-      'label': 'Driver\'s License',
-      'description': 'Valid driving permit',
+      'key': 'ltfrb_permit',
+      'label': 'LTFRB Permit to Operate',
+      'description': 'Required for vehicles used for public transport services (if applicable).',
       'required': false,
-      'conditional': false,
-      'icon': 'assets/svg/license.svg',
-    },
-    {
-      'key': 'nbi_clearance',
-      'label': 'NBI/Police Clearance',
-      'description': 'Criminal background check',
-      'required': false,
-      'conditional': false,
-      'icon': 'assets/svg/clearance.svg',
+      'icon': 'assets/svg/legal.svg',
     },
   ];
 
@@ -226,22 +156,26 @@ class _DocumentVerificationCarOwnerScreenState
                       const SizedBox(height: 24),
                       _buildProgressIndicator(),
                       const SizedBox(height: 24),
-                      _buildOwnershipToggle(),
+                      _buildSectionHeader('Required Documents', Icons.description, AppTheme.lightBlue),
+                      const SizedBox(height: 16),
+                      ...documentFields
+                          .where((d) => d['required'] as bool)
+                          .map((field) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: _buildEnhancedUploadCard(field),
+                              )),
                       const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(child: _buildRequiredDocumentsSection()),
-              SliverToBoxAdapter(child: _buildOptionalDocumentsSection()),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                          'Optional Documents', Icons.description_outlined, AppTheme.paleBlue),
+                      const SizedBox(height: 16),
+                      ...documentFields
+                          .where((d) => !(d['required'] as bool))
+                          .map((field) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: _buildEnhancedUploadCard(field),
+                              )),
+                      const SizedBox(height: 32),
                       _buildSubmitButton(),
-                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
@@ -284,24 +218,16 @@ class _DocumentVerificationCarOwnerScreenState
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Secure Document Verification',
-            style: TextStyle(
-              color: AppTheme.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
           Text(
-            'Upload clear, legible photos of your documents. All information is encrypted and secure.',
-            style: TextStyle(
-              color: AppTheme.white.withOpacity(0.7),
-              fontSize: 14,
-              height: 1.4,
-            ),
+            'Organization Verification',
             textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AppTheme.white, fontSize: 28, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'To comply with regulations and ensure trust on our platform, please upload the required business documents for your organization.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.paleBlue, fontSize: 16),
           ),
         ],
       ),
@@ -310,207 +236,48 @@ class _DocumentVerificationCarOwnerScreenState
 
   Widget _buildProgressIndicator() {
     final totalRequired =
-        documentFields
-            .where(
-              (field) =>
-                  field['required'] == true &&
-                  (!field['conditional'] || _notRegisteredOwner),
-            )
-            .length;
+        documentFields.where((field) => field['required'] as bool).length;
 
-    final completedRequired =
-        documentFields
-            .where(
-              (field) =>
-                  field['required'] == true &&
-                  (!field['conditional'] || _notRegisteredOwner) &&
-                  _isDocumentUploaded(field['key']),
-            )
-            .length;
+    final completedRequired = documentFields
+        .where((field) =>
+            field['required'] as bool && _isDocumentUploaded(field['key']))
+        .length;
 
     final progress =
         totalRequired > 0 ? completedRequired / totalRequired : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.navy,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.paleBlue.withOpacity(0.2), width: 1),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Required Documents',
-                style: TextStyle(
-                  color: AppTheme.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Verification Progress',
+              style: TextStyle(
+                color: AppTheme.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
               ),
-              Text(
-                '$completedRequired / $totalRequired',
-                style: TextStyle(
-                  color: AppTheme.paleBlue,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppTheme.darkNavy,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                progress == 1.0 ? Colors.green : AppTheme.mediumBlue,
-              ),
-              minHeight: 8,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOwnershipToggle() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.navy,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color:
-              _notRegisteredOwner
-                  ? AppTheme.mediumBlue.withOpacity(0.5)
-                  : AppTheme.paleBlue.withOpacity(0.2),
-          width: 1,
+            Text(
+              '$completedRequired of $totalRequired Required',
+              style: const TextStyle(
+                color: AppTheme.paleBlue,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color:
-                  _notRegisteredOwner
-                      ? AppTheme.mediumBlue.withOpacity(0.2)
-                      : AppTheme.darkNavy,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              _notRegisteredOwner ? Icons.person_off : Icons.person,
-              color:
-                  _notRegisteredOwner ? AppTheme.mediumBlue : AppTheme.paleBlue,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Vehicle Ownership',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _notRegisteredOwner
-                      ? 'You are not the registered owner'
-                      : 'You are the registered owner',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.white.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: _notRegisteredOwner,
-            onChanged: (val) {
-              setState(() {
-                _notRegisteredOwner = val;
-              });
-            },
-            activeColor: AppTheme.mediumBlue,
-            inactiveThumbColor: AppTheme.paleBlue,
-            inactiveTrackColor: AppTheme.darkNavy,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRequiredDocumentsSection() {
-    final requiredDocs =
-        documentFields
-            .where(
-              (field) =>
-                  field['required'] == true &&
-                  (!field['conditional'] || _notRegisteredOwner),
-            )
-            .toList();
-
-    if (requiredDocs.isEmpty) return const SizedBox();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-            'Required Documents',
-            Icons.priority_high,
-            Colors.red,
-          ),
-          const SizedBox(height: 16),
-          ...requiredDocs.map(
-            (field) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _buildEnhancedUploadCard(field),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOptionalDocumentsSection() {
-    final optionalDocs =
-        documentFields.where((field) => field['required'] == false).toList();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          _buildSectionHeader(
-            'Optional Documents',
-            Icons.add_circle_outline,
-            Colors.blue,
-          ),
-          const SizedBox(height: 16),
-          ...optionalDocs.map(
-            (field) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _buildEnhancedUploadCard(field),
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(height: 12),
+        LinearProgressIndicator(
+          value: progress,
+          backgroundColor: AppTheme.darkNavy,
+          valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.lightBlue),
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ],
     );
   }
 
@@ -545,7 +312,7 @@ class _DocumentVerificationCarOwnerScreenState
     final String? url = doc['url'] as String?;
     final String? status = doc['status'] as String?;
     final bool isUploaded = _isDocumentUploaded(documentType);
-    final bool isRequired = field['required'] ?? false;
+    final bool isRequired = field['required'] as bool;
 
     String statusLabel = 'Not Uploaded';
     Color statusColor = Colors.grey;
@@ -587,12 +354,12 @@ class _DocumentVerificationCarOwnerScreenState
           boxShadow:
               isUploaded
                   ? [
-                    BoxShadow(
-                      color: statusColor.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
+                      BoxShadow(
+                        color: statusColor.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
                   : null,
         ),
         child: Column(
@@ -776,13 +543,11 @@ class _DocumentVerificationCarOwnerScreenState
 
   Widget _buildSubmitButton() {
     final requiredDocs = documentFields.where(
-      (field) =>
-          field['required'] == true &&
-          (!field['conditional'] || _notRegisteredOwner),
+      (field) => field['required'] == true,
     );
 
     final hasAllRequired = requiredDocs.every(
-      (field) => _isDocumentUploaded(field['key']),
+      (field) => _isDocumentUploaded(field['key'] as String),
     );
 
     final hasAnyDocuments = _documents.values.any((doc) {

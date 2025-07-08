@@ -4,70 +4,16 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
 
 class PricingSectionWidget extends StatelessWidget {
-  final TextEditingController price6hController;
-  final TextEditingController price12hController;
-  final TextEditingController price1dController;
-  final TextEditingController price1wController;
-  final TextEditingController price1mController;
-  const PricingSectionWidget({
-    super.key,
-    required this.price6hController,
-    required this.price12hController,
-    required this.price1dController,
-    required this.price1wController,
-    required this.price1mController,
-  });
+  final TextEditingController hourlyRateController;
+
+  const PricingSectionWidget({super.key, required this.hourlyRateController});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildPriceField(
-                controller: price6hController,
-                label: '6 Hours',
-                icon: 'assets/svg/clock-hour-6.svg',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildPriceField(
-                controller: price12hController,
-                label: '12 Hours',
-                icon: 'assets/svg/clock-hour-12.svg',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildPriceField(
-                controller: price1dController,
-                label: '1 Day',
-                icon: 'assets/svg/calendar.svg',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildPriceField(
-                controller: price1wController,
-                label: '1 Week',
-                icon: 'assets/svg/calendar-week.svg',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildPriceField(
-          controller: price1mController,
-          label: '1 Month',
-          icon: 'assets/svg/calendar-month.svg',
-        ),
-      ],
+    return _buildPriceField(
+      controller: hourlyRateController,
+      label: 'Hourly Rate',
+      icon: 'assets/svg/peso.svg',
     );
   }
 
@@ -91,11 +37,6 @@ class PricingSectionWidget extends StatelessWidget {
             height: 20,
             color: AppTheme.lightBlue,
           ),
-        ),
-        prefixText: '₱ ',
-        prefixStyle: const TextStyle(
-          color: AppTheme.lightBlue,
-          fontWeight: FontWeight.w600,
         ),
         filled: true,
         fillColor: AppTheme.darkNavy,

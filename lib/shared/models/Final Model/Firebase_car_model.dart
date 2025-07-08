@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum AvailabilityStatus { available, rented, maintenance }
 
+enum VerificationStatus { pending, approved, rejected }
+
 class CarModel {
   final String id; // Document ID from Firestore
   final String type;
@@ -9,8 +11,10 @@ class CarModel {
   final String model;
   final String image; // Keep for backward compatibility
   final List<String> imageGallery;
-  final double price;
-  final String pricePeriod;
+  final double hourlyRate;
+  final double rating;
+  final int reviewCount;
+  final double deliveryCharge;
   final String seatsCount;
   final String luggageCapacity;
   final String transmissionType;
@@ -26,13 +30,9 @@ class CarModel {
   final List<Map<String, dynamic>> extraCharges;
   final List<String> rentalRequirements;
   final Map<String, double> location;
-
-  // Pricing fields
-  final String price12h;
-  final String price1d;
-  final String price1m;
-  final String price1w;
-  final String price6h;
+  final List<String> orDocuments;  // Official Receipt documents
+  final List<String> crDocuments;  // Certificate of Registration documents
+  final VerificationStatus verificationStatus;  // Admin verification status
 
   CarModel({
     required this.id,
@@ -41,8 +41,10 @@ class CarModel {
     required this.model,
     required this.image,
     required this.imageGallery,
-    required this.price,
-    required this.pricePeriod,
+    required this.hourlyRate,
+    required this.rating,
+    required this.reviewCount,
+    required this.deliveryCharge,
     required this.seatsCount,
     required this.luggageCapacity,
     required this.transmissionType,
@@ -58,11 +60,9 @@ class CarModel {
     required this.extraCharges,
     required this.rentalRequirements,
     required this.location,
-    required this.price12h,
-    required this.price1d,
-    required this.price1m,
-    required this.price1w,
-    required this.price6h,
+    required this.orDocuments,
+    required this.crDocuments,
+    required this.verificationStatus,
   });
 
   // Factory constructor to create CarModel from Firestore document
@@ -82,8 +82,10 @@ class CarModel {
         map,
       ), // Get first image from gallery as fallback
       imageGallery: _parseImageGallery(map['carImageGallery']),
-      price: _parsePrice(map['price1d']), // Use 1-day price as default
-      pricePeriod: '/day',
+      hourlyRate: (map['hourlyRate'] as num?)?.toDouble() ?? 0.0,
+      rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: (map['reviewCount'] as num?)?.toInt() ?? 0,
+      deliveryCharge: (map['deliveryCharge'] as num?)?.toDouble() ?? 0.0,
       seatsCount: map['seats']?.toString() ?? '2',
       luggageCapacity: map['luggage']?.toString() ?? '1',
       transmissionType: map['transmissionType'] ?? 'Manual',
@@ -96,14 +98,15 @@ class CarModel {
       carOwnerFullName: map['carOwnerFullName'] ?? '',
       createdAt: _parseDateTime(map['createdAt']),
       features: _parseFeatures(map['features']),
-      rentalRequirements: _parseFeatures(map['rentalRequirements']),
       extraCharges: _parseExtraCharges(map['extraCharges']),
+      rentalRequirements: (map['rentalRequirements'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       location: _parseLocation(map['location']),
-      price12h: map['price12h']?.toString() ?? '0',
-      price1d: map['price1d']?.toString() ?? '0',
-      price1m: map['price1m']?.toString() ?? '0',
-      price1w: map['price1w']?.toString() ?? '0',
-      price6h: map['price6h']?.toString() ?? '0',
+      orDocuments: (map['orDocuments'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      crDocuments: (map['crDocuments'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      verificationStatus: _parseVerificationStatus(map),
     );
   }
 
@@ -114,16 +117,16 @@ class CarModel {
       'brand': brand,
       'model': model,
       'carImageGallery': imageGallery,
-      'price12h': price12h,
-      'price1d': price1d,
-      'price1m': price1m,
-      'price1w': price1w,
-      'price6h': price6h,
+      'hourlyRate': hourlyRate,
+      'rating': rating,
+      'reviewCount': reviewCount,
+      'deliveryCharge': deliveryCharge,
       'seats': seatsCount,
       'luggage': luggageCapacity,
       'transmissionType': transmissionType,
       'fuelType': fuelType,
       'year': year,
+      'availabilityStatus': availabilityStatus.toString().split('.').last,
       'description': description,
       'address': address,
       'carOwnerDocumentId': carOwnerDocumentId,
@@ -133,6 +136,9 @@ class CarModel {
       'rentalRequirements': rentalRequirements,
       'extraCharges': extraCharges,
       'location': location,
+      'orDocuments': orDocuments,
+      'crDocuments': crDocuments,
+      'verificationStatus': verificationStatus.toString().split('.').last,
     };
   }
 
@@ -150,15 +156,6 @@ class CarModel {
     return gallery.isNotEmpty ? gallery.first : '';
   }
 
-  static double _parsePrice(dynamic price) {
-    if (price == null) return 0.0;
-    if (price is num) return price.toDouble();
-    if (price is String) {
-      return double.tryParse(price) ?? 0.0;
-    }
-    return 0.0;
-  }
-
   static AvailabilityStatus _parseAvailabilityStatus(Map<String, dynamic> map) {
     // Since availability status is not in your current Firebase structure,
     // we'll default to available. You can add this field later.
@@ -170,6 +167,18 @@ class CarModel {
         return AvailabilityStatus.maintenance;
       default:
         return AvailabilityStatus.available;
+    }
+  }
+  
+  static VerificationStatus _parseVerificationStatus(Map<String, dynamic> map) {
+    final status = map['verificationStatus'] ?? 'pending';
+    switch (status.toString().toLowerCase()) {
+      case 'approved':
+        return VerificationStatus.approved;
+      case 'rejected':
+        return VerificationStatus.rejected;
+      default:
+        return VerificationStatus.pending;
     }
   }
 
@@ -215,42 +224,6 @@ class CarModel {
     return {};
   }
 
-  // Helper method to get formatted price based on period
-  String getFormattedPrice(String period) {
-    switch (period) {
-      case '6h':
-        return price6h;
-      case '12h':
-        return price12h;
-      case '1d':
-        return price1d;
-      case '1w':
-        return price1w;
-      case '1m':
-        return price1m;
-      default:
-        return price1d; // Default to daily price
-    }
-  }
-
-  // Helper method to get price period display text
-  String getPricePeriodDisplay(String period) {
-    switch (period) {
-      case '6h':
-        return '/6hrs';
-      case '12h':
-        return '/12hrs';
-      case '1d':
-        return '/day';
-      case '1w':
-        return '/week';
-      case '1m':
-        return '/month';
-      default:
-        return '/day';
-    }
-  }
-
   // Copy with method for updates
   CarModel copyWith({
     String? id,
@@ -259,8 +232,10 @@ class CarModel {
     String? model,
     String? image,
     List<String>? imageGallery,
-    double? price,
-    String? pricePeriod,
+    double? hourlyRate,
+    double? rating,
+    int? reviewCount,
+    double? deliveryCharge,
     String? seatsCount,
     String? luggageCapacity,
     String? transmissionType,
@@ -276,11 +251,9 @@ class CarModel {
     List<String>? rentalRequirements,
     List<Map<String, dynamic>>? extraCharges,
     Map<String, double>? location,
-    String? price12h,
-    String? price1d,
-    String? price1m,
-    String? price1w,
-    String? price6h,
+    List<String>? orDocuments,
+    List<String>? crDocuments,
+    VerificationStatus? verificationStatus,
   }) {
     return CarModel(
       id: id ?? this.id,
@@ -289,8 +262,10 @@ class CarModel {
       model: model ?? this.model,
       image: image ?? this.image,
       imageGallery: imageGallery ?? this.imageGallery,
-      price: price ?? this.price,
-      pricePeriod: pricePeriod ?? this.pricePeriod,
+      hourlyRate: hourlyRate ?? this.hourlyRate,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      deliveryCharge: deliveryCharge ?? this.deliveryCharge,
       seatsCount: seatsCount ?? this.seatsCount,
       luggageCapacity: luggageCapacity ?? this.luggageCapacity,
       transmissionType: transmissionType ?? this.transmissionType,
@@ -306,11 +281,9 @@ class CarModel {
       rentalRequirements: rentalRequirements ?? this.rentalRequirements,
       extraCharges: extraCharges ?? this.extraCharges,
       location: location ?? this.location,
-      price12h: price12h ?? this.price12h,
-      price1d: price1d ?? this.price1d,
-      price1m: price1m ?? this.price1m,
-      price1w: price1w ?? this.price1w,
-      price6h: price6h ?? this.price6h,
+      orDocuments: orDocuments ?? this.orDocuments,
+      crDocuments: crDocuments ?? this.crDocuments,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
     );
   }
 }

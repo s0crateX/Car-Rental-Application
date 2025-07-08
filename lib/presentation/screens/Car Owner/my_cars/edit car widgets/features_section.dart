@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:car_rental_app/config/theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
 
 class FeaturesSection extends StatefulWidget {
   final List<String> features;
   final List<Map<String, dynamic>> extraCharges;
+  final double deliveryCharge;
   final Function(List<String>) onFeaturesChanged;
   final Function(List<Map<String, dynamic>>) onExtraChargesChanged;
+  final Function(double) onDeliveryChargeChanged;
 
   const FeaturesSection({
     super.key,
     required this.features,
     required this.extraCharges,
+    required this.deliveryCharge,
     required this.onFeaturesChanged,
     required this.onExtraChargesChanged,
+    required this.onDeliveryChargeChanged,
   });
 
   @override
@@ -23,12 +28,14 @@ class FeaturesSection extends StatefulWidget {
 class _FeaturesSectionState extends State<FeaturesSection> {
   late List<String> _features;
   late List<Map<String, dynamic>> _extraCharges;
+  late TextEditingController _deliveryChargeController;
 
   @override
   void initState() {
     super.initState();
     _features = List<String>.from(widget.features);
     _extraCharges = List<Map<String, dynamic>>.from(widget.extraCharges);
+    _deliveryChargeController = TextEditingController(text: widget.deliveryCharge == 0.0 ? '' : widget.deliveryCharge.toString());
   }
 
   @override
@@ -41,6 +48,17 @@ class _FeaturesSectionState extends State<FeaturesSection> {
     if (oldWidget.extraCharges != widget.extraCharges) {
       _extraCharges = List<Map<String, dynamic>>.from(widget.extraCharges);
     }
+    // Only update controller if value has changed (prevents cursor jump)
+    final newText = widget.deliveryCharge == 0.0 ? '' : widget.deliveryCharge.toStringAsFixed(0);
+    if (_deliveryChargeController.text != newText) {
+      _deliveryChargeController.text = newText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _deliveryChargeController.dispose();
+    super.dispose();
   }
 
   /// Prompts the user to enter a custom feature and adds it to the list.
@@ -143,6 +161,39 @@ class _FeaturesSectionState extends State<FeaturesSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Delivery Charge Field
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            children: [
+              SvgPicture.asset('assets/svg/peso.svg', width: 20, height: 20, color: AppTheme.lightBlue),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _deliveryChargeController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: const InputDecoration(
+                    labelText: 'Delivery Charge',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    hintText: 'Enter delivery charge',
+                    hintStyle: TextStyle(color: Colors.white54),
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.transparent,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  onChanged: (value) {
+                    final intCharge = int.tryParse(value) ?? 0;
+                    widget.onDeliveryChargeChanged(intCharge.toDouble());
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
         _buildSectionHeader('Features & Extras', Icons.star_outline),
         const SizedBox(height: 16),
 

@@ -251,7 +251,7 @@ class AuthService with ChangeNotifier {
     String fullName,
     String phoneNumber,
     String userRole, // 'customer', 'car_owner', 'admin'
-  ) async {
+    {String? organizationName}) async {
     try {
       _status = AuthStatus.loading;
       _errorMessage = null;
@@ -318,7 +318,7 @@ class AuthService with ChangeNotifier {
             // Create user document
             final userDocRef = _firestore.collection('users').doc(userId);
 
-            transaction.set(userDocRef, {
+            final userData = <String, dynamic>{
               'fullName': fullName,
               'email': email,
               'phoneNumber': phoneNumber,
@@ -328,7 +328,15 @@ class AuthService with ChangeNotifier {
               'lastLogin': FieldValue.serverTimestamp(),
               'profileComplete': false,
               'profileImageUrl': '', // Initialize with empty profile image URL
-            });
+            };
+
+            if (userRole == 'car_owner' &&
+                organizationName != null &&
+                organizationName.isNotEmpty) {
+              userData['organizationName'] = organizationName;
+            }
+
+            transaction.set(userDocRef, userData);
 
             // Create role-specific collections based on user type
             // No longer create a car_owners document. All info stored in users collection.

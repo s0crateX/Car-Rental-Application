@@ -25,9 +25,8 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
-  final TextEditingController dobController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
-  final TextEditingController companyNameController = TextEditingController();
+  final TextEditingController organizationNameController = TextEditingController();
 
   bool _hasChanges = false;
   bool _isSaving = false;
@@ -38,9 +37,8 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
       fullNameController,
       emailController,
       mobileController,
-      dobController,
       addressController,
-      companyNameController,
+      organizationNameController,
     ]) {
       controller.addListener(() {
         if (mounted) {
@@ -76,9 +74,8 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
         fullNameController.text = ownerData['fullName'] ?? '';
         emailController.text = ownerData['email'] ?? '';
         mobileController.text = ownerData['phoneNumber'] ?? '';
-        dobController.text = ownerData['dob'] ?? '';
         addressController.text = ownerData['address'] ?? '';
-        companyNameController.text = ownerData['companyName'] ?? '';
+        organizationNameController.text = ownerData['organizationName'] ?? '';
         _profileImageUrl = ownerData['profileImageUrl'] as String?;
         final createdAt = ownerData['createdAt'];
         if (createdAt != null) {
@@ -143,9 +140,8 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
     fullNameController.dispose();
     emailController.dispose();
     mobileController.dispose();
-    dobController.dispose();
     addressController.dispose();
-    companyNameController.dispose();
+    organizationNameController.dispose();
     super.dispose();
   }
 
@@ -192,9 +188,8 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
       'fullName': fullNameController.text.trim(),
       'email': emailController.text.trim(),
       'phoneNumber': mobileController.text.trim(),
-      'dob': dobController.text.trim(),
       'address': addressController.text.trim(),
-      'companyName': companyNameController.text.trim(),
+      'organizationName': organizationNameController.text.trim(),
     };
     
     if (uploadedImageUrl != null) {
@@ -438,32 +433,9 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
                   keyboardType: TextInputType.phone,
                 ),
                 _buildEditableField(
-                  label: 'Date of Birth',
-                  controller: dobController,
-                  hint: 'DD.MM.YYYY',
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.tryParse(_parseDate(dobController.text)) ??
-                          DateTime(2000, 1, 1),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      dobController.text = _formatDate(picked);
-                      if (mounted) {
-                        setState(() {
-                          _hasChanges = true;
-                        });
-                      }
-                    }
-                  },
-                ),
-                _buildEditableField(
-                  label: 'Company Name',
-                  controller: companyNameController,
-                  hint: 'Enter your company name',
+                  label: 'Organization Name',
+                  controller: organizationNameController,
+                  hint: 'Enter your organization name',
                 ),
                 _buildEditableField(
                   label: 'Address',
@@ -524,18 +496,5 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
-  }
-
-  String _parseDate(String dateStr) {
-    try {
-      final parts = dateStr.split('.');
-      if (parts.length == 3) {
-        final day = int.parse(parts[0]);
-        final month = int.parse(parts[1]);
-        final year = int.parse(parts[2]);
-        return DateTime(year, month, day).toIso8601String();
-      }
-    } catch (_) {}
-    return DateTime(2000, 1, 1).toIso8601String();
   }
 }

@@ -1,21 +1,28 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'rental_duration_selector.dart';
 import 'extra_charges_section.dart';
 import 'payment_mode_section.dart';
-import 'payment_breakdown_section.dart';
 import 'booking_dialogs.dart';
 import 'package:car_rental_app/shared/models/Final Model/Firebase_car_model.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
+import 'delivery_section.dart';
+import 'payment_summary_section.dart';
+import 'booking_options_selector.dart';
+import 'rental_period_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
+import 'document_verification.dart';
+import 'terms_and_conditions_screen.dart';
 // Add dotted_border to pubspec.yaml if not present: dotted_border: ^2.0.0
 
 class RentCarScreen extends StatefulWidget {
   final CarModel car;
-  
+
   const RentCarScreen({super.key, required this.car});
 
   @override
@@ -23,6 +30,14 @@ class RentCarScreen extends StatefulWidget {
 }
 
 class _RentCarScreenState extends State<RentCarScreen> {
+  bool _isDelivery = false;
+  String? _deliveryAddress;
+  LatLng? _deliveryLatLng;
+  double _deliveryCharge = 0.0;
+  BookingType _bookingType = BookingType.rentNow;
+  DateTime? _startDate;
+  DateTime? _endDate;
+
   // Notes entered by the user
   String _notes = '';
 
@@ -36,6 +51,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
   // Document status tracking
   Map<String, dynamic>? _userDocuments;
   bool _isLoading = true;
+  bool _agreedToTerms = false;
 
   @override
   void initState() {
@@ -122,522 +138,182 @@ class _RentCarScreenState extends State<RentCarScreen> {
 
   // Car passed from previous screen
   late final CarModel _car;
-  
-  // Selected rental period
-  String _selectedPeriod = '1d';
+
+
 
   // Track selected extra charges
   final Map<String, bool> _selectedExtras = {
     'Driver Fee': false,
     'Delivery Fee': false,
   };
-  
-  // Helper method to convert List<Map<String, dynamic>> to Map<String, double>
-  // Function removed as ExtraChargesSection now handles the conversion internally
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Rental Requirements')),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ListView(
-                  children: [
-                    // Document verification section
-                    _buildSectionTitle('Document Verification'),
-                    const SizedBox(height: 16),
-                    _buildDocumentVerificationGrid(),
-
-                    const SizedBox(height: 24),
-
-                    // 2. Rental Duration Selector
-                    RentalDurationSelector(
-                      selectedPeriod: _selectedPeriod,
-                      onPeriodChanged: (period) {
-                        setState(() {
-                          _selectedPeriod = period;
-                        });
-                      },
-                      car: _car, // Pass the Firebase CarModel directly
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 3. Extra Charges Section
-                    ExtraChargesSection(
-                      car: _car,
-                      selectedExtras: _selectedExtras,
-                      onToggle: (key) {
-                        setState(() {
-                          _selectedExtras[key] =
-                              !(_selectedExtras[key] ?? false);
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 4. Notes Section
-                    const Text(
-                      'Notes (Optional)',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Enter any special requests or notes...',
-                      ),
-                      minLines: 1,
-                      maxLines: 3,
-                      onChanged: (val) {
-                        setState(() {
-                          _notes = val;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 5. Payment Breakdown Section
-                    const Text(
-                      'Payment Breakdown',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    PaymentBreakdownSection(
-                      car: _car,
-                      selectedPeriod: _selectedPeriod,
-                      selectedExtras: _selectedExtras,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 6. Payment Option Section (at bottom)
-                    PaymentModeSection(
-                      selectedPaymentMode: _selectedPaymentMode,
-                      paymentModes: _paymentModes,
-                      onPaymentModeChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedPaymentMode = val;
-                          });
-                        }
-                      },
-                      receiptImage: _receiptImage,
-                      onPickReceiptImage: _pickReceiptImage,
-                      onRemoveReceiptImage: () {
-                        setState(() {
-                          _receiptImage = null;
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-                    // 7. Book Now Button
-                    _buildBookNowButton(),
-                  ],
-                ),
-              ),
-    );
-  }
-
-  // Helper methods to access document status
-  String _getDocumentStatus(String documentId) {
-    if (_userDocuments == null || !_userDocuments!.containsKey(documentId)) {
-      return 'pending';
-    }
-    return _userDocuments![documentId]['status'] ?? 'pending';
-  }
-
-  String? _getUploadedDate(String documentId) {
-    if (_userDocuments == null ||
-        !_userDocuments!.containsKey(documentId) ||
-        !_userDocuments![documentId].containsKey('uploadedAt')) {
-      return null;
-    }
-
-    final uploadedAt = _userDocuments![documentId]['uploadedAt'];
-    if (uploadedAt == null) return null;
-
-    if (uploadedAt is Timestamp) {
-      final now = DateTime.now();
-      final uploadDate = uploadedAt.toDate();
-      final difference = now.difference(uploadDate);
-
-      if (difference.inDays > 0) {
-        return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
-      } else {
-        return 'just now';
-      }
-    }
-    return null;
-  }
-
-  String? _getDocumentUrl(String documentId) {
-    if (_userDocuments == null || !_userDocuments!.containsKey(documentId)) {
-      return null;
-    }
-    return _userDocuments![documentId]['url'];
-  }
-
-  // Build document verification grid
-  Widget _buildDocumentVerificationGrid() {
-    // Document types we want to display
-    final List<String> documentTypes = [
-      'government_id',
-      'license_front',
-      'license_back',
-      'selfie_with_license',
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.8,
-          ),
-          itemCount: documentTypes.length,
-          itemBuilder: (context, index) {
-            final String docType = documentTypes[index];
-            final String status = _getDocumentStatus(docType);
-            final String? docUrl = _getDocumentUrl(docType);
-
-            return _buildDocumentCard(
-              title: _getDocumentTitle(docType),
-              imageUrl: docUrl,
-              status: status,
-              onTap: () => _showDocumentDetails(docType),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        _buildVerificationStatus(),
-      ],
-    );
-  }
-
-  String _getDocumentTitle(String docType) {
-    switch (docType) {
-      case 'government_id':
-        return 'Government ID';
-      case 'license_front':
-        return 'License (Front)';
-      case 'license_back':
-        return 'License (Back)';
-      case 'selfie_with_license':
-        return 'Selfie with License';
-      default:
-        return 'Document';
-    }
-  }
-
-  Widget _buildDocumentCard({
-    required String title,
-    required String? imageUrl,
-    required String status,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child:
-                    imageUrl != null && imageUrl.isNotEmpty
-                        ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          placeholder:
-                              (context, url) => Container(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surface.withOpacity(0.5),
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                          errorWidget:
-                              (context, url, error) => Container(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surface.withOpacity(0.5),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.image_not_supported,
-                                    size: 40,
-                                  ),
-                                ),
-                              ),
-                        )
-                        : Container(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surface.withOpacity(0.5),
-                          child: const Center(
-                            child: Icon(Icons.upload_file, size: 40),
-                          ),
-                        ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ListView(
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                  // Document verification section
+                  DocumentVerificationSection(
+                    userDocuments: _userDocuments,
+                    onDocumentUploaded: _fetchUserDocuments,
                   ),
-                  const SizedBox(height: 4),
-                  _buildStatusChip(status),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildStatusChip(String status) {
-    Color chipColor;
-    IconData iconData;
-    String statusText = status.toLowerCase();
+                  const SizedBox(height: 24),
 
-    switch (statusText) {
-      case 'approved':
-      case 'verified':
-        chipColor = Colors.green;
-        iconData = Icons.check_circle;
-        statusText = 'Verified';
-        break;
-      case 'rejected':
-        chipColor = Colors.red;
-        iconData = Icons.cancel;
-        break;
-      case 'pending':
-        chipColor = Colors.orange;
-        iconData = Icons.pending;
-        break;
-      default:
-        chipColor = Colors.grey;
-        iconData = Icons.help_outline;
-        break;
-    }
+                  // Booking Option
+                  BookingOptionsSelector(
+                    selectedOption: _bookingType,
+                    onOptionSelected: (option) {
+                      setState(() {
+                        _bookingType = option;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: chipColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(iconData, size: 14, color: chipColor),
-          const SizedBox(width: 4),
-          Text(
-            statusText.substring(0, 1).toUpperCase() + statusText.substring(1),
-            style: TextStyle(fontSize: 12, color: chipColor),
-          ),
-        ],
-      ),
-    );
-  }
+                  RentalPeriodSection(
+                    bookingType: _bookingType,
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    onSelectStartDate: () => _selectStartDate(context),
+                    onSelectEndDate: () => _selectEndDate(context),
+                  ),
 
-  void _showDocumentDetails(String docType) {
-    final String? imageUrl = _getDocumentUrl(docType);
-    final String status = _getDocumentStatus(docType);
+                  // 3. Extra Charges Section
+                  ExtraChargesSection(
+                    car: _car,
+                    selectedExtras: _selectedExtras,
+                    onToggle: (key) {
+                      setState(() {
+                        _selectedExtras[key] =
+                            !(_selectedExtras[key] ?? false);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 24),
 
-    showDialog(
-      context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    _getDocumentTitle(docType),
-                    style: const TextStyle(
+                  // Delivery Section
+                  DeliverySection(
+                    car: widget.car,
+                    onDeliveryChanged:
+                        (isDelivery, latLng, address, deliveryCharge) {
+                      setState(() {
+                        _isDelivery = isDelivery;
+                        _deliveryLatLng = latLng;
+                        _deliveryAddress = address;
+                        _deliveryCharge = deliveryCharge;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 4. Notes Section
+                  const Text(
+                    'Notes (Optional)',
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                if (imageUrl != null && imageUrl.isNotEmpty)
-                  InteractiveViewer(
-                    minScale: 0.5,
-                    maxScale: 3.0,
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.contain,
-                      height: 300,
-                      width: double.infinity,
-                      placeholder:
-                          (context, url) => const SizedBox(
-                            height: 300,
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                      errorWidget:
-                          (context, url, error) => const SizedBox(
-                            height: 300,
-                            child: Center(child: Icon(Icons.error)),
-                          ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Enter any special requests or notes...',
                     ),
-                  )
-                else
-                  const SizedBox(
-                    height: 300,
-                    child: Center(child: Text('No image uploaded')),
+                    minLines: 1,
+                    maxLines: 3,
+                    onChanged: (val) {
+                      setState(() {
+                        _notes = val;
+                      });
+                    },
                   ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  const SizedBox(height: 24),
+
+                  // 5. Payment Summary
+                  PaymentSummarySection(
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    car: widget.car,
+                    selectedExtras: _selectedExtras,
+                    deliveryCharge: _deliveryCharge,
+                  ),
+
+                  const SizedBox(height: 16),
+                  // 6. Payment Option Section (at bottom)
+                  PaymentModeSection(
+                    selectedPaymentMode: _selectedPaymentMode,
+                    paymentModes: _paymentModes,
+                    onPaymentModeChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedPaymentMode = val;
+                        });
+                      }
+                    },
+                    receiptImage: _receiptImage,
+                    onPickReceiptImage: _pickReceiptImage,
+                    onRemoveReceiptImage: () {
+                      setState(() {
+                        _receiptImage = null;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Terms and Conditions
+                  Row(
                     children: [
-                      _buildStatusChip(status),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Close'),
+                      Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (value) {
+                          setState(() {
+                            _agreedToTerms = value ?? false;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            children: [
+                              const TextSpan(text: 'I agree to the '),
+                              TextSpan(
+                                text: 'Terms and Conditions',
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsAndConditionsScreen(),
+                                      ),
+                                    );
+                                  },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
 
-  // Helper method to build section titles with consistent styling
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildVerificationStatus() {
-    // Calculate verification progress
-    final List<String> documentTypes = [
-      'government_id',
-      'license_front',
-      'license_back',
-      'selfie_with_license',
-    ];
-
-    int approvedCount = 0;
-    for (String docType in documentTypes) {
-      final String status = _getDocumentStatus(docType);
-      if (status.toLowerCase() == 'approved' ||
-          status.toLowerCase() == 'verified') {
-        approvedCount++;
-      }
-    }
-
-    final double progress =
-        documentTypes.isEmpty ? 0 : approvedCount / documentTypes.length;
-    final bool isFullyVerified = progress == 1.0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Verification Progress',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 24),
+                  _buildBookNowButton(),
+                ],
               ),
-              Text(
-                '${(progress * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color:
-                      isFullyVerified
-                          ? Colors.green
-                          : Theme.of(context).colorScheme.secondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.grey.withOpacity(0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isFullyVerified
-                  ? Colors.green
-                  : Theme.of(context).colorScheme.secondary,
             ),
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            isFullyVerified
-                ? 'All documents verified! You can now rent cars.'
-                : 'Please upload all required documents for verification.',
-            style: TextStyle(
-              color:
-                  isFullyVerified
-                      ? Colors.green
-                      : Theme.of(context).colorScheme.secondary,
-            ),
-          ),
-          if (!isFullyVerified) ...[const SizedBox(height: 16)],
-        ],
-      ),
     );
   }
 
@@ -651,37 +327,48 @@ class _RentCarScreenState extends State<RentCarScreen> {
 
     bool allRequirementsUploaded = true;
     for (String docType in documentTypes) {
-      final String status = _getDocumentStatus(docType);
+      final String status = _userDocuments?[docType]?['status'] ?? 'pending';
       if (status.toLowerCase() != 'approved' &&
           status.toLowerCase() != 'verified') {
         allRequirementsUploaded = false;
         break;
       }
     }
+
+    String periodDisplayText = 'N/A';
+    String startDisplayText = 'N/A';
+    String endDisplayText = 'N/A';
+
+    if (_startDate != null && _endDate != null && _endDate!.isAfter(_startDate!)) {
+      final rentalDuration = _endDate!.difference(_startDate!);
+      periodDisplayText =
+          "${rentalDuration.inDays}d ${rentalDuration.inHours.remainder(24)}h";
+      startDisplayText = DateFormat('MMM d, yyyy hh:mm a').format(_startDate!);
+      endDisplayText = DateFormat('MMM d, yyyy hh:mm a').format(_endDate!);
+    }
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed:
-            allRequirementsUploaded
-                ? () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder:
-  (context) => ConfirmBookingDialog(
-    period: _getPeriodDisplayText(_selectedPeriod),
-    paymentMode: _selectedPaymentMode,
-    startDate: DateTime.now().toString().substring(0, 16),
-    endDate: DateTime.now().add(const Duration(days: 1)).toString().substring(0, 16),
-    notes: _notes,
-    onCancel: () => Navigator.of(context).pop(false),
-    onConfirm: () => Navigator.of(context).pop(true),
-  ),
-                  );
-                  if (confirmed == true) {
-                    _onBookNow();
-                  }
+        onPressed: allRequirementsUploaded && _agreedToTerms
+            ? () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => ConfirmBookingDialog(
+                    period: periodDisplayText,
+                    paymentMode: _selectedPaymentMode,
+                    startDate: startDisplayText,
+                    endDate: endDisplayText,
+                    notes: _notes,
+                    onCancel: () => Navigator.of(context).pop(false),
+                    onConfirm: () => Navigator.of(context).pop(true),
+                  ),
+                );
+                if (confirmed == true) {
+                  _onBookNow();
                 }
-                : null,
+              }
+            : null,
         child: const Text('Confirm'),
       ),
     );
@@ -694,135 +381,159 @@ class _RentCarScreenState extends State<RentCarScreen> {
         _receiptImage == null) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Receipt Required'),
-          content: const Text('Please upload your payment receipt.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Receipt Required'),
+              content: const Text('Please upload your payment receipt.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
-          ],
+      );
+      return;
+    }
+
+    // Validation
+    if (_startDate == null ||
+        _endDate == null ||
+        _endDate!.isBefore(_startDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select valid start and end dates.'),
         ),
       );
       return;
     }
-    
-    // Show loading indicator
+
+    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Processing your booking...'),
-          ],
-        ),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
-    
+
     try {
-      // Get current user
       final authService = Provider.of<AuthService>(context, listen: false);
       final userId = authService.user?.uid;
-      
       if (userId == null) {
-        throw Exception('User not logged in');
+        throw Exception('User not logged in.');
       }
-      
-      // Get user data for the booking
-      Map<String, dynamic>? userData = authService.userData;
-      String customerName = userData?['fullName'] ?? 'Unknown Customer';
-      String customerPhone = userData?['phoneNumber'] ?? 'No Phone';
-      
-      // Calculate rental dates
-      final DateTime startDate = DateTime.now();
-      DateTime endDate;
-      
-      switch (_selectedPeriod) {
-        case '6h':
-          endDate = startDate.add(const Duration(hours: 6));
-          break;
-        case '12h':
-          endDate = startDate.add(const Duration(hours: 12));
-          break;
-        case '1d':
-          endDate = startDate.add(const Duration(days: 1));
-          break;
-        case '1w':
-          endDate = startDate.add(const Duration(days: 7));
-          break;
-        case '1m':
-          endDate = startDate.add(const Duration(days: 30));
-          break;
-        default:
-          endDate = startDate.add(const Duration(days: 1));
-      }
-      
-      // Prepare selected extras
-      List<Map<String, dynamic>> selectedExtraCharges = [];
-      for (var entry in _selectedExtras.entries) {
-        if (entry.value) { // If this extra is selected
-          // Find the corresponding extra charge in the car's extraCharges list
-          for (var charge in _car.extraCharges) {
-            if (charge['name'] == entry.key) {
-              selectedExtraCharges.add(charge);
-              break;
-            }
-          }
+
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .get();
+      final customerName = userDoc.data()?['fullName'] ?? 'N/A';
+      final customerPhone = userDoc.data()?['phone'] ?? 'N/A';
+
+      // Get selected extra charges
+      final List<Map<String, dynamic>> selectedExtraCharges = [];
+      _selectedExtras.forEach((name, isSelected) {
+        if (isSelected) {
+          final charge = _car.extraCharges.firstWhere(
+            (c) => c['name'] == name,
+            orElse: () => {'name': name, 'price': 0.0},
+          );
+          selectedExtraCharges.add(charge);
         }
-      }
-      
+      });
+
+      final rentalDuration = _endDate!.difference(_startDate!);
+      final periodDisplayText =
+          "${rentalDuration.inDays}d ${rentalDuration.inHours.remainder(24)}h";
+
+      // Calculate prices
+      final carRentalCost =
+          (rentalDuration.inHours > 0 ? rentalDuration.inHours : 1) *
+              widget.car.hourlyRate;
+
+      double totalExtraCharges = 0;
+      _selectedExtras.forEach((name, isSelected) {
+        if (isSelected) {
+          final chargeData = widget.car.extraCharges.firstWhere(
+            (c) => c['name'] == name,
+            orElse: () => {'name': name, 'amount': '0.0'},
+          );
+          final price =
+              double.tryParse(chargeData['amount']?.toString() ?? '0') ?? 0.0;
+          totalExtraCharges += price;
+        }
+      });
+
+      final totalPrice = carRentalCost + totalExtraCharges;
+      final downPayment = carRentalCost * 0.5;
+
       // Create booking document
-      final bookingRef = await FirebaseFirestore.instance.collection('rentals').add({
+      final Map<String, dynamic> bookingData = {
         'carId': _car.id,
         'carName': '${_car.brand} ${_car.model}',
-        'carImage': _car.imageGallery.isNotEmpty ? _car.imageGallery[0] : '',
+        'carImageUrl': _car.image,
+        'ownerId': _car.carOwnerDocumentId,
         'customerId': userId,
         'customerName': customerName,
         'customerPhone': customerPhone,
-        'carOwnerId': _car.carOwnerDocumentId,
-        'carOwnerName': _car.carOwnerFullName,
-        'paymentMode': _selectedPaymentMode,
-        'rentalPeriod': _selectedPeriod,
-        'rentalPeriodDisplay': _getPeriodDisplayText(_selectedPeriod),
-        'price': _car.getFormattedPrice(_selectedPeriod),
-        'startDate': startDate,
-        'endDate': endDate,
-        'status': 'pending', // pending, active, completed, cancelled
+        'rentalPeriod': {
+          'days': rentalDuration.inDays,
+          'hours': rentalDuration.inHours % 24,
+        },
+        'carRentalCost': carRentalCost,
+        'totalExtraCharges': totalExtraCharges,
+        'totalPrice': totalPrice,
+        'downPayment': downPayment,
+        'startDate': Timestamp.fromDate(_startDate!),
+        'endDate': Timestamp.fromDate(_endDate!),
+        'status': _bookingType == BookingType.reserve ? 'reserved' : 'pending',
+        'bookingType': _bookingType.toString().split('.').last,
         'createdAt': FieldValue.serverTimestamp(),
         'notes': _notes,
         'extraCharges': selectedExtraCharges,
-        'location': _car.location,
-        'address': _car.address,
-      });
-      
+        'paymentMethod': _selectedPaymentMode,
+        if (_isDelivery && _deliveryLatLng != null) ...{
+          'deliveryAddress': {
+            'address': _deliveryAddress,
+            'latitude': _deliveryLatLng!.latitude,
+            'longitude': _deliveryLatLng!.longitude,
+          },
+        },
+        'isPaid': false, // This represents the full payment status
+        'documents': {
+          'license': _userDocuments?['license_front']?['url'],
+          'id': _userDocuments?['government_id']?['url'],
+        },
+      };
+      // Use 'rents' collection as requested by user
+      final bookingRef = await FirebaseFirestore.instance
+          .collection('rents')
+          .add(bookingData);
+
       // Update car availability status to rented
       await FirebaseFirestore.instance.collection('Cars').doc(_car.id).update({
-        'availabilityStatus': 'rented'
+        'availabilityStatus': 'rented',
       });
-      
+
       // Close loading dialog
       Navigator.of(context).pop();
       // Show success dialog
       showDialog(
         context: context,
-        builder: (context) => BookingConfirmedDialog(
-          bookingId: bookingRef.id,
-          period: _getPeriodDisplayText(_selectedPeriod),
-          paymentMode: _selectedPaymentMode,
-          startDate: startDate.toString().substring(0, 16),
-          endDate: endDate.toString().substring(0, 16),
-          notes: _notes.isNotEmpty ? _notes : null,
-          receiptUploaded: _receiptImage != null,
-          onOk: () {
-            Navigator.of(context).pop();
-            Navigator.of(context).pop(); // Go back to previous screen
-          },
-        ),
+        builder:
+            (context) => BookingConfirmedDialog(
+              bookingId: bookingRef.id,
+              period: periodDisplayText,
+              paymentMode: _selectedPaymentMode,
+              startDate: DateFormat('MMM d, yyyy hh:mm a').format(_startDate!),
+              endDate: DateFormat('MMM d, yyyy hh:mm a').format(_endDate!),
+              notes: _notes.isNotEmpty ? _notes : null,
+              receiptUploaded: _receiptImage != null,
+              onOk: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Go back to previous screen
+              },
+            ),
       );
     } catch (e) {
       // Close loading dialog
@@ -830,16 +541,17 @@ class _RentCarScreenState extends State<RentCarScreen> {
       // Show error dialog
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: Text('Failed to create booking: ${e.toString()}'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Error'),
+              content: Text('Failed to create booking: ${e.toString()}'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     }
   }
@@ -853,22 +565,148 @@ class _RentCarScreenState extends State<RentCarScreen> {
       });
     }
   }
-  
-  // Helper method to get display text for rental period
-  String _getPeriodDisplayText(String period) {
-    switch (period) {
-      case '6h':
-        return '6 Hours';
-      case '12h':
-        return '12 Hours';
-      case '1d':
-        return '1 Day';
-      case '1w':
-        return '1 Week';
-      case '1m':
-        return '1 Month';
-      default:
-        return '1 Day';
+
+  Future<void> _selectPickupTime(BuildContext context) async {
+    final initialTime = TimeOfDay.fromDateTime(_startDate ?? DateTime.now());
+
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Transform.scale(scale: 0.85, child: child!);
+      },
+    );
+
+    if (pickedTime != null) {
+      final now = DateTime.now();
+      final selectedDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+
+      if (_endDate != null && selectedDateTime.isAfter(_endDate!)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pickup time must be before the end of rental.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      setState(() {
+        _startDate = selectedDateTime;
+      });
     }
+  }
+
+  Future<void> _selectStartDateTime(BuildContext context) async {
+    final initialDate = _startDate ?? DateTime.now();
+    final firstDate = DateTime.now();
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && context.mounted) {
+      final initialTime = TimeOfDay.fromDateTime(initialDate);
+      TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: initialTime,
+        builder: (context, child) {
+          return Transform.scale(scale: 0.85, child: child!);
+        },
+      );
+
+      if (pickedTime != null) {
+        final selectedDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        if (_endDate != null && selectedDateTime.isAfter(_endDate!)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Start date must be before the end date.'),
+              ),
+            );
+          }
+          return;
+        }
+        setState(() {
+          _startDate = selectedDateTime;
+        });
+      }
+    }
+  }
+
+  Future<void> _selectEndDateTime(BuildContext context) async {
+    final initialDate = _endDate ?? _startDate ?? DateTime.now();
+    final firstDate = _startDate ?? DateTime.now();
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && context.mounted) {
+      final initialTime = TimeOfDay.fromDateTime(initialDate);
+      TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: initialTime,
+        builder: (context, child) {
+          return Transform.scale(scale: 0.85, child: child!);
+        },
+      );
+
+      if (pickedTime != null) {
+        final selectedDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        if (_startDate != null && selectedDateTime.isBefore(_startDate!)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('End of rental must be after the pickup time.'),
+              ),
+            );
+          }
+          return;
+        }
+        setState(() {
+          _endDate = selectedDateTime;
+        });
+      }
+    }
+  }
+
+  Future<void> _selectStartDate(BuildContext context) async {
+    if (_bookingType == BookingType.reserve) {
+      await _selectStartDateTime(context);
+    } else {
+      await _selectPickupTime(context);
+    }
+  }
+
+  Future<void> _selectEndDate(BuildContext context) async {
+    await _selectEndDateTime(context);
   }
 }

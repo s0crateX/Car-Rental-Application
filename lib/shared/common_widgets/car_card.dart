@@ -236,44 +236,34 @@ class CarCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                    )).toList(),
+                    )),
                     const SizedBox(height: 16),
                   ],
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/svg/peso.svg',
-                            width: 18,
-                            height: 18,
-                            colorFilter: ColorFilter.mode(
-                              theme.colorScheme.primary,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            car.price.toStringAsFixed(0),
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          Text(
-                            car.pricePeriod,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.7,
+                      RichText(
+                        text: TextSpan(
+                          style: theme.textTheme.bodyLarge, // Default text style
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: '₱${car.hourlyRate.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
-                          ),
-                        ],
+                            TextSpan(
+                              text: ' / hour',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       Row(
                         children: [

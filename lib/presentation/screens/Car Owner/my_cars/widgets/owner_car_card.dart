@@ -1,6 +1,7 @@
 import 'package:car_rental_app/config/theme.dart';
 import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit_car_details_screen.dart';
 
@@ -164,7 +165,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
 
   Widget _buildCarHeader(ThemeData theme, NumberFormat currencyFormat) {
     return Container(
-      height: 140,
+      height: 180, // Increased height to accommodate more content
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -179,11 +180,11 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         children: [
           // Background pattern
           Positioned.fill(child: CustomPaint(painter: _PatternPainter())),
-          // Car image
+
+          // Car image - positioned on the right
           Positioned(
             right: 16,
             top: 16,
-            bottom: 16,
             child: Hero(
               tag: 'car_image_${car.type}_${car.brand}',
               child: ClipRRect(
@@ -191,15 +192,16 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                 child:
                     (car.imageGallery.isNotEmpty)
                         ? SizedBox(
-                          width: 120,
-                          height: 108,
+                          width:
+                              100, // Reduced width to give more space for text
+                          height: 80, // Reduced height
                           child: PageView.builder(
                             itemCount: car.imageGallery.length,
                             itemBuilder: (context, index) {
                               return Image.network(
                                 car.imageGallery[index],
-                                width: 120,
-                                height: 108,
+                                width: 100,
+                                height: 80,
                                 fit: BoxFit.cover,
                                 loadingBuilder: (
                                   context,
@@ -207,14 +209,14 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                                   loadingProgress,
                                 ) {
                                   if (loadingProgress == null) return child;
-                                  return Center(
+                                  return const Center(
                                     child: CircularProgressIndicator(),
                                   );
                                 },
                                 errorBuilder:
                                     (context, error, stackTrace) => Container(
-                                      width: 120,
-                                      height: 108,
+                                      width: 100,
+                                      height: 80,
                                       decoration: BoxDecoration(
                                         color: AppTheme.darkNavy.withOpacity(
                                           0.5,
@@ -235,7 +237,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                                             Icons.directions_car,
                                             color: AppTheme.lightBlue
                                                 .withOpacity(0.7),
-                                            size: 32,
+                                            size: 24,
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
@@ -243,7 +245,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                                             style: TextStyle(
                                               color: AppTheme.paleBlue
                                                   .withOpacity(0.7),
-                                              fontSize: 12,
+                                              fontSize: 10,
                                             ),
                                           ),
                                         ],
@@ -255,13 +257,13 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                         )
                         : Image.asset(
                           car.image,
-                          width: 120,
-                          height: 108,
+                          width: 100,
+                          height: 80,
                           fit: BoxFit.cover,
                           errorBuilder:
                               (context, error, stackTrace) => Container(
-                                width: 120,
-                                height: 108,
+                                width: 100,
+                                height: 80,
                                 decoration: BoxDecoration(
                                   color: AppTheme.darkNavy.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(16),
@@ -278,7 +280,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                                       color: AppTheme.lightBlue.withOpacity(
                                         0.7,
                                       ),
-                                      size: 32,
+                                      size: 24,
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
@@ -287,7 +289,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                                         color: AppTheme.paleBlue.withOpacity(
                                           0.7,
                                         ),
-                                        fontSize: 12,
+                                        fontSize: 10,
                                       ),
                                     ),
                                   ],
@@ -297,46 +299,117 @@ class _OwnerCarCardState extends State<OwnerCarCard>
               ),
             ),
           ),
-          // Car name and status overlay
+
+          // Left side content - properly spaced
           Positioned(
-            left: 20,
+            left: 16,
             top: 16,
-            right: 150,
+            right:
+                130, // Leave space for the image (100px + 16px margin + 14px buffer)
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatusChip(theme),
-                const SizedBox(height: 12),
+                // Status chips
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 4.0,
+                  children: [
+                    _buildStatusChip(theme),
+                    _buildVerificationStatusChip(theme),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                _buildVerificationStatusText(theme),
+                const SizedBox(height: 8),
+
+                // Brand and model - main title
                 Text(
-                  car.type,
+                  '${car.brand} ${car.model}',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.white,
-                    fontSize: 20,
+                    fontSize: 18, // Slightly smaller to prevent overflow
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
+
+                // Car type with icon
                 Row(
                   children: [
-                    Icon(
-                      Icons.branding_watermark,
+                    const Icon(
+                      Icons.directions_car,
                       color: AppTheme.lightBlue,
-                      size: 16,
+                      size: 14,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        '${car.brand} ${car.model}',
+                        car.type,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppTheme.lightBlue,
                           fontWeight: FontWeight.w500,
+                          fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
+                ),
+              ],
+            ),
+          ),
+
+          // Pricing details - bottom left
+          Positioned(
+            bottom: 16,
+            left: 16,
+            right: 130, // Match the spacing with top content
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/svg/peso.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '${car.hourlyRate.toStringAsFixed(0)}',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '/ hour',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.paleBlue.withOpacity(0.9),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Available for rent',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.paleBlue.withOpacity(0.7),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -348,95 +421,44 @@ class _OwnerCarCardState extends State<OwnerCarCard>
 
   Widget _buildMainContent(ThemeData theme, NumberFormat currencyFormat) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         children: [
-          // Pricing section
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.darkNavy.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.lightBlue.withOpacity(0.2)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Price durations list
-                    Expanded(
-                      child: Wrap(
-                        spacing: 10,
-                        runSpacing: 6,
-                        children: [
-                          _PriceDurationLabel(
-                            label: '6h',
-                            price: double.tryParse(car.price6h ?? '0') ?? 0,
-                            currencyFormat: currencyFormat,
-                          ),
-                          _PriceDurationLabel(
-                            label: '12h',
-                            price: double.tryParse(car.price12h ?? '0') ?? 0,
-                            currencyFormat: currencyFormat,
-                          ),
-                          _PriceDurationLabel(
-                            label: '1d',
-                            price: double.tryParse(car.price1d ?? '0') ?? 0,
-                            currencyFormat: currencyFormat,
-                          ),
-                          _PriceDurationLabel(
-                            label: '1w',
-                            price: double.tryParse(car.price1w ?? '0') ?? 0,
-                            currencyFormat: currencyFormat,
-                          ),
-                          _PriceDurationLabel(
-                            label: '1m',
-                            price: double.tryParse(car.price1m ?? '0') ?? 0,
-                            currencyFormat: currencyFormat,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Quick stats
-                    _buildQuickStats(theme),
-                  ],
-                ),
-              ],
-            ),
+          // Car specifications and stats in a row
+          Row(
+            children: [
+              // Specs on the left
+              Expanded(flex: 2, child: _buildSpecsPreview(theme)),
+              const SizedBox(width: 16),
+              // Quick stats on the right
+              _buildQuickStats(theme),
+            ],
           ),
-          const SizedBox(height: 12),
-          // Car specifications preview
-          _buildSpecsPreview(theme),
         ],
       ),
     );
   }
 
   Widget _buildQuickStats(ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _buildStatItem(
-            icon: Icons.event_seat,
-            value: car.seatsCount.isNotEmpty ? car.seatsCount : '5',
-            theme: theme,
-          ),
-          const SizedBox(height: 6),
-          _buildStatItem(
-            icon: Icons.luggage,
-            value:
-                car.luggageCapacity.isNotEmpty
-                    ? car.luggageCapacity.split(' ')[0]
-                    : '2',
-            theme: theme,
-          ),
-        ],
-      ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _buildStatItem(
+          icon: Icons.event_seat,
+          value: car.seatsCount.isNotEmpty ? car.seatsCount : '5',
+          theme: theme,
+        ),
+        const SizedBox(height: 6),
+        _buildStatItem(
+          icon: Icons.luggage,
+          value:
+              car.luggageCapacity.isNotEmpty
+                  ? car.luggageCapacity.split(' ')[0]
+                  : '2',
+          theme: theme,
+        ),
+      ],
     );
   }
 
@@ -463,36 +485,30 @@ class _OwnerCarCardState extends State<OwnerCarCard>
   }
 
   Widget _buildSpecsPreview(ThemeData theme) {
-    return Row(
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
       children: [
-        Flexible(
-          child: _buildSpecChip(
-            icon: Icons.settings,
-            label: _truncateText(
-              car.transmissionType.isNotEmpty ? car.transmissionType : 'Auto',
-              8,
-            ),
-            theme: theme,
+        _buildSpecChip(
+          icon: Icons.settings,
+          label: _truncateText(
+            car.transmissionType.isNotEmpty ? car.transmissionType : 'Auto',
+            6,
           ),
+          theme: theme,
         ),
-        const SizedBox(width: 8), // Reduced spacing between chips
-        Flexible(
-          child: _buildSpecChip(
-            icon: Icons.local_gas_station,
-            label: _truncateText(
-              car.fuelType.isNotEmpty ? car.fuelType : 'Petrol',
-              8,
-            ),
-            theme: theme,
+        _buildSpecChip(
+          icon: Icons.local_gas_station,
+          label: _truncateText(
+            car.fuelType.isNotEmpty ? car.fuelType : 'Petrol',
+            6,
           ),
+          theme: theme,
         ),
-        const SizedBox(width: 8), // Reduced spacing between chips
-        Flexible(
-          child: _buildSpecChip(
-            icon: Icons.calendar_today,
-            label: car.year.isNotEmpty ? car.year : '2023',
-            theme: theme,
-          ),
+        _buildSpecChip(
+          icon: Icons.calendar_today,
+          label: car.year.isNotEmpty ? car.year : '2023',
+          theme: theme,
         ),
       ],
     );
@@ -509,10 +525,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
     required ThemeData theme,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 6,
-      ), // Reduced padding
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: AppTheme.mediumBlue.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
@@ -520,24 +533,15 @@ class _OwnerCarCardState extends State<OwnerCarCard>
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: AppTheme.lightBlue,
-            size: 14,
-          ), // Slightly smaller icon
-          const SizedBox(width: 4), // Reduced spacing
-          Flexible(
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: AppTheme.white,
-                fontWeight: FontWeight.w500,
-                fontSize: 11, // Slightly smaller font
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
+          Icon(icon, color: AppTheme.lightBlue, size: 12),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppTheme.white,
+              fontWeight: FontWeight.w500,
+              fontSize: 10,
             ),
           ),
         ],
@@ -547,7 +551,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
 
   Widget _buildActionFooter(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.darkNavy.withOpacity(0.3),
         border: Border(
@@ -558,7 +562,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         children: [
           Expanded(
             child: OutlinedButton.icon(
-              icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
+              icon: const Icon(Icons.remove_red_eye_outlined, size: 16),
               label: const Text('View Details'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.lightBlue,
@@ -566,7 +570,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
               ),
               onPressed: () {
                 Navigator.push(
@@ -595,7 +599,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
               ),
               onPressed: () => _showDeleteDialog(context),
               tooltip: 'Delete Car',
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
             ),
           ),
         ],
@@ -604,17 +608,26 @@ class _OwnerCarCardState extends State<OwnerCarCard>
   }
 
   Widget _buildStatusChip(ThemeData theme) {
-    String statusText =
-        car.availabilityStatus == AvailabilityStatus.available
-            ? 'Available'
-            : 'Rented';
-    Color statusColor =
-        car.availabilityStatus == AvailabilityStatus.available
-            ? Colors.green
-            : Colors.orange;
+    String statusText;
+    Color statusColor;
+
+    switch (car.availabilityStatus) {
+      case AvailabilityStatus.available:
+        statusText = 'Available';
+        statusColor = Colors.green;
+        break;
+      case AvailabilityStatus.rented:
+        statusText = 'Rented';
+        statusColor = Colors.orange;
+        break;
+      case AvailabilityStatus.maintenance:
+        statusText = 'Maintenance';
+        statusColor = Colors.blueGrey;
+        break;
+    }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: statusColor.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
@@ -631,8 +644,8 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 6,
+            height: 6,
             decoration: BoxDecoration(
               color: statusColor,
               shape: BoxShape.circle,
@@ -644,11 +657,93 @@ class _OwnerCarCardState extends State<OwnerCarCard>
             style: theme.textTheme.bodySmall?.copyWith(
               color: statusColor.withOpacity(0.9),
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 11,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVerificationStatusChip(ThemeData theme) {
+    String statusText;
+    Color statusColor;
+    IconData statusIcon;
+
+    switch (car.verificationStatus) {
+      case VerificationStatus.approved:
+        statusText = 'Approved';
+        statusColor = Colors.green;
+        statusIcon = Icons.check_circle_outline;
+        break;
+      case VerificationStatus.rejected:
+        statusText = 'Rejected';
+        statusColor = Colors.red;
+        statusIcon = Icons.cancel_outlined;
+        break;
+      case VerificationStatus.pending:
+        statusText = 'Pending';
+        statusColor = Colors.orange;
+        statusIcon = Icons.hourglass_empty_outlined;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: statusColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            statusIcon,
+            color: statusColor,
+            size: 12,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            statusText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: statusColor.withOpacity(0.9),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerificationStatusText(ThemeData theme) {
+    String message;
+    Color color;
+
+    switch (car.verificationStatus) {
+      case VerificationStatus.approved:
+        message = 'Verified and ready for rental.';
+        color = Colors.green;
+        break;
+      case VerificationStatus.rejected:
+        message = 'Submission rejected. Check details.';
+        color = Colors.red;
+        break;
+      case VerificationStatus.pending:
+        message = 'Awaiting admin verification.';
+        color = Colors.orange;
+        break;
+    }
+
+    return Text(
+      message,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: color.withOpacity(0.9),
+        fontSize: 11,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -691,57 +786,6 @@ class _OwnerCarCardState extends State<OwnerCarCard>
           ],
         );
       },
-    );
-  }
-}
-
-// Helper widget for price duration display
-class _PriceDurationLabel extends StatelessWidget {
-  final String label;
-  final num price;
-  final NumberFormat currencyFormat;
-
-  const _PriceDurationLabel({
-    required this.label,
-    required this.price,
-    required this.currencyFormat,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.navy.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBlue.withOpacity(0.15)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style:
-                Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.lightBlue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ) ??
-                const TextStyle(),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            currencyFormat.format(price),
-            style:
-                Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.paleBlue,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
-                ) ??
-                const TextStyle(),
-          ),
-        ],
-      ),
     );
   }
 }

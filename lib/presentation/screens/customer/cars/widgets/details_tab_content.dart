@@ -92,6 +92,39 @@ class DetailsTabContent extends StatelessWidget {
   }
 
   Widget _buildPricingOptions(BuildContext context) {
+    if (car.hourlyRate <= 0) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(
+          child: Text('Pricing not available for this vehicle.'),
+        ),
+      );
+    }
+
+    final pricingData = [
+      {'period': '1 Hour', 'price': car.hourlyRate, 'isRecommended': false},
+      {
+        'period': '12 Hours',
+        'price': car.hourlyRate * 12,
+        'isRecommended': false,
+      },
+      {'period': 'Daily', 'price': car.hourlyRate * 24, 'isRecommended': true},
+      {
+        'period': 'Weekly',
+        'price': car.hourlyRate * 24 * 7,
+        'isRecommended': false,
+      },
+      {
+        'period': 'Monthly',
+        'price': car.hourlyRate * 24 * 30,
+        'isRecommended': false,
+      },
+    ];
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -99,54 +132,17 @@ class DetailsTabContent extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        children: [
-          // 6 hours pricing
-          if (car.price6h != '0' && car.price6h != '')
-            PricingOption(
-              period: '6 Hours',
-              price: double.tryParse(car.price6h) ?? 0,
-              onTap: () {
-                // Handle selection - could navigate to booking screen with selected period
-              },
-            ),
-          // 12 hours pricing
-          if (car.price12h != '0' && car.price12h != '')
-            PricingOption(
-              period: '12 Hours',
-              price: double.tryParse(car.price12h) ?? 0,
-              onTap: () {
-                // Handle 12-hour selection
-              },
-            ),
-          // Daily pricing - recommended option
-          if (car.price1d != '0' && car.price1d != '')
-            PricingOption(
-              period: 'Daily',
-              price: double.tryParse(car.price1d) ?? 0,
-              isRecommended: true,
-              onTap: () {
-                // Handle daily selection
-              },
-            ),
-          // Weekly pricing
-          if (car.price1w != '0' && car.price1w != '')
-            PricingOption(
-              period: 'Weekly',
-              price: double.tryParse(car.price1w) ?? 0,
-              onTap: () {
-                // Handle weekly selection
-              },
-            ),
-          // Monthly pricing
-          if (car.price1m != '0' && car.price1m != '')
-            PricingOption(
-              period: 'Monthly',
-              price: double.tryParse(car.price1m) ?? 0,
-              onTap: () {
-                // Handle monthly selection
-              },
-            ),
-        ],
+        children:
+            pricingData.map((option) {
+              return PricingOption(
+                period: option['period'] as String,
+                price: option['price'] as double,
+                isRecommended: option['isRecommended'] as bool,
+                onTap: () {
+                  // Handle selection - could navigate to booking screen with selected period
+                },
+              );
+            }).toList(),
       ),
     );
   }
@@ -211,13 +207,7 @@ class DetailsTabContent extends StatelessWidget {
                 charge['name'] as String? ??
                 charge['title'] as String? ??
                 'Additional Charge';
-            final amount =
-                double.tryParse(
-                  charge['price']?.toString() ??
-                      charge['amount']?.toString() ??
-                      '0',
-                ) ??
-                0.0;
+            final amount = double.tryParse(charge['amount']?.toString() ?? '0') ?? 0.0;
             final unit = charge['unit'] as String?;
 
             return ExtraChargeItem(title: title, amount: amount, unit: unit);
@@ -235,31 +225,32 @@ class DetailsTabContent extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: car.rentalRequirements.map((requirement) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2.0),
-                child: Icon(
-                  Icons.check_circle_outline,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
+      children:
+          car.rentalRequirements.map((requirement) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2.0),
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      requirement,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  requirement,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
     );
   }
 }

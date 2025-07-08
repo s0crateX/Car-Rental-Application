@@ -114,8 +114,9 @@ class CarCardCompact extends StatelessWidget {
                               car.type,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: theme.colorScheme.onSurface
-                                    .withOpacity(0.6),
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.6,
+                                ),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -283,19 +284,23 @@ class CarCardCompact extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SvgPicture.asset(
-                            'assets/svg/peso.svg',
-                            width: 14,
-                            height: 14,
-                            colorFilter: ColorFilter.mode(
-                              theme.colorScheme.primary,
-                              BlendMode.srcIn,
+                          Padding(
+                            padding: const EdgeInsets.only(top: 3.0),
+                            child: SvgPicture.asset(
+                              'assets/svg/peso.svg',
+                              width: 20,
+                              height: 20,
+                              colorFilter: ColorFilter.mode(
+                                theme.colorScheme.primary,
+                                BlendMode.srcIn,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 1),
                           Text(
-                            car.price.toStringAsFixed(0),
+                            car.hourlyRate.toStringAsFixed(0),
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -303,7 +308,7 @@ class CarCardCompact extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            car.pricePeriod,
+                            ' / hour',
                             style: TextStyle(
                               fontSize: 12,
                               color: theme.colorScheme.onSurface.withOpacity(

@@ -1,4 +1,6 @@
 import 'package:car_rental_app/config/theme.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/validation_snackbar.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:car_rental_app/core/services/imagekit_upload_service.dart';
@@ -19,7 +21,9 @@ import 'add car widgts/description_section_widget.dart';
 import 'add car widgts/features_section_widget.dart';
 import 'add car widgts/rental_requirements_section_widget.dart';
 import 'add car widgts/car_images_section_widget.dart';
+import 'add car widgts/document_verification_section_widget.dart';
 import '../../../../shared/models/Final Model/Firebase_car_model.dart';
+
 
 class AddNewCarScreen extends StatefulWidget {
   const AddNewCarScreen({super.key});
@@ -33,17 +37,14 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
   final _formKey = GlobalKey<FormState>();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  bool _isLoading = false;
 
   // Form controllers
   final _typeController = TextEditingController();
   final _brandController = TextEditingController();
   final _modelController = TextEditingController();
   final _yearController = TextEditingController();
-  final _price6hController = TextEditingController();
-  final _price12hController = TextEditingController();
-  final _price1dController = TextEditingController();
-  final _price1wController = TextEditingController();
-  final _price1mController = TextEditingController();
+  final _hourlyRateController = TextEditingController();
   final _seatsController = TextEditingController();
   final _luggageController = TextEditingController();
   final _featuresController = TextEditingController();
@@ -107,6 +108,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
       TextEditingController();
   final TextEditingController _extraChargeAmountController =
       TextEditingController();
+  final TextEditingController _deliveryAmountController = TextEditingController();
   final List<Map<String, dynamic>> _extraCharges = [];
 
   void _addExtraCharge() {
@@ -128,6 +130,11 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
 
   // Add state for car images
   final List<File?> _carImages = List.filled(4, null);
+  
+  // Add state for document verification
+  final List<File?> _orImages = List.filled(2, null); // Front and back of OR
+  final List<File?> _crImages = List.filled(2, null); // Front and back of CR
+  
   final ImagePicker _picker = ImagePicker();
 
   // Add method to pick image
@@ -136,6 +143,32 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
     if (image != null) {
       setState(() {
         _carImages[index] = File(image.path);
+      });
+    }
+  }
+  
+  // Add method to pick document images
+  Future<void> _pickDocumentImage(int index, DocumentType type) async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    
+    if (image != null) {
+      setState(() {
+        if (type == DocumentType.or) {
+          if (index < _orImages.length) {
+            _orImages[index] = File(image.path);
+          } else {
+            _orImages.add(File(image.path));
+          }
+        } else if (type == DocumentType.cr) {
+          if (index < _crImages.length) {
+            _crImages[index] = File(image.path);
+          } else {
+            _crImages.add(File(image.path));
+          }
+        }
       });
     }
   }
@@ -160,11 +193,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
     _brandController.dispose();
     _modelController.dispose();
     _yearController.dispose();
-    _price6hController.dispose();
-    _price12hController.dispose();
-    _price1dController.dispose();
-    _price1wController.dispose();
-    _price1mController.dispose();
+    _hourlyRateController.dispose();
     _seatsController.dispose();
     _luggageController.dispose();
     _featuresController.dispose();
@@ -173,186 +202,247 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
     _requirementController.dispose();
     _extraChargeNameController.dispose();
     _extraChargeAmountController.dispose();
+    _deliveryAmountController.dispose();
     _addressController.dispose();
     super.dispose();
   }
 
-  Future<void> _submitForm() async {
-    // Validate form fields
+  Future<void> _showConfirmationDialog() async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.error, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Please fill all required fields.'),
-            ],
-          ),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      ValidationSnackbar.showFieldValidationError(context);
+      return;
+    }
+
+    if (_carImages.any((img) => img == null)) {
+      ErrorSnackbar.show(
+        context: context,
+        message: 'Please select all 4 car images.',
+      );
+      return;
+    }
+    
+    // Check if at least the OR and CR front images are uploaded
+    if (_orImages[0] == null || _crImages[0] == null) {
+      ErrorSnackbar.show(
+        context: context,
+        message: 'Please upload at least the front images of both OR and CR.',
       );
       return;
     }
 
-    // Validate all 4 car image slots
-    if (_carImages.length < 4 || _carImages.any((img) => img == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.error, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Please select all 4 car images.'),
-            ],
-          ),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Submission'),
+        content: const Text('Are you sure you want to submit this car for listing?'),
+        backgroundColor: AppTheme.darkNavy,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: AppTheme.lightBlue.withOpacity(0.5)),
         ),
-      );
-      return;
-    }
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[400], 
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.lightBlue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text(
+              'SUBMIT',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
 
-    // Show loading dialog
+    if (confirmed == true) {
+      await _submitForm();
+    }
+  }
+
+  Future<void> _submitForm() async {
+    // Set loading state
+    setState(() {
+      _isLoading = true;
+    });
+    
+    // Show a loading dialog with more information
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkNavy,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            const Text(
+              'Uploading car information...',
+              style: TextStyle(color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Please wait while we process your submission',
+              style: TextStyle(color: Colors.grey[400], fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
 
     try {
-      // Upload all images to ImageKit
-      List<String> imageUrls = [];
-      for (final img in _carImages) {
-        final url = await ImageKitUploadService.uploadFile(img!);
+      final imageUrls = <String>[];
+      for (final imageFile in _carImages) {
+        final url = await ImageKitUploadService.uploadFile(imageFile!);
         if (url == null) {
-          Navigator.of(context).pop(); // Remove loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: const [
-                  Icon(Icons.error, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text('Failed to upload one or more images.'),
-                ],
-              ),
-              backgroundColor: Colors.red.shade700,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-          return;
+          throw Exception('Image upload failed for one or more images.');
         }
         imageUrls.add(url);
       }
-      final String imageUrl = imageUrls[0]; // Main image
+      
+      // Upload OR documents
+      final orUrls = <String>[];
+      for (final docFile in _orImages) {
+        if (docFile != null) {
+          final url = await ImageKitUploadService.uploadFile(docFile);
+          if (url == null) {
+            throw Exception('Document upload failed for one or more OR images.');
+          }
+          orUrls.add(url);
+        }
+      }
+      
+      // Upload CR documents
+      final crUrls = <String>[];
+      for (final docFile in _crImages) {
+        if (docFile != null) {
+          final url = await ImageKitUploadService.uploadFile(docFile);
+          if (url == null) {
+            throw Exception('Document upload failed for one or more CR images.');
+          }
+          crUrls.add(url);
+        }
+      }
 
-      // Get Firestore instance
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userData = authService.userData;
+      final userFullName = userData?['fullName'] ?? 'Car Owner';
+      final userDocumentId = authService.user?.uid ?? '';
+
       final firestore = FirebaseFirestore.instance;
-
-      // Generate unique car ID
       final carDocRef = firestore.collection('Cars').doc();
       final carId = carDocRef.id;
 
-      // Get user info from AuthService
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final userData = authService.userData;
-      final userFullName = userData != null ? userData['fullName'] ?? '' : '';
-      final userDocumentId = authService.user?.uid ?? '';
-
-      // Create CarModel instance
-      final newCar = CarModel(
+      final carData = CarModel(
         id: carId,
-        type: _typeController.text.trim(),
+        carOwnerDocumentId: userDocumentId,
         brand: _brandController.text.trim(),
         model: _modelController.text.trim(),
         year: _yearController.text.trim(),
-        image: imageUrls.isNotEmpty ? imageUrls.first : '',
-        imageGallery: imageUrls,
-        price: double.tryParse(_price1dController.text.trim()) ?? 0.0,
-        pricePeriod: '/day',
-        price6h: _price6hController.text.trim(),
-        price12h: _price12hController.text.trim(),
-        price1d: _price1dController.text.trim(),
-        price1w: _price1wController.text.trim(),
-        price1m: _price1mController.text.trim(),
-        seatsCount: _seatsController.text.trim(),
-        luggageCapacity: _luggageController.text.trim(),
+        type: _typeController.text.trim(),
         transmissionType: _transmissionType,
         fuelType: _fuelType,
+        seatsCount: _seatsController.text.trim(),
+        luggageCapacity: _luggageController.text.trim(),
+        hourlyRate: double.tryParse(_hourlyRateController.text) ?? 0,
+        address: _addressController.text.trim(),
+        location: {
+          'latitude': _selectedLocation?.latitude ?? 0.0,
+          'longitude': _selectedLocation?.longitude ?? 0.0,
+        },
+        image: imageUrls.isNotEmpty ? imageUrls.first : '',
+        imageGallery: imageUrls,
         description: _descriptionController.text.trim(),
         features: _featuresList,
         rentalRequirements: _rentalRequirementsList,
         extraCharges: _extraCharges,
-        address: _addressController.text.trim(),
-        location:
-            _selectedLocation != null
-                ? {
-                  'latitude': _selectedLocation!.latitude,
-                  'longitude': _selectedLocation!.longitude,
-                }
-                : {},
+        deliveryCharge: double.tryParse(_deliveryAmountController.text) ?? 0.0,
         availabilityStatus: AvailabilityStatus.available,
-        carOwnerDocumentId: userDocumentId,
+        orDocuments: orUrls,
+        crDocuments: crUrls,
+        rating: 0,
+        reviewCount: 0,
         carOwnerFullName: userFullName,
-        createdAt:
-            DateTime.now(), // Placeholder, will be replaced by server timestamp
+        createdAt: DateTime.now(),
+        verificationStatus: VerificationStatus.pending, // Set initial status to pending for admin verification
       );
 
-      final carData = newCar.toMap();
-      carData['createdAt'] = FieldValue.serverTimestamp();
-      carData['carId'] = carId;
-
-      // Set car data in Firestore
-      await carDocRef.set(carData);
+      await carDocRef.set(carData.toMap());
 
       if (mounted) {
-        Navigator.of(context).pop(); // Remove loading
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Text('Car added successfully!'),
+        Navigator.of(context).pop(); // Dismiss loading dialog
+        
+        // Show success dialog with more information
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppTheme.darkNavy,
+            title: const Text('Success!', style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green, size: 64),
+                const SizedBox(height: 16),
+                const Text(
+                  'Your car has been submitted successfully!',
+                  style: TextStyle(color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'An admin will verify your car information and documents before it becomes available for rental.',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      Navigator.of(context).pop(); // Remove loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error, color: Colors.white),
-              const SizedBox(width: 12),
-              Flexible(child: Text('Error saving car: $e')),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Go back to previous screen
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.lightBlue,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('OK', style: TextStyle(color: Colors.white)),
+              ),
             ],
           ),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading dialog
+        ErrorSnackbar.show(
+          context: context,
+          message: 'Error: ${e.toString()}',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -472,11 +562,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
                     icon: Icons.attach_money,
                     children: [
                       PricingSectionWidget(
-                        price6hController: _price6hController,
-                        price12hController: _price12hController,
-                        price1dController: _price1dController,
-                        price1wController: _price1wController,
-                        price1mController: _price1mController,
+                        hourlyRateController: _hourlyRateController,
                       ),
                     ],
                   ),
@@ -492,6 +578,7 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
                         extraChargeNameController: _extraChargeNameController,
                         extraChargeAmountController:
                             _extraChargeAmountController,
+                        deliveryAmountController: _deliveryAmountController,
                         extraCharges: _extraCharges,
                         onAddExtraCharge: _addExtraCharge,
                         onRemoveExtraCharge: _removeExtraCharge,
@@ -544,6 +631,21 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
                       ),
                     ],
                   ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Document Verification Section
+                  FormSectionWidget(
+                    title: 'Document Verification',
+                    icon: Icons.verified_user,
+                    children: [
+                      DocumentVerificationSectionWidget(
+                        orImages: _orImages,
+                        crImages: _crImages,
+                        onDocumentSelected: _pickDocumentImage,
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 32),
 
@@ -579,29 +681,26 @@ class _AddNewCarScreenState extends State<AddNewCarScreen>
         ],
       ),
       child: ElevatedButton(
-        onPressed: _submitForm,
+        onPressed: _isLoading ? null : _showConfirmationDialog,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
+          backgroundColor: AppTheme.lightBlue,
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.save, color: AppTheme.darkNavy, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Save Car',
-              style: TextStyle(
-                color: AppTheme.darkNavy,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        child: _isLoading
+            ? const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              )
+            : const Text(
+                'Submit Car',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

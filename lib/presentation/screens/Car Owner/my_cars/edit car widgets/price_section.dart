@@ -3,19 +3,11 @@ import 'package:car_rental_app/config/theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class PricingSection extends StatelessWidget {
-  final TextEditingController price6hController;
-  final TextEditingController price12hController;
-  final TextEditingController price1dController;
-  final TextEditingController price1wController;
-  final TextEditingController price1mController;
+  final TextEditingController hourlyRateController;
 
   const PricingSection({
     super.key,
-    required this.price6hController,
-    required this.price12hController,
-    required this.price1dController,
-    required this.price1wController,
-    required this.price1mController,
+    required this.hourlyRateController,
   });
 
   @override
@@ -27,58 +19,18 @@ class PricingSection extends StatelessWidget {
         const SizedBox(height: 16),
 
         _buildInfoCard(
-          'Set competitive prices for different rental durations. '
-          'Consider market rates and your car\'s value when pricing.',
+          'Set a competitive hourly rate. This will be the base for calculating all rental durations.',
           Icons.info_outline,
         ),
         const SizedBox(height: 20),
 
-        // Short term pricing
-        _buildPricingCategory('Short Term Rentals', Icons.schedule, [
-          _buildPriceCard(
-            controller: price6hController,
-            title: '6 Hours',
-            subtitle: 'Half day rental',
-            icon: Icons.wb_sunny,
-            color: Colors.orange,
-          ),
-          const SizedBox(height: 12),
-          _buildPriceCard(
-            controller: price12hController,
-            title: '12 Hours',
-            subtitle: 'Full day rental',
-            icon: Icons.brightness_6,
-            color: Colors.blue,
-          ),
-        ]),
-        const SizedBox(height: 24),
-
-        // Long term pricing
-        _buildPricingCategory('Long Term Rentals', Icons.date_range, [
-          _buildPriceCard(
-            controller: price1dController,
-            title: '1 Day',
-            subtitle: '24 hours',
-            icon: Icons.today,
-            color: Colors.green,
-          ),
-          const SizedBox(height: 12),
-          _buildPriceCard(
-            controller: price1wController,
-            title: '1 Week',
-            subtitle: '7 days',
-            icon: Icons.view_week,
-            color: Colors.purple,
-          ),
-          const SizedBox(height: 12),
-          _buildPriceCard(
-            controller: price1mController,
-            title: '1 Month',
-            subtitle: '30 days',
-            icon: Icons.calendar_month,
-            color: Colors.teal,
-          ),
-        ]),
+        _buildPriceCard(
+          controller: hourlyRateController,
+          title: 'Hourly Rate',
+          subtitle: 'Price per hour',
+          icon: Icons.hourglass_bottom,
+          color: AppTheme.lightBlue,
+        ),
         const SizedBox(height: 20),
 
         _buildPricingSummary(),
@@ -137,33 +89,6 @@ class PricingSection extends StatelessWidget {
     );
   }
 
-  Widget _buildPricingCategory(
-    String title,
-    IconData icon,
-    List<Widget> children,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.white70, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...children,
-      ],
-    );
-  }
 
   Widget _buildPriceCard({
     required TextEditingController controller,

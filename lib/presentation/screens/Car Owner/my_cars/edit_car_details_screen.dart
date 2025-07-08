@@ -2,8 +2,10 @@ import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car w
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/car_image_gallery_section.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/features_section.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/price_section.dart';
-import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/add car widgts/location_section_widget.dart';
+
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/add car widgts/rental_requirements_section_widget.dart';
+import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/document_upload_section.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,28 +29,25 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   late TextEditingController _brandController;
   late TextEditingController _modelController;
   late TextEditingController _yearController;
-  late TextEditingController _price6hController;
-  late TextEditingController _price12hController;
-  late TextEditingController _price1dController;
-  late TextEditingController _price1wController;
-  late TextEditingController _price1mController;
+  late TextEditingController _hourlyRateController;
   late TextEditingController _seatsController;
   late TextEditingController _luggageController;
   late TextEditingController _descriptionController;
-  late TextEditingController _addressController;
   late TextEditingController _fuelTypeController;
   late TextEditingController _transmissionTypeController;
   late TextEditingController _carOwnerFullNameController;
-  late TextEditingController _latController;
-  late TextEditingController _lngController;
   late TextEditingController _rentalRequirementController;
 
   List<String> _features = [];
   List<Map<String, dynamic>> _extraCharges = [];
   List<String> _carImageGallery = [];
+  List<String> _orDocuments = [];
+  List<String> _crDocuments = [];
   List<String> _rentalRequirements = [];
+  double _deliveryCharge = 0.0;
   bool _isLoading = false;
   int _currentStep = 0;
+  late StreamSubscription<DocumentSnapshot> _carStreamSubscription;
 
   void _addRequirement() {
     if (_rentalRequirementController.text.isNotEmpty) {
@@ -76,23 +75,23 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   void initState() {
     super.initState();
     _initializeControllers();
+    _subscribeToCarUpdates();
   }
 
   void _initializeControllers() {
     _features = List<String>.from(widget.car.features);
     _extraCharges = List<Map<String, dynamic>>.from(widget.car.extraCharges);
     _carImageGallery = List<String>.from(widget.car.imageGallery);
+    _orDocuments = List<String>.from(widget.car.orDocuments);
+    _crDocuments = List<String>.from(widget.car.crDocuments);
     _rentalRequirements = List<String>.from(widget.car.rentalRequirements);
+    _deliveryCharge = widget.car.deliveryCharge;
 
     _typeController = TextEditingController(text: widget.car.type);
     _brandController = TextEditingController(text: widget.car.brand);
     _modelController = TextEditingController(text: widget.car.model);
     _yearController = TextEditingController(text: widget.car.year);
-    _price6hController = TextEditingController(text: widget.car.price6h);
-    _price12hController = TextEditingController(text: widget.car.price12h);
-    _price1dController = TextEditingController(text: widget.car.price1d);
-    _price1wController = TextEditingController(text: widget.car.price1w);
-    _price1mController = TextEditingController(text: widget.car.price1m);
+    _hourlyRateController = TextEditingController(text: widget.car.hourlyRate.toString());
     _seatsController = TextEditingController(text: widget.car.seatsCount);
     _luggageController = TextEditingController(
       text: widget.car.luggageCapacity,
@@ -100,19 +99,12 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
     _descriptionController = TextEditingController(
       text: widget.car.description,
     );
-    _addressController = TextEditingController(text: widget.car.address ?? '');
     _fuelTypeController = TextEditingController(text: widget.car.fuelType);
     _transmissionTypeController = TextEditingController(
       text: widget.car.transmissionType,
     );
     _carOwnerFullNameController = TextEditingController(
       text: widget.car.carOwnerFullName,
-    );
-    _latController = TextEditingController(
-      text: widget.car.location['lat']?.toString() ?? '',
-    );
-    _lngController = TextEditingController(
-      text: widget.car.location['lng']?.toString() ?? '',
     );
     _rentalRequirementController = TextEditingController();
     _features = List<String>.from(widget.car.features ?? []);
@@ -127,6 +119,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
 
   @override
   void dispose() {
+    _carStreamSubscription.cancel();
     _disposeControllers();
     _scrollController.dispose();
     super.dispose();
@@ -137,20 +130,13 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
     _brandController.dispose();
     _modelController.dispose();
     _yearController.dispose();
-    _price6hController.dispose();
-    _price12hController.dispose();
-    _price1dController.dispose();
-    _price1wController.dispose();
-    _price1mController.dispose();
+    _hourlyRateController.dispose();
     _seatsController.dispose();
     _luggageController.dispose();
     _descriptionController.dispose();
-    _addressController.dispose();
     _fuelTypeController.dispose();
     _transmissionTypeController.dispose();
     _carOwnerFullNameController.dispose();
-    _latController.dispose();
-    _lngController.dispose();
     _rentalRequirementController.dispose();
   }
 
@@ -171,22 +157,13 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
             'brand': _brandController.text.trim(),
             'model': _modelController.text.trim(),
             'year': _yearController.text.trim(),
-            'price6h': _price6hController.text.trim(),
-            'price12h': _price12hController.text.trim(),
-            'price1d': _price1dController.text.trim(),
-            'price1w': _price1wController.text.trim(),
-            'price1m': _price1mController.text.trim(),
+            'hourlyRate': double.tryParse(_hourlyRateController.text) ?? 0.0,
             'seats': _seatsController.text.trim(),
             'luggage': _luggageController.text.trim(),
             'description': _descriptionController.text.trim(),
-            'address': _addressController.text.trim(),
             'fuelType': _fuelTypeController.text.trim(),
             'transmissionType': _transmissionTypeController.text.trim(),
             'carOwnerFullName': _carOwnerFullNameController.text.trim(),
-            'location': {
-              'lat': double.tryParse(_latController.text.trim()) ?? 0.0,
-              'lng': double.tryParse(_lngController.text.trim()) ?? 0.0,
-            },
             'features': _features.where((f) => f.isNotEmpty).toList(),
             'extraCharges':
                 _extraCharges
@@ -195,6 +172,9 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
             'imageGallery':
                 _carImageGallery.where((img) => img.isNotEmpty).toList(),
             'rentalRequirements': _rentalRequirements,
+            'orDocuments': _orDocuments,
+            'crDocuments': _crDocuments,
+            'deliveryCharge': _deliveryCharge,
           });
 
       if (mounted) {
@@ -356,13 +336,13 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   }
 
   Widget _buildProgressIndicator() {
-    const steps = [
-      'Basic Info',
-      'Images',
+    final List<String> steps = [
+      'Car Images',
+      'Basic Information',
+      'Features & Charges',
       'Pricing',
-      'Features',
-      'Location',
       'Rental Requirements',
+      'Documents',
     ];
 
     return Container(
@@ -423,35 +403,45 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
         );
       case 2:
         return PricingSection(
-          price6hController: _price6hController,
-          price12hController: _price12hController,
-          price1dController: _price1dController,
-          price1wController: _price1wController,
-          price1mController: _price1mController,
+          hourlyRateController: _hourlyRateController,
         );
       case 3:
         return FeaturesSection(
           features: _features,
           extraCharges: _extraCharges,
+          deliveryCharge: _deliveryCharge,
           onFeaturesChanged: (features) => setState(() => _features = features),
           onExtraChargesChanged:
               (charges) => setState(() => _extraCharges = charges),
+          onDeliveryChargeChanged: (charge) => setState(() => _deliveryCharge = charge),
         );
       case 4:
-        return LocationSectionWidget(
-          addressController: _addressController,
-          onLocationSelected: (latLng) {
-            // handle location selection, e.g., setState or update a variable
-          },
-          initialLocation: null, // or provide your current LatLng if available
-        );
-      case 5:
         return RentalRequirementsSectionWidget(
           requirementController: _rentalRequirementController,
           requirementsList: _rentalRequirements,
           onAddRequirement: _addRequirement,
           onRemoveRequirement: _removeRequirement,
           onAddSuggestedRequirement: _addSuggestedRequirement,
+        );
+      case 5:
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              DocumentUploadSection(
+                title: 'OR (Official Receipt)',
+                documentUrls: _orDocuments,
+                onDocumentsChanged: (urls) => setState(() => _orDocuments = urls),
+                carId: widget.car.id,
+              ),
+              const SizedBox(height: 24),
+              DocumentUploadSection(
+                title: 'CR (Certificate of Registration)',
+                documentUrls: _crDocuments,
+                onDocumentsChanged: (urls) => setState(() => _crDocuments = urls),
+                carId: widget.car.id,
+              ),
+            ],
+          ),
         );
       default:
         return const SizedBox();
@@ -502,5 +492,25 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
         ),
       ],
     );
+  }
+
+  void _subscribeToCarUpdates() {
+    _carStreamSubscription = FirebaseFirestore.instance
+        .collection('cars')
+        .doc(widget.car.id)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists && mounted) {
+        final updatedCar = CarModel.fromFirestore(snapshot);
+        setState(() {
+          // To avoid overwriting user's active edits, we only update
+          // data that is managed passively, like image galleries.
+          _orDocuments = List<String>.from(updatedCar.orDocuments);
+          _crDocuments = List<String>.from(updatedCar.crDocuments);
+          _carImageGallery = List<String>.from(updatedCar.imageGallery);
+          _deliveryCharge = updatedCar.deliveryCharge;
+        });
+      }
+    });
   }
 }

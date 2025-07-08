@@ -4,6 +4,7 @@ import 'package:car_rental_app/shared/common_widgets/snackbars/validation_snackb
 import 'package:car_rental_app/shared/common_widgets/snackbars/app_snackbar.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -14,6 +15,7 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   bool _isSubmitting = false;
+  final _organizationNameController = TextEditingController();
 
   Future<void> _registerUser() async {
     // Validate all fields first
@@ -23,6 +25,15 @@ class _SignupScreenState extends State<SignupScreen> {
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
       ValidationSnackbar.showFieldValidationError(context);
+      return;
+    }
+
+    if (_selectedRole == 'Car Owner' &&
+        _organizationNameController.text.isEmpty) {
+      AppSnackbar.error(
+        context: context,
+        message: 'Please enter your organization name.',
+      );
       return;
     }
 
@@ -75,6 +86,9 @@ class _SignupScreenState extends State<SignupScreen> {
         _nameController.text.trim(),
         _phoneController.text.trim(),
         _selectedRole, // Now all user info (including car_owner) is saved in users collection only
+        organizationName: _selectedRole == 'Car Owner'
+            ? _organizationNameController.text.trim()
+            : null,
       );
 
       if (success) {
@@ -118,8 +132,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _hasLowercase = false;
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
-  bool _obscurePassword = true;
-  final bool _obscureConfirmPassword = true;
+  bool _showPassword = false;
 
   // Check if passwords match
   bool _passwordsMatch = false;
@@ -219,6 +232,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _organizationNameController.dispose();
     super.dispose();
   }
 
@@ -294,9 +308,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   controller: _nameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      Icons.person_outline,
-                      color: AppTheme.lightBlue,
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: SvgPicture.asset(
+                        'assets/svg/user.svg',
+                        color: AppTheme.lightBlue,
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
                     hintText: 'Full Name',
                     hintStyle: TextStyle(
@@ -358,9 +377,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: AppTheme.lightBlue,
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: SvgPicture.asset(
+                        'assets/svg/mail.svg',
+                        color: AppTheme.lightBlue,
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
                     hintText: 'Email',
                     hintStyle: TextStyle(
@@ -374,7 +398,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 // Password field
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: _obscurePassword,
+                  obscureText: !_showPassword,
                   onChanged: (value) {
                     _checkPasswordStrength(value);
                     _checkPasswordsMatch();
@@ -382,18 +406,18 @@ class _SignupScreenState extends State<SignupScreen> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: TextStyle(color: AppTheme.lightBlue),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: SvgPicture.asset(
+                        'assets/svg/lock.svg',
                         color: AppTheme.lightBlue,
+                        width: 20,
+                        height: 20,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                    ),
+                    hintText: 'Enter your password',
+                    hintStyle: TextStyle(
+                      color: AppTheme.lightBlue.withOpacity(0.7),
                     ),
                   ),
                 ),
@@ -436,35 +460,59 @@ class _SignupScreenState extends State<SignupScreen> {
                 // Confirm Password field
                 TextFormField(
                   controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  onChanged: (value) => _checkPasswordsMatch(),
+                  obscureText: !_showPassword,
+                  onChanged: (value) {
+                    _checkPasswordsMatch();
+                  },
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
                     labelStyle: TextStyle(color: AppTheme.lightBlue),
-                    suffixIcon: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (_confirmPasswordController.text.isNotEmpty)
-                          Icon(
-                            _passwordsMatch ? Icons.check : Icons.close,
-                            color: _passwordsMatch ? Colors.green : Colors.red,
-                            size: 20,
-                          ),
-                        const SizedBox(width: 8),
-                      ],
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: SvgPicture.asset(
+                        'assets/svg/lock.svg',
+                        color: AppTheme.lightBlue,
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
+                    hintText: 'Confirm your password',
+                    hintStyle: TextStyle(
+                      color: AppTheme.lightBlue.withOpacity(0.7),
+                    ),
+                    errorText: _passwordsMatch ||
+                            _confirmPasswordController.text.isEmpty
+                        ? null
+                        : 'Passwords do not match',
                   ),
                 ),
 
-                if (_confirmPasswordController.text.isNotEmpty &&
-                    !_passwordsMatch)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      'Passwords do not match',
-                      style: TextStyle(color: Colors.red, fontSize: 12),
+                const SizedBox(height: 10),
+
+                // Show Password Checkbox
+                Row(
+                  children: [
+                    Theme(
+                      data: ThemeData(
+                        unselectedWidgetColor: AppTheme.lightBlue,
+                      ),
+                      child: Checkbox(
+                        value: _showPassword,
+                        onChanged: (value) {
+                          setState(() {
+                            _showPassword = value!;
+                          });
+                        },
+                        checkColor: AppTheme.navy,
+                        activeColor: AppTheme.lightBlue,
+                      ),
                     ),
-                  ),
+                    Text(
+                      'Show Password',
+                      style: TextStyle(color: AppTheme.paleBlue),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 25),
 
@@ -473,16 +521,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'I want to register as:',
+                      'I am a',
                       style: TextStyle(
                         color: AppTheme.paleBlue,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 10),
-
-                    // Role selection buttons
+                    const SizedBox(height: 15),
                     Row(
                       children: [
                         Expanded(
@@ -495,16 +541,14 @@ class _SignupScreenState extends State<SignupScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color:
-                                    _selectedRole == 'Customer'
-                                        ? AppTheme.mediumBlue
-                                        : AppTheme.navy,
+                                color: _selectedRole == 'Customer'
+                                    ? AppTheme.mediumBlue
+                                    : AppTheme.navy,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color:
-                                      _selectedRole == 'Customer'
-                                          ? AppTheme.mediumBlue
-                                          : AppTheme.lightBlue,
+                                  color: _selectedRole == 'Customer'
+                                      ? AppTheme.mediumBlue
+                                      : AppTheme.lightBlue,
                                   width: 1,
                                 ),
                               ),
@@ -512,10 +556,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 child: Text(
                                   'Customer',
                                   style: TextStyle(
-                                    color:
-                                        _selectedRole == 'Customer'
-                                            ? Colors.white
-                                            : AppTheme.lightBlue,
+                                    color: _selectedRole == 'Customer'
+                                        ? Colors.white
+                                        : AppTheme.lightBlue,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -534,16 +577,14 @@ class _SignupScreenState extends State<SignupScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color:
-                                    _selectedRole == 'Car Owner'
-                                        ? AppTheme.mediumBlue
-                                        : AppTheme.navy,
+                                color: _selectedRole == 'Car Owner'
+                                    ? AppTheme.mediumBlue
+                                    : AppTheme.navy,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color:
-                                      _selectedRole == 'Car Owner'
-                                          ? AppTheme.mediumBlue
-                                          : AppTheme.lightBlue,
+                                  color: _selectedRole == 'Car Owner'
+                                      ? AppTheme.mediumBlue
+                                      : AppTheme.lightBlue,
                                   width: 1,
                                 ),
                               ),
@@ -551,10 +592,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 child: Text(
                                   'Car Owner',
                                   style: TextStyle(
-                                    color:
-                                        _selectedRole == 'Car Owner'
-                                            ? Colors.white
-                                            : AppTheme.lightBlue,
+                                    color: _selectedRole == 'Car Owner'
+                                        ? Colors.white
+                                        : AppTheme.lightBlue,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -565,6 +605,56 @@ class _SignupScreenState extends State<SignupScreen> {
                       ],
                     ),
                   ],
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SizeTransition(
+                          sizeFactor: animation,
+                          axis: Axis.vertical,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _selectedRole == 'Car Owner'
+                        ? Padding(
+                            key: const ValueKey('organization-field'),
+                            padding: const EdgeInsets.only(top: 20.0),
+                            child: TextFormField(
+                              controller: _organizationNameController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                labelText: 'Organization Name',
+                                labelStyle: TextStyle(color: AppTheme.lightBlue),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.all(14.0),
+                                  child: SvgPicture.asset(
+                                    'assets/svg/users.svg',
+                                    color: AppTheme.lightBlue,
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                ),
+                                hintText: 'Enter your organization name',
+                                hintStyle: TextStyle(
+                                  color: AppTheme.lightBlue.withOpacity(0.7),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (_selectedRole == 'Car Owner' &&
+                                    (value == null || value.isEmpty)) {
+                                  return 'Organization name is required for Car Owners';
+                                }
+                                return null;
+                              },
+                            ),
+                          )
+                        : const SizedBox.shrink(key: ValueKey('empty')),
+                  ),
                 ),
 
                 const SizedBox(height: 30),

@@ -38,7 +38,7 @@ class CarFilterBottomSheet extends StatefulWidget {
 class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
   late CarFilter _filter;
 
-  final List<String> carTypes = ['All', ...CarTypes.allTypes.toSet().toList()];
+  final List<String> carTypes = ['All', ...CarTypes.allTypes.toSet()];
   final List<String> transmissions = ['All', 'Automatic', 'Manual'];
   final List<String> fuelTypes = [
     'All',

@@ -36,10 +36,12 @@ class CarBottomBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Row(
-  children: [
-    Expanded(child: _buildRentButton(context)),
-  ],
-),
+          children: [
+            _buildPriceSection(context),
+            const SizedBox(width: 16),
+            Expanded(child: _buildRentButton(context)),
+          ],
+        ),
       ),
     );
   }
@@ -52,11 +54,11 @@ class CarBottomBar extends StatelessWidget {
         Text(
           'Price',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.2,
-          ),
+                color: Colors.grey[600],
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.2,
+              ),
         ),
         const SizedBox(height: 4),
         Row(
@@ -78,17 +80,29 @@ class CarBottomBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                '${car.price.toStringAsFixed(2)}${car.pricePeriod}',
+            RichText(
+              text: TextSpan(
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  letterSpacing: -0.2,
-                ),
-                overflow: TextOverflow.ellipsis,
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      letterSpacing: -0.2,
+                    ),
+                children: [
+                  TextSpan(
+                    text: car.hourlyRate.toStringAsFixed(2),
+                  ),
+                  TextSpan(
+                    text: ' / hour',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                  ),
+                ],
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

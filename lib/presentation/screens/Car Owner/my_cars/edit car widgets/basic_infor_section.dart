@@ -156,7 +156,7 @@ class BasicInfoSection extends StatelessWidget {
             // Car owner
             _buildModernTextField(
               controller: carOwnerFullNameController,
-              label: 'Car Owner Full Name',
+              label: 'Car Owner Name',
               icon: Icons.person,
               readOnly: true,
             ),

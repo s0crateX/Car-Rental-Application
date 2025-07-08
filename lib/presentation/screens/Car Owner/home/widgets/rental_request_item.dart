@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:car_rental_app/config/theme.dart';
-import 'package:car_rental_app/shared/models/Mock%20Model/rental_request.dart';
+import 'package:car_rental_app/shared/models/rent_model.dart';
 
 class RentalRequestItem extends StatelessWidget {
   final RentalRequest request;
