@@ -3,22 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'extra_charges_section.dart';
-import 'payment_mode_section.dart';
-import 'booking_dialogs.dart';
+import 'package:car_rental_app/config/theme.dart';
+import 'widgets/extra_charges_section.dart';
+import 'widgets/payment_mode_section.dart';
+import 'widgets/booking_dialogs.dart';
 import 'package:car_rental_app/shared/models/Final Model/Firebase_car_model.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
-import 'delivery_section.dart';
-import 'payment_summary_section.dart';
-import 'booking_options_selector.dart';
-import 'rental_period_section.dart';
+import 'widgets/delivery_section.dart';
+import 'widgets/payment_summary_section.dart';
+import 'widgets/booking_options_selector.dart';
+import 'widgets/rental_period_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'document_verification.dart';
-import 'terms_and_conditions_screen.dart';
-import 'calendar_section.dart';
+import 'widgets/document_verification.dart';
+import 'widgets/terms_and_conditions_screen.dart';
+import 'widgets/calendar_section.dart';
+import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
 // Add dotted_border to pubspec.yaml if not present: dotted_border: ^2.0.0
 
 class RentCarScreen extends StatefulWidget {
@@ -53,7 +55,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
   Map<String, dynamic>? _userDocuments;
   bool _isLoading = true;
   bool _agreedToTerms = false;
-  
+
   // List of unavailable dates for the car
   Set<DateTime> _unavailableDates = {};
 
@@ -144,8 +146,6 @@ class _RentCarScreenState extends State<RentCarScreen> {
   // Car passed from previous screen
   late final CarModel _car;
 
-
-
   // Track selected extra charges
   final Map<String, bool> _selectedExtras = {
     'Driver Fee': false,
@@ -156,203 +156,227 @@ class _RentCarScreenState extends State<RentCarScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Rental Requirements')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ListView(
-                children: [
-                  // Document verification section
-                  DocumentVerificationSection(
-                    userDocuments: _userDocuments,
-                    onDocumentUploaded: _fetchUserDocuments,
-                  ),
-
-                  const SizedBox(height: 24),
-                  
-                  // Calendar Widget
-                  CalendarSection(
-                    initialDate: _getInitialSelectableDate(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                    onDateChanged: (DateTime value) {
-                      setState(() {
-                        if (_startDate == null || _endDate == null) {
-                          _startDate = DateTime(
-                            value.year,
-                            value.month,
-                            value.day,
-                            DateTime.now().hour,
-                            DateTime.now().minute,
-                          );
-                        } else {
-                          _startDate = DateTime(
-                            value.year,
-                            value.month,
-                            value.day,
-                            _startDate!.hour,
-                            _startDate!.minute,
-                          );
-                          if (_startDate!.isAfter(_endDate!)) {
-                            _endDate = null;
-                          }
-                        }
-                      });
-                    },
-                    isDateUnavailable: _isDateUnavailable,
-                  ),
-                  
-                  const SizedBox(height: 24),
-
-                  // Booking Option
-                  BookingOptionsSelector(
-                    selectedOption: _bookingType,
-                    onOptionSelected: (option) {
-                      setState(() {
-                        _bookingType = option;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  RentalPeriodSection(
-                    bookingType: _bookingType,
-                    startDate: _startDate,
-                    endDate: _endDate,
-                    onSelectStartDate: () => _selectStartDate(context),
-                    onSelectEndDate: () => _selectEndDate(context),
-                  ),
-
-                  // 3. Extra Charges Section
-                  ExtraChargesSection(
-                    car: _car,
-                    selectedExtras: _selectedExtras,
-                    onToggle: (key) {
-                      setState(() {
-                        _selectedExtras[key] =
-                            !(_selectedExtras[key] ?? false);
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Delivery Section
-                  DeliverySection(
-                    car: widget.car,
-                    onDeliveryChanged:
-                        (isDelivery, latLng, address, deliveryCharge) {
-                      setState(() {
-                        _isDelivery = isDelivery;
-                        _deliveryLatLng = latLng;
-                        _deliveryAddress = address;
-                        _deliveryCharge = deliveryCharge;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 4. Notes Section
-                  const Text(
-                    'Notes (Optional)',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ListView(
+                  children: [
+                    // Document verification section
+                    DocumentVerificationSection(
+                      userDocuments: _userDocuments,
+                      onDocumentUploaded: _fetchUserDocuments,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Enter any special requests or notes...',
-                    ),
-                    minLines: 1,
-                    maxLines: 3,
-                    onChanged: (val) {
-                      setState(() {
-                        _notes = val;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 24),
 
-                  // 5. Payment Summary
-                  PaymentSummarySection(
-                    startDate: _startDate,
-                    endDate: _endDate,
-                    car: widget.car,
-                    selectedExtras: _selectedExtras,
-                    deliveryCharge: _deliveryCharge,
-                  ),
+                    const SizedBox(height: 24),
 
-                  const SizedBox(height: 16),
-                  // 6. Payment Option Section (at bottom)
-                  PaymentModeSection(
-                    selectedPaymentMode: _selectedPaymentMode,
-                    paymentModes: _paymentModes,
-                    onPaymentModeChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          _selectedPaymentMode = val;
-                        });
-                      }
-                    },
-                    receiptImage: _receiptImage,
-                    onPickReceiptImage: _pickReceiptImage,
-                    onRemoveReceiptImage: () {
-                      setState(() {
-                        _receiptImage = null;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Terms and Conditions
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _agreedToTerms,
-                        onChanged: (value) {
-                          setState(() {
-                            _agreedToTerms = value ?? false;
-                          });
-                        },
-                      ),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            children: [
-                              const TextSpan(text: 'I agree to the '),
-                              TextSpan(
-                                text: 'Terms and Conditions',
-                                style: const TextStyle(
-                                  color: Colors.blue,
-                                  decoration: TextDecoration.underline,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const TermsAndConditionsScreen(),
-                                      ),
-                                    );
-                                  },
+                    // Calendar Widget - Display only to show availability
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Car Availability Calendar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'This calendar shows car availability. Please use the date selectors below to set your booking dates.',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(height: 16),
+                            CalendarSection(
+                              initialDate: _getInitialSelectableDate(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 365),
+                              ),
+                              onDateChanged: (_) {}, // No action on date change
+                              isDateUnavailable: _isDateUnavailable,
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
 
-                  const SizedBox(height: 24),
-                  _buildBookNowButton(),
-                ],
+                    const SizedBox(height: 24),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.navy,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Booking Option
+                          BookingOptionsSelector(
+                            selectedOption: _bookingType,
+                            onOptionSelected: (option) {
+                              setState(() {
+                                _bookingType = option;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          RentalPeriodSection(
+                            bookingType: _bookingType,
+                            startDate: _startDate,
+                            endDate: _endDate,
+                            onSelectStartDate: () => _selectStartDate(context),
+                            onSelectEndDate: () => _selectEndDate(context),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // 3. Extra Charges Section
+                    ExtraChargesSection(
+                      car: _car,
+                      selectedExtras: _selectedExtras,
+                      onToggle: (key) {
+                        setState(() {
+                          _selectedExtras[key] =
+                              !(_selectedExtras[key] ?? false);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Delivery Section
+                    DeliverySection(
+                      car: widget.car,
+                      onDeliveryChanged: (
+                        isDelivery,
+                        latLng,
+                        address,
+                        deliveryCharge,
+                      ) {
+                        setState(() {
+                          _isDelivery = isDelivery;
+                          _deliveryLatLng = latLng;
+                          _deliveryAddress = address;
+                          _deliveryCharge = deliveryCharge;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 4. Notes Section
+                    const Text(
+                      'Notes (Optional)',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter any special requests or notes...',
+                      ),
+                      minLines: 1,
+                      maxLines: 3,
+                      onChanged: (val) {
+                        setState(() {
+                          _notes = val;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 5. Payment Summary
+                    PaymentSummarySection(
+                      startDate: _startDate,
+                      endDate: _endDate,
+                      car: widget.car,
+                      selectedExtras: _selectedExtras,
+                      deliveryCharge: _deliveryCharge,
+                    ),
+
+                    const SizedBox(height: 16),
+                    // 6. Payment Option Section (at bottom)
+                    PaymentModeSection(
+                      selectedPaymentMode: _selectedPaymentMode,
+                      paymentModes: _paymentModes,
+                      onPaymentModeChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _selectedPaymentMode = val;
+                          });
+                        }
+                      },
+                      receiptImage: _receiptImage,
+                      onPickReceiptImage: _pickReceiptImage,
+                      onRemoveReceiptImage: () {
+                        setState(() {
+                          _receiptImage = null;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Terms and Conditions
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _agreedToTerms,
+                          onChanged: (value) {
+                            setState(() {
+                              _agreedToTerms = value ?? false;
+                            });
+                          },
+                        ),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              children: [
+                                const TextSpan(text: 'I agree to the '),
+                                TextSpan(
+                                  text: 'Terms and Conditions',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer:
+                                      TapGestureRecognizer()
+                                        ..onTap = () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (context) =>
+                                                      const TermsAndConditionsScreen(),
+                                            ),
+                                          );
+                                        },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                    _buildBookNowButton(),
+                  ],
+                ),
               ),
-            ),
     );
   }
 
@@ -364,6 +388,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
       'selfie_with_license',
     ];
 
+    // Check if all required documents are uploaded and verified/approved
     bool allRequirementsUploaded = true;
     for (String docType in documentTypes) {
       final String status = _userDocuments?[docType]?['status'] ?? 'pending';
@@ -374,11 +399,34 @@ class _RentCarScreenState extends State<RentCarScreen> {
       }
     }
 
+    // Check if all required fields are filled
+    bool allRequiredFieldsFilled =
+        _startDate != null &&
+        _endDate != null &&
+        _endDate!.isAfter(_startDate!);
+
+    // For GCash/PayMaya, receipt image is required
+    if (_selectedPaymentMode == 'GCash' || _selectedPaymentMode == 'PayMaya') {
+      allRequiredFieldsFilled =
+          allRequiredFieldsFilled && _receiptImage != null;
+    }
+
+    // If delivery is selected, we need an address
+    if (_isDelivery) {
+      allRequiredFieldsFilled =
+          allRequiredFieldsFilled &&
+          _deliveryAddress != null &&
+          _deliveryAddress!.isNotEmpty &&
+          _deliveryLatLng != null;
+    }
+
     String periodDisplayText = 'N/A';
     String startDisplayText = 'N/A';
     String endDisplayText = 'N/A';
 
-    if (_startDate != null && _endDate != null && _endDate!.isAfter(_startDate!)) {
+    if (_startDate != null &&
+        _endDate != null &&
+        _endDate!.isAfter(_startDate!)) {
       final rentalDuration = _endDate!.difference(_startDate!);
       periodDisplayText =
           "${rentalDuration.inDays}d ${rentalDuration.inHours.remainder(24)}h";
@@ -386,28 +434,57 @@ class _RentCarScreenState extends State<RentCarScreen> {
       endDisplayText = DateFormat('MMM d, yyyy hh:mm a').format(_endDate!);
     }
 
+    // Button is enabled only if all conditions are met
+    final bool isButtonEnabled =
+        allRequirementsUploaded && allRequiredFieldsFilled && _agreedToTerms;
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: allRequirementsUploaded && _agreedToTerms
-            ? () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => ConfirmBookingDialog(
-                    period: periodDisplayText,
-                    paymentMode: _selectedPaymentMode,
-                    startDate: startDisplayText,
-                    endDate: endDisplayText,
-                    notes: _notes,
-                    onCancel: () => Navigator.of(context).pop(false),
-                    onConfirm: () => Navigator.of(context).pop(true),
-                  ),
-                );
-                if (confirmed == true) {
-                  _onBookNow();
+        style: ElevatedButton.styleFrom(
+          // ===== BUTTON COLORS - START =====
+          // You can customize button colors here:
+          // Enabled button background color (currently using primary theme color)
+          backgroundColor:
+              isButtonEnabled
+                  ? Theme.of(context)
+                      .colorScheme
+                      .primary // Change this color for enabled button
+                  : Theme.of(context)
+                      .colorScheme
+                      .surfaceVariant, // Change this color for disabled button
+          // Button text colors
+          foregroundColor:
+              isButtonEnabled
+                  ? Colors
+                      .white // Change this color for enabled button text
+                  : Colors.white, // Change this color for disabled button text
+          // These properties are used when button is disabled with onPressed: null
+          disabledBackgroundColor: Colors.grey, // Change disabled background
+          disabledForegroundColor: Colors.white, // Change disabled text color
+          // ===== BUTTON COLORS - END =====
+        ),
+        onPressed:
+            isButtonEnabled
+                ? () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder:
+                        (context) => ConfirmBookingDialog(
+                          period: periodDisplayText,
+                          paymentMode: _selectedPaymentMode,
+                          startDate: startDisplayText,
+                          endDate: endDisplayText,
+                          notes: _notes,
+                          onCancel: () => Navigator.of(context).pop(false),
+                          onConfirm: () => Navigator.of(context).pop(true),
+                        ),
+                  );
+                  if (confirmed == true) {
+                    _onBookNow();
+                  }
                 }
-              }
-            : null,
+                : null,
         child: const Text('Confirm'),
       ),
     );
@@ -439,10 +516,23 @@ class _RentCarScreenState extends State<RentCarScreen> {
     if (_startDate == null ||
         _endDate == null ||
         _endDate!.isBefore(_startDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select valid start and end dates.'),
-        ),
+      ErrorSnackbar.showValidationError(
+        context: context,
+        message: 'Please select valid start and end dates.',
+      );
+      return;
+    }
+
+    // Check if the selected date range overlaps with existing bookings
+    bool isDateRangeAvailable = await _checkDateRangeAvailability(
+      _startDate!,
+      _endDate!,
+    );
+    if (!isDateRangeAvailable) {
+      ErrorSnackbar.show(
+        context: context,
+        message:
+            'Selected dates are not available for this car. Please choose different dates.',
       );
       return;
     }
@@ -488,7 +578,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
       // Calculate prices
       final carRentalCost =
           (rentalDuration.inHours > 0 ? rentalDuration.inHours : 1) *
-              widget.car.hourlyRate;
+          widget.car.hourlyRate;
 
       double totalExtraCharges = 0;
       _selectedExtras.forEach((name, isSelected) {
@@ -745,109 +835,101 @@ class _RentCarScreenState extends State<RentCarScreen> {
   Future<void> _selectEndDate(BuildContext context) async {
     await _selectEndDateTime(context);
   }
-  
+
   // Fetch car rental dates from the 'rents' collection
   Future<void> _fetchCarRentalDates() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       // Get the current user
       final authService = Provider.of<AuthService>(context, listen: false);
       final userId = authService.user?.uid;
-      
+
       if (userId == null) {
         setState(() {
           _isLoading = false;
         });
         return;
       }
-      
+
       print('Fetching rental dates for car ID: ${widget.car.id}');
-      
+
       // Query the 'rents' collection for bookings of this car
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('rents')
-          .where('carId', isEqualTo: widget.car.id)
-          .get();
-      
+      final querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('rents')
+              .where('carId', isEqualTo: widget.car.id)
+              .get();
+
       print('Found ${querySnapshot.docs.length} rental documents');
-      
+
       Set<DateTime> unavailableDates = {};
-      
+
       // Process each booking to extract unavailable dates
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
         final status = data['status'] as String?;
         final bookingId = doc.id;
-        
+
         print('Processing booking $bookingId with status: $status');
-        
+
         // Only consider bookings with these statuses
-        if (status == null || !['pending', 'approved', 'reserved', 'active'].contains(status)) {
+        if (status == null ||
+            !['pending', 'approved', 'reserved', 'active'].contains(status)) {
           print('Skipping booking $bookingId due to status: $status');
           continue;
         }
-        
+
         final startTimestamp = data['startDate'] as Timestamp?;
         final endTimestamp = data['endDate'] as Timestamp?;
-        
+
         if (startTimestamp != null && endTimestamp != null) {
           final startDate = startTimestamp.toDate();
           final endDate = endTimestamp.toDate();
-          
-          print('Booking period: ${startDate.toString()} to ${endDate.toString()}');
-          
+
+          print(
+            'Booking period: ${startDate.toString()} to ${endDate.toString()}',
+          );
+
           // Add all dates between start and end (inclusive) to unavailable dates
-          for (DateTime date = DateTime(startDate.year, startDate.month, startDate.day);
-               date.isBefore(DateTime(endDate.year, endDate.month, endDate.day).add(const Duration(days: 1)));
-               date = date.add(const Duration(days: 1))) {
+          for (
+            DateTime date = DateTime(
+              startDate.year,
+              startDate.month,
+              startDate.day,
+            );
+            date.isBefore(
+              DateTime(
+                endDate.year,
+                endDate.month,
+                endDate.day,
+              ).add(const Duration(days: 1)),
+            );
+            date = date.add(const Duration(days: 1))
+          ) {
             final normalizedDate = DateTime(date.year, date.month, date.day);
             unavailableDates.add(normalizedDate);
           }
         } else {
-          print('Booking $bookingId has invalid dates: start=$startTimestamp, end=$endTimestamp');
+          print(
+            'Booking $bookingId has invalid dates: start=$startTimestamp, end=$endTimestamp',
+          );
         }
       }
-      
+
       print('Total unavailable dates: ${unavailableDates.length}');
       if (unavailableDates.isNotEmpty) {
-        print('Sample unavailable dates: ${unavailableDates.take(5).map((d) => d.toString()).join(', ')}');
+        print(
+          'Sample unavailable dates: ${unavailableDates.take(5).map((d) => d.toString()).join(', ')}',
+        );
       }
-      
-      // Add some test dates if no unavailable dates were found
-      if (unavailableDates.isEmpty) {
-        print('No unavailable dates found, adding test dates');
-        // Add the next 3 days as unavailable for testing
-        final now = DateTime.now();
-        for (int i = 1; i <= 3; i++) {
-          final testDate = DateTime(now.year, now.month, now.day + i);
-          unavailableDates.add(testDate);
-          print('Added test unavailable date: ${testDate.toString()}');
-        }
-        
-        // Add some dates in July 2025 for testing (based on the screenshot)
-        unavailableDates.add(DateTime(2025, 7, 10));
-        unavailableDates.add(DateTime(2025, 7, 15));
-        unavailableDates.add(DateTime(2025, 7, 25));
-        print('Added test dates in July 2025');
-      }
-      
+
       setState(() {
         _unavailableDates = unavailableDates;
         _isLoading = false;
       });
-      
-      // Show a small notification about the unavailable dates
-      if (mounted && unavailableDates.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Found ${unavailableDates.length} unavailable dates for this car'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
     } catch (e) {
       print('Error fetching car rental dates: $e');
       // Don't show an error to the user, just continue with an empty set of unavailable dates
@@ -855,38 +937,80 @@ class _RentCarScreenState extends State<RentCarScreen> {
       setState(() {
         _isLoading = false;
       });
-      
+
       // Show a small notification that dates might not be accurate
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Unable to check car availability. All dates will be shown as available.'),
+            content: Text(
+              'Unable to check car availability. All dates will be shown as available.',
+            ),
             duration: Duration(seconds: 3),
           ),
         );
       }
     }
   }
-  
+
   // Check if a date is unavailable
   bool _isDateUnavailable(DateTime date) {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     return _unavailableDates.contains(normalizedDate);
   }
-  
+
   // Get an initial date that is selectable (not unavailable)
   DateTime _getInitialSelectableDate() {
     // Start with today or the existing start date
     DateTime candidate = _startDate ?? DateTime.now();
-    
+
     // Normalize to remove time component
     candidate = DateTime(candidate.year, candidate.month, candidate.day);
-    
+
     // If the candidate date is unavailable, find the next available date
     while (_isDateUnavailable(candidate)) {
       candidate = candidate.add(const Duration(days: 1));
     }
-    
+
     return candidate;
+  }
+
+  // Check if a date range is available (doesn't overlap with existing bookings)
+  Future<bool> _checkDateRangeAvailability(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    try {
+      // Normalize dates to remove time component for comparison
+      final normalizedStartDate = DateTime(
+        startDate.year,
+        startDate.month,
+        startDate.day,
+      );
+      final normalizedEndDate = DateTime(
+        endDate.year,
+        endDate.month,
+        endDate.day,
+      );
+
+      // Check individual dates in the range using existing unavailability data
+      for (
+        DateTime date = normalizedStartDate;
+        date.isBefore(normalizedEndDate.add(const Duration(days: 1)));
+        date = date.add(const Duration(days: 1))
+      ) {
+        if (_isDateUnavailable(date)) {
+          print('Date unavailable: ${date.toString()}');
+          return false; // At least one day in the range is unavailable
+        }
+      }
+
+      // All days in the range are available
+      return true;
+    } catch (e) {
+      print('Error checking date range availability: $e');
+      // In case of error, assume dates are available to prevent blocking the user
+      // You might want to show an error message instead
+      return true;
+    }
   }
 }

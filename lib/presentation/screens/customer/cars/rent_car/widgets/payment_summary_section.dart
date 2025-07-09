@@ -39,6 +39,7 @@ class PaymentSummarySection extends StatelessWidget {
     final duration = endDate!.difference(startDate!);
     final totalHours = duration.inHours > 0 ? duration.inHours : 0;
     final totalDays = duration.inDays;
+    final remainingHours = totalHours % 24;
 
     final carRentalCost = totalHours * car.hourlyRate;
     final downPayment = carRentalCost * 0.5; // 50% of car rental cost
@@ -75,8 +76,19 @@ class PaymentSummarySection extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Car Rental (${totalDays}d ${totalHours % 24}h)'),
+                  Text('Car Rental (${totalDays}d ${remainingHours}h / ${totalHours}h total)'),
                   Text('₱${carRentalCost.toStringAsFixed(2)}'),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${startDate!.day}/${startDate!.month}/${startDate!.year} ${startDate!.hour}:${startDate!.minute.toString().padLeft(2, '0')} - ${endDate!.day}/${endDate!.month}/${endDate!.year} ${endDate!.hour}:${endDate!.minute.toString().padLeft(2, '0')}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  Text('${car.hourlyRate.toStringAsFixed(2)}/hour', style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
               if (totalExtraCharges > 0) ...[
