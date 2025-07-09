@@ -62,6 +62,7 @@ dependencies:
   geocoding: ^4.0.0
   http: ^1.2.0
   cached_network_image: ^3.3.1
+  table_calendar: ^3.0.9
   # No need for Google Fonts as we're using local font files
 
 dev_dependencies:
