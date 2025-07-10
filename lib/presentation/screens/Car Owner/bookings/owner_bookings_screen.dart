@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../shared/data/mock data/sample_bookings.dart';
-import '../../../../shared/models/Mock Model/booking_model.dart'
-    show BookingModel, BookingStatus;
-import 'widgets/booking_list_item.dart';
-import 'booking_details_screen.dart';
-import 'owner_bookings_history_screen.dart';
+import '../../../../config/theme.dart';
+import 'widgets/rent_tab.dart';
+import 'widgets/reservation_tab.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
   const OwnerBookingsScreen({super.key});
@@ -14,114 +10,99 @@ class OwnerBookingsScreen extends StatefulWidget {
   State<OwnerBookingsScreen> createState() => _OwnerBookingsScreenState();
 }
 
-class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
-  late List<BookingModel> _bookings;
+class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _bookings =
-        SampleBookings.getSampleBookings()
-            .where((booking) => booking.status != BookingStatus.completed)
-            .toList()
-          ..sort((a, b) {
-            // Sort pending bookings to the top
-            if (a.status == BookingStatus.pending &&
-                b.status != BookingStatus.pending) {
-              return -1;
-            } else if (a.status != BookingStatus.pending &&
-                b.status == BookingStatus.pending) {
-              return 1;
-            }
-            return 0; // Maintain original order for other statuses
-          });
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder:
-                              (context) => const OwnerBookingsHistoryScreen(),
-                        ),
-                      );
-                    },
-                    icon: SvgPicture.asset(
-                      'assets/svg/history.svg',
-                      width: 20,
-                      height: 20,
-                      colorFilter: ColorFilter.mode(
-                        Theme.of(context).primaryColor,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    label: Text(
-                      'View History',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                itemCount: _bookings.length,
-                itemBuilder: (context, index) {
-                  return BookingListItem(
-                    booking: _bookings[index],
-                    onViewDetails: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder:
-                              (context) => BookingDetailsScreen(
-                                booking: _bookings[index],
-                                onStatusUpdated: (newStatus) {
-                                  setState(() {
-                                    _bookings[index] = _bookings[index]
-                                        .copyWith(status: newStatus);
-                                    // Re-sort the list after status update
-                                    _bookings.sort((a, b) {
-                                      if (a.status == BookingStatus.pending &&
-                                          b.status != BookingStatus.pending) {
-                                        return -1;
-                                      } else if (a.status !=
-                                              BookingStatus.pending &&
-                                          b.status == BookingStatus.pending) {
-                                        return 1;
-                                      }
-                                      return 0;
-                                    });
-                                  });
-                                },
-                              ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+    return Scaffold(
+      backgroundColor: AppTheme.darkNavy,
+      appBar: AppBar(
+        backgroundColor: AppTheme.darkNavy,
+        elevation: 0,
+        title: const Text(
+          'Bookings Management',
+          style: TextStyle(
+            color: AppTheme.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: AppTheme.white),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.navy,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.mediumBlue.withOpacity(0.3)),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: AppTheme.mediumBlue,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicatorPadding: const EdgeInsets.all(4),
+              dividerHeight: 0,
+              labelColor: AppTheme.white,
+              unselectedLabelColor: AppTheme.lightBlue,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+              tabs: const [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.car_rental, size: 18),
+                      SizedBox(width: 8),
+                      Text('Rent'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.event_note, size: 18),
+                      SizedBox(width: 8),
+                      Text('Reservation'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          RentTab(),
+          ReservationTab(),
+        ],
       ),
     );
   }
