@@ -4,6 +4,7 @@ import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.da
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'widgets/widgets.dart';
 
 class OwnerMyCarsScreen extends StatefulWidget {
@@ -24,18 +25,42 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
     super.initState();
     // Get current user ID when screen initializes
     _getCurrentUserId();
+    
+    // Add listener for auth state changes to refresh when user switches accounts
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (mounted && user != null) {
+        setState(() {
+          _currentUserId = user.uid;
+          print('Auth state changed - Current user ID: $_currentUserId');
+        });
+      }
+    });
   }
 
-  // Get current user ID from AuthService
-  void _getCurrentUserId() {
-    final user = _authService.user;
-    if (user != null && mounted) {
+  // Get current user ID from AuthService and Firebase Auth
+  Future<void> _getCurrentUserId() async {
+    // First try getting from Firebase Auth directly
+    User? firebaseUser = FirebaseAuth.instance.currentUser;
+    
+    if (firebaseUser == null) {
+      // Try getting from auth service as fallback
+      var user = _authService.user;
+      
+      // If still null, wait and try again
+      if (user == null) {
+        // Wait for auth to initialize if needed
+        await Future.delayed(const Duration(milliseconds: 500));
+        firebaseUser = FirebaseAuth.instance.currentUser;
+      }
+    }
+    
+    if (firebaseUser != null && mounted) {
       setState(() {
-        _currentUserId = user.uid;
+        _currentUserId = firebaseUser!.uid;
       });
-      print('Current user ID: $_currentUserId'); // Debug print
-
-      // Force refresh of the stream by triggering setState
+      print('Current user ID refreshed: $_currentUserId');
+      
+      // Force refresh of the stream
       setState(() {});
     } else {
       print('No user found or widget not mounted');
@@ -46,6 +71,8 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
     Navigator.pushNamed(context, AppRoutes.addNewCar).then((_) {
       // Refresh user ID when returning from add car screen
       _getCurrentUserId();
+      // Force rebuild
+      if (mounted) setState(() {});
     });
   }
 
@@ -184,46 +211,89 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
 
   Widget _buildErrorState(String error) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.red.withOpacity(0.7),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Error Loading Cars',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            error,
-            style: TextStyle(fontSize: 14, color: AppTheme.paleBlue),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => setState(() {}), // Trigger rebuild
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.lightBlue,
-              foregroundColor: AppTheme.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.red.withOpacity(0.1), width: 1),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: 28,
+                color: Colors.red.withOpacity(0.8),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              'Unable to Load Cars',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.white,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.paleBlue.withOpacity(0.8),
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => setState(() {}),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  size: 18,
+                  color: AppTheme.white,
+                ),
+                label: const Text(
+                  'Try Again',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.lightBlue,
+                  foregroundColor: AppTheme.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh user ID when screen gains focus
+    _getCurrentUserId();
   }
 
   @override
@@ -291,39 +361,30 @@ class _OwnerMyCarsScreenState extends State<OwnerMyCarsScreen> {
                                 .cast<CarModel>()
                                 .toList();
 
-                        // Filter cars by the current user ID with more flexible matching
+                        // Filter cars to only show those owned by the current user with exact ID match
                         final cars =
                             _currentUserId != null
                                 ? allCars
                                     .where(
                                       (car) =>
                                           car.carOwnerDocumentId ==
-                                              _currentUserId ||
-                                          car.carOwnerDocumentId.trim() ==
-                                              _currentUserId ||
-                                          (_currentUserId != null &&
-                                              car
-                                                  .carOwnerDocumentId
-                                                  .isNotEmpty &&
-                                              _currentUserId!.contains(
-                                                car.carOwnerDocumentId,
-                                              )) ||
-                                          (car.carOwnerDocumentId.isNotEmpty &&
-                                              _currentUserId != null &&
-                                              car.carOwnerDocumentId.contains(
-                                                _currentUserId!,
-                                              )),
+                                          _currentUserId,
                                     )
                                     .toList()
-                                : allCars;
+                                : [];
 
                         print(
                           'Found ${cars.length} cars for user "$_currentUserId" out of ${allCars.length} total cars',
                         );
 
-                        // Handle case where all documents failed to parse
-                        if (cars.isEmpty) {
-                          return _buildErrorState('Unable to load car data');
+                        // If no cars found for user but we have user ID
+                        if (cars.isEmpty && _currentUserId != null) {
+                          // Check if we found any cars at all
+                          if (allCars.isEmpty) {
+                            return _buildErrorState('Unable to load car data');
+                          } else {
+                            return _buildEmptyState();
+                          }
                         }
 
                         // Build car list
