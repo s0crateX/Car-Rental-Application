@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../../core/authentication/auth_service.dart';
-import '../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../models/Firebase_car_model.dart';
 import '../../../shared/common_widgets/maps/interactive_map.dart';
 
 class MapScreen extends StatelessWidget {

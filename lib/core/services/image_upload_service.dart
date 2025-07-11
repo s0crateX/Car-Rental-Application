@@ -80,6 +80,21 @@ class ImageUploadService {
     return uploadImage(imageFile, folder: 'profile_images');
   }
 
+  /// Upload receipt image to the car_rental_app/receipts folder
+  static Future<String?> uploadReceiptImage(File imageFile, String bookingId) {
+    // Generate a unique filename with timestamp to prevent conflicts
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final extension = imageFile.path.split('.').last.toLowerCase();
+    final fileName = 'receipt_${bookingId}_$timestamp.$extension';
+    
+    // Upload to the car_rental_app/receipts folder
+    return uploadImage(
+      imageFile, 
+      folder: 'car_rental_app/receipts',
+      customFileName: fileName,
+    );
+  }
+
   /// Upload car image to the car_rental_app/documents folder
   static Future<String?> uploadCarImage(File imageFile, String carId) {
     // Generate a unique filename with timestamp to prevent conflicts

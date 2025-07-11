@@ -22,7 +22,7 @@ import 'add car widgts/features_section_widget.dart';
 import 'add car widgts/rental_requirements_section_widget.dart';
 import 'add car widgts/car_images_section_widget.dart';
 import 'add car widgts/document_verification_section_widget.dart';
-import '../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../models/Firebase_car_model.dart';
 
 
 class AddNewCarScreen extends StatefulWidget {

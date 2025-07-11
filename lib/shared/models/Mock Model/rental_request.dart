@@ -1,4 +1,4 @@
-import 'package:car_rental_app/shared/models/rent_model.dart';
+import 'package:car_rental_app/models/customer%20models/rent%20model/rent_model.dart';
 
 // Sample data
 final List<RentalRequest> sampleRentalRequests = [

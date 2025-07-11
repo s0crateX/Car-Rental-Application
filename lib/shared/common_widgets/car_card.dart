@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../models/Final Model/Firebase_car_model.dart';
+import '../../models/Firebase_car_model.dart';
 import 'blinking_status_indicator.dart';
 
 

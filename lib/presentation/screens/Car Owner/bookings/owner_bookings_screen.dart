@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../config/theme.dart';
 import 'widgets/rent_tab.dart';
-import 'widgets/reservation_tab.dart';
+import 'widgets/history_tab.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
   const OwnerBookingsScreen({super.key});
@@ -86,9 +86,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.event_note, size: 18),
+                      Icon(Icons.history, size: 18),
                       SizedBox(width: 8),
-                      Text('Reservation'),
+                      Text('History'),
                     ],
                   ),
                 ),
@@ -101,7 +101,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
         controller: _tabController,
         children: const [
           RentTab(),
-          ReservationTab(),
+          HistoryTab(),
         ],
       ),
     );

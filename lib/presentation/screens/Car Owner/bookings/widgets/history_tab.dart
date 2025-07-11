@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../../config/theme.dart';
 
-class ReservationTab extends StatefulWidget {
-  const ReservationTab({super.key});
+class HistoryTab extends StatefulWidget {
+  const HistoryTab({super.key});
 
   @override
-  State<ReservationTab> createState() => _ReservationTabState();
+  State<HistoryTab> createState() => _HistoryTabState();
 }
 
-class _ReservationTabState extends State<ReservationTab> {
+class _HistoryTabState extends State<HistoryTab> {
   @override
   Widget build(BuildContext context) {
     return Column(

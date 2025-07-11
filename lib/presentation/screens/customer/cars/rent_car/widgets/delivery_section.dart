@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:car_rental_app/shared/common_widgets/maps/full_screen_map.dart';
 import 'package:car_rental_app/shared/common_widgets/maps/interactive_map.dart';
-import 'package:car_rental_app/shared/models/Final Model/Firebase_car_model.dart';
+import 'package:car_rental_app/models/Firebase_car_model.dart';
 
 enum DeliveryOption { pickup, delivery }
 

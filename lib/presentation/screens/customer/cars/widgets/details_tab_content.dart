@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../../models/Firebase_car_model.dart';
 import 'extra_charge_item.dart';
 import 'pricing_option.dart';
 import 'rental_details_item.dart';

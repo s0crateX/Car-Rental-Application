@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
-import '../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../models/Firebase_car_model.dart';
 
 class CarService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

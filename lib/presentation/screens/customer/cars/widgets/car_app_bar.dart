@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
-import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../../models/Firebase_car_model.dart';
 import 'image_gallery.dart';
 
 class CarAppBar extends StatelessWidget {

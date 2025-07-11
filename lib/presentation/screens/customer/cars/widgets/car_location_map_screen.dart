@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
-import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../../models/Firebase_car_model.dart';
 import '../../../../../core/services/routing_service.dart';
 
 class CarLocationMapScreen extends StatefulWidget {

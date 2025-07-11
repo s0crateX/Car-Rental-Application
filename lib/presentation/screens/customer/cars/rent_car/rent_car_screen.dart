@@ -7,7 +7,7 @@ import 'package:car_rental_app/config/theme.dart';
 import 'widgets/extra_charges_section.dart';
 import 'widgets/payment_mode_section.dart';
 import 'widgets/booking_dialogs.dart';
-import 'package:car_rental_app/shared/models/Final Model/Firebase_car_model.dart';
+import 'package:car_rental_app/models/Firebase_car_model.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
@@ -21,6 +21,7 @@ import 'widgets/document_verification.dart';
 import 'widgets/terms_and_conditions_screen.dart';
 import 'widgets/calendar_section.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
+import 'package:car_rental_app/core/services/image_upload_service.dart';
 // Add dotted_border to pubspec.yaml if not present: dotted_border: ^2.0.0
 
 class RentCarScreen extends StatefulWidget {
@@ -557,7 +558,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
               .doc(userId)
               .get();
       final customerName = userDoc.data()?['fullName'] ?? 'N/A';
-      final customerPhone = userDoc.data()?['phone'] ?? 'N/A';
+      final customerPhone = userDoc.data()?['phoneNumber'] ?? 'N/A';
 
       // Get selected extra charges
       final List<Map<String, dynamic>> selectedExtraCharges = [];
@@ -596,6 +597,14 @@ class _RentCarScreenState extends State<RentCarScreen> {
       final totalPrice = carRentalCost + totalExtraCharges;
       final downPayment = carRentalCost * 0.5;
 
+      // Use 'rent_request' collection as requested by user
+      final bookingRef = FirebaseFirestore.instance.collection('rent_request').doc();
+
+      String? receiptImageUrl;
+      if ((_selectedPaymentMode == 'GCash' || _selectedPaymentMode == 'PayMaya') && _receiptImage != null) {
+        receiptImageUrl = await ImageUploadService.uploadReceiptImage(_receiptImage!, bookingRef.id);
+      }
+
       // Create booking document
       final Map<String, dynamic> bookingData = {
         'carId': _car.id,
@@ -608,19 +617,20 @@ class _RentCarScreenState extends State<RentCarScreen> {
         'rentalPeriod': {
           'days': rentalDuration.inDays,
           'hours': rentalDuration.inHours % 24,
+          'startDate': Timestamp.fromDate(_startDate!),
+          'endDate': Timestamp.fromDate(_endDate!),
         },
         'carRentalCost': carRentalCost,
         'totalExtraCharges': totalExtraCharges,
         'totalPrice': totalPrice,
         'downPayment': downPayment,
-        'startDate': Timestamp.fromDate(_startDate!),
-        'endDate': Timestamp.fromDate(_endDate!),
         'status': _bookingType == BookingType.reserve ? 'reserved' : 'pending',
         'bookingType': _bookingType.toString().split('.').last,
         'createdAt': FieldValue.serverTimestamp(),
         'notes': _notes,
         'extraCharges': selectedExtraCharges,
         'paymentMethod': _selectedPaymentMode,
+        'receiptImageUrl': receiptImageUrl,
         if (_isDelivery && _deliveryLatLng != null) ...{
           'deliveryAddress': {
             'address': _deliveryAddress,
@@ -634,10 +644,8 @@ class _RentCarScreenState extends State<RentCarScreen> {
           'id': _userDocuments?['government_id']?['url'],
         },
       };
-      // Use 'rents' collection as requested by user
-      final bookingRef = await FirebaseFirestore.instance
-          .collection('rents')
-          .add(bookingData);
+      print('Saving booking data: $bookingData');
+      await bookingRef.set(bookingData);
 
       // Car status will be updated by the owner upon approval.
 
@@ -836,7 +844,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
     await _selectEndDateTime(context);
   }
 
-  // Fetch car rental dates from the 'rents' collection
+  // Fetch car rental dates from the 'rent_request' collection
   Future<void> _fetchCarRentalDates() async {
     setState(() {
       _isLoading = true;
@@ -856,10 +864,10 @@ class _RentCarScreenState extends State<RentCarScreen> {
 
       print('Fetching rental dates for car ID: ${widget.car.id}');
 
-      // Query the 'rents' collection for bookings of this car
+      // Query the 'rent_request' collection for bookings of this car
       final querySnapshot =
           await FirebaseFirestore.instance
-              .collection('rents')
+              .collection('rent_request')
               .where('carId', isEqualTo: widget.car.id)
               .get();
 
@@ -882,8 +890,10 @@ class _RentCarScreenState extends State<RentCarScreen> {
           continue;
         }
 
-        final startTimestamp = data['startDate'] as Timestamp?;
-        final endTimestamp = data['endDate'] as Timestamp?;
+        final rentalPeriodData = data['rentalPeriod'] as Map<String, dynamic>?;
+
+        final startTimestamp = rentalPeriodData?['startDate'] as Timestamp?;
+        final endTimestamp = rentalPeriodData?['endDate'] as Timestamp?;
 
         if (startTimestamp != null && endTimestamp != null) {
           final startDate = startTimestamp.toDate();
@@ -933,7 +943,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
     } catch (e) {
       print('Error fetching car rental dates: $e');
       // Don't show an error to the user, just continue with an empty set of unavailable dates
-      // This allows the calendar to work even if we can't access the rents collection
+      // This allows the calendar to work even if we can't access the rent_request collection
       setState(() {
         _isLoading = false;
       });

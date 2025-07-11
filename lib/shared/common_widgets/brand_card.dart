@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../config/theme.dart';
-import '../models/Final Model/car_brand_model.dart';
+import '../../models/customer models/rent model/car_brand_model.dart';
 
 class BrandCard extends StatefulWidget {
   final CarBrandModel brand;

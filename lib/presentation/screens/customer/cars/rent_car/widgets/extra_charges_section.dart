@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:car_rental_app/shared/utils/price_utils.dart';
 import 'package:car_rental_app/config/theme.dart';
-import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
+import 'package:car_rental_app/models/Firebase_car_model.dart';
 
 class ExtraChargesSection extends StatefulWidget {
   final CarModel car;

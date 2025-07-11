@@ -7,7 +7,7 @@ import '../../../../shared/common_widgets/car_card_compact.dart';
 // Ensure CarCardCompact uses Firebase_car_model.dart, not mock model
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../models/Firebase_car_model.dart';
 import 'car_details_screen.dart';
 import 'car_filter_bottom_sheet.dart';
 

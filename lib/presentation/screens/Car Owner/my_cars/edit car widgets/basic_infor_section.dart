@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
+import 'package:car_rental_app/models/Firebase_car_model.dart';
 import 'package:car_rental_app/config/theme.dart';
 
 class BasicInfoSection extends StatelessWidget {

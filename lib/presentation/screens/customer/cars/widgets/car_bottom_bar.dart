@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../../shared/models/Final Model/Firebase_car_model.dart';
+import '../../../../../models/Firebase_car_model.dart';
 import '../rent_car/rent_car_screen.dart';
 
 class CarBottomBar extends StatelessWidget {

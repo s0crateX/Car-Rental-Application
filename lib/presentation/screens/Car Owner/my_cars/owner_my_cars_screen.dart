@@ -1,6 +1,6 @@
 import 'package:car_rental_app/config/routes.dart';
 import 'package:car_rental_app/config/theme.dart';
-import 'package:car_rental_app/shared/models/Final%20Model/Firebase_car_model.dart';
+import 'package:car_rental_app/models/Firebase_car_model.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
