@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../../../config/theme.dart';
+import 'package:car_rental_app/config/theme.dart';
+import '../../../../../../models/car owner  models/booking model/rent.dart';
+import 'booking_info_card.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -24,7 +27,7 @@ class _HistoryTabState extends State<HistoryTab> {
                   children: [
                     Expanded(
                       child: _buildStatCard(
-                        'Total Reservations',
+                        'Approved Reservations',
                         '0',
                         Icons.event_note,
                         AppTheme.mediumBlue,
@@ -33,7 +36,7 @@ class _HistoryTabState extends State<HistoryTab> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildStatCard(
-                        'Pending Approval',
+                        'Approved Rentals',
                         '0',
                         Icons.pending_actions,
                         AppTheme.lightBlue,
@@ -99,78 +102,44 @@ class _HistoryTabState extends State<HistoryTab> {
   }
 
   Widget _buildReservationsList() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.navy,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.mediumBlue.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.mediumBlue.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('rent_approve').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: AppTheme.white),
             ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.event_available,
-                  color: AppTheme.lightBlue,
-                  size: 20,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'Recent Reservations',
-                  style: TextStyle(
-                    color: AppTheme.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(
+            child: Text(
+              'No bookings found.',
+              style: TextStyle(color: AppTheme.white),
             ),
-          ),
-          
-          // Empty State
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.event_note_outlined,
-                    size: 64,
-                    color: AppTheme.mediumBlue.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No reservations yet',
-                    style: TextStyle(
-                      color: AppTheme.paleBlue,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Reservation requests will appear here',
-                    style: TextStyle(
-                      color: AppTheme.lightBlue,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+          );
+        }
+
+        final bookings = snapshot.data!.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return Rent.fromMap(data..['id'] = doc.id);
+        }).toList();
+
+        return ListView.builder(
+          itemCount: bookings.length,
+          itemBuilder: (context, index) {
+            final booking = bookings[index];
+            return BookingInfoCard(rent: booking, isHistory: true);
+          },
+        );
+      },
     );
   }
 }

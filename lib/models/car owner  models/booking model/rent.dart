@@ -17,7 +17,7 @@ class Rent {
   final DeliveryAddress? deliveryAddress;
   final RentalDocuments? documents;
   final double? downPayment;
-  final ExtraCharges? extraCharges;
+  final List<ExtraChargeItem>? extraCharges;
   final String? ownerId;
   final String? paymentMethod;
   final RentalPeriod? rentalPeriod;
@@ -88,8 +88,11 @@ class Rent {
       downPayment: map['downPayment'] is double 
           ? map['downPayment'] 
           : (map['downPayment'] as num?)?.toDouble(),
-      extraCharges: ExtraCharges.fromMap(
-          map['extraCharges'] is Map ? Map<String, dynamic>.from(map['extraCharges']) : null),
+      extraCharges: map['extraCharges'] is List
+          ? (map['extraCharges'] as List)
+              .map((item) => ExtraChargeItem.fromMap(Map<String, dynamic>.from(item)))
+              .toList()
+          : [],
       ownerId: map['ownerId'],
       paymentMethod: map['paymentMethod'],
       rentalPeriod: map['rentalPeriod'] != null
@@ -123,7 +126,7 @@ class Rent {
       'deliveryAddress': deliveryAddress?.toMap(),
       'documents': documents?.toMap(),
       'downPayment': downPayment,
-      'extraCharges': extraCharges?.toMap(),
+      'extraCharges': extraCharges?.map((item) => item.toMap()).toList(),
       'ownerId': ownerId,
       'paymentMethod': paymentMethod,
       'rentalPeriod': rentalPeriod?.toMap(),

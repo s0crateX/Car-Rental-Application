@@ -624,7 +624,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
         'totalExtraCharges': totalExtraCharges,
         'totalPrice': totalPrice,
         'downPayment': downPayment,
-        'status': _bookingType == BookingType.reserve ? 'reserved' : 'pending',
+        'status': 'pending',
         'bookingType': _bookingType.toString().split('.').last,
         'createdAt': FieldValue.serverTimestamp(),
         'notes': _notes,
@@ -865,67 +865,52 @@ class _RentCarScreenState extends State<RentCarScreen> {
       print('Fetching rental dates for car ID: ${widget.car.id}');
 
       // Query the 'rent_request' collection for bookings of this car
-      final querySnapshot =
-          await FirebaseFirestore.instance
-              .collection('rent_request')
-              .where('carId', isEqualTo: widget.car.id)
-              .get();
+      final requestQuery = FirebaseFirestore.instance
+          .collection('rent_request')
+          .where('carId', isEqualTo: widget.car.id)
+          .where('status', whereIn: ['pending', 'reserved', 'active']);
 
-      print('Found ${querySnapshot.docs.length} rental documents');
+      // Query the 'rent_approve' collection for approved bookings of this car
+      final approveQuery = FirebaseFirestore.instance
+          .collection('rent_approve')
+          .where('carId', isEqualTo: widget.car.id);
+
+      final requestSnapshot = await requestQuery.get();
+      final approveSnapshot = await approveQuery.get();
 
       Set<DateTime> unavailableDates = {};
 
-      // Process each booking to extract unavailable dates
-      for (var doc in querySnapshot.docs) {
+      // Process requests
+      for (var doc in requestSnapshot.docs) {
         final data = doc.data();
-        final status = data['status'] as String?;
-        final bookingId = doc.id;
-
-        print('Processing booking $bookingId with status: $status');
-
-        // Only consider bookings with these statuses
-        if (status == null ||
-            !['pending', 'approved', 'reserved', 'active'].contains(status)) {
-          print('Skipping booking $bookingId due to status: $status');
-          continue;
-        }
-
         final rentalPeriodData = data['rentalPeriod'] as Map<String, dynamic>?;
-
-        final startTimestamp = rentalPeriodData?['startDate'] as Timestamp?;
-        final endTimestamp = rentalPeriodData?['endDate'] as Timestamp?;
-
-        if (startTimestamp != null && endTimestamp != null) {
-          final startDate = startTimestamp.toDate();
-          final endDate = endTimestamp.toDate();
-
-          print(
-            'Booking period: ${startDate.toString()} to ${endDate.toString()}',
-          );
-
-          // Add all dates between start and end (inclusive) to unavailable dates
-          for (
-            DateTime date = DateTime(
-              startDate.year,
-              startDate.month,
-              startDate.day,
-            );
-            date.isBefore(
-              DateTime(
-                endDate.year,
-                endDate.month,
-                endDate.day,
-              ).add(const Duration(days: 1)),
-            );
-            date = date.add(const Duration(days: 1))
-          ) {
-            final normalizedDate = DateTime(date.year, date.month, date.day);
-            unavailableDates.add(normalizedDate);
+        if (rentalPeriodData != null) {
+          final startTimestamp = rentalPeriodData['startDate'] as Timestamp?;
+          final endTimestamp = rentalPeriodData['endDate'] as Timestamp?;
+          if (startTimestamp != null && endTimestamp != null) {
+            final startDate = startTimestamp.toDate();
+            final endDate = endTimestamp.toDate();
+            for (var d = DateTime(startDate.year, startDate.month, startDate.day); d.isBefore(DateTime(endDate.year, endDate.month, endDate.day).add(const Duration(days: 1))); d = d.add(const Duration(days: 1))) {
+              unavailableDates.add(d);
+            }
           }
-        } else {
-          print(
-            'Booking $bookingId has invalid dates: start=$startTimestamp, end=$endTimestamp',
-          );
+        }
+      }
+
+      // Process approved rentals
+      for (var doc in approveSnapshot.docs) {
+        final data = doc.data();
+        final rentalPeriodData = data['rentalPeriod'] as Map<String, dynamic>?;
+        if (rentalPeriodData != null) {
+          final startTimestamp = rentalPeriodData['startDate'] as Timestamp?;
+          final endTimestamp = rentalPeriodData['endDate'] as Timestamp?;
+          if (startTimestamp != null && endTimestamp != null) {
+            final startDate = startTimestamp.toDate();
+            final endDate = endTimestamp.toDate();
+            for (var d = DateTime(startDate.year, startDate.month, startDate.day); d.isBefore(DateTime(endDate.year, endDate.month, endDate.day).add(const Duration(days: 1))); d = d.add(const Duration(days: 1))) {
+              unavailableDates.add(d);
+            }
+          }
         }
       }
 

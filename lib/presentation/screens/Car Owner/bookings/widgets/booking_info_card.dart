@@ -8,11 +8,17 @@ import '../screens/rental_details_screen.dart';
 
 class BookingInfoCard extends StatelessWidget {
   final Rent rent;
-  const BookingInfoCard({super.key, required this.rent});
+  final bool isHistory;
+  const BookingInfoCard({super.key, required this.rent, this.isHistory = false});
 
   void _navigateToDetails(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => RentalDetailsScreen(rent: rent)),
+      MaterialPageRoute(
+        builder: (context) => RentalDetailsScreen(
+          rent: rent,
+          isHistory: isHistory,
+        ),
+      ),
     );
   }
 
@@ -205,6 +211,7 @@ class BookingInfoCard extends StatelessWidget {
   }
 
   Widget _buildCompactInfoGrid() {
+    final lateDuration = isHistory ? _calculateLateDuration() : null;
     return Column(
       children: [
         Row(
@@ -246,15 +253,34 @@ class BookingInfoCard extends StatelessWidget {
             ),
           ],
         ),
+        if (lateDuration != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: _buildInfoChip(
+              Icons.warning_amber_rounded,
+              'Late Return',
+              lateDuration,
+              chipColor: Colors.red.withOpacity(0.1),
+              iconColor: Colors.red,
+              labelColor: Colors.red,
+            ),
+          ),
       ],
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String label, String value) {
+  Widget _buildInfoChip(
+    IconData icon,
+    String label,
+    String value, {
+    Color chipColor = const Color.fromRGBO(255, 255, 255, 0.1),
+    Color iconColor = AppTheme.lightBlue,
+    Color labelColor = AppTheme.lightBlue,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: chipColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
@@ -263,12 +289,12 @@ class BookingInfoCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: AppTheme.lightBlue, size: 14),
+              Icon(icon, color: iconColor, size: 14),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: AppTheme.lightBlue,
+                  color: labelColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
@@ -357,6 +383,36 @@ class BookingInfoCard extends StatelessWidget {
       duration += '${period.hours}h';
     }
     return duration.isNotEmpty ? duration : 'N/A';
+  }
+
+  String? _calculateLateDuration() {
+    final status = rent.status?.toUpperCase();
+    if (status == 'PENDING' || status == 'CANCELLED' || rent.rentalPeriod?.endDate == null) {
+      return null;
+    }
+
+    final now = DateTime.now().toUtc();
+    final endDate = rent.rentalPeriod!.endDate!.toUtc();
+
+
+
+    if (now.isBefore(endDate)) {
+      return null;
+    }
+
+    final difference = now.difference(endDate);
+    final days = difference.inDays;
+    final hours = difference.inHours % 24;
+
+    String duration = '';
+    if (days > 0) {
+      duration += '${days}d ';
+    }
+    if (hours > 0) {
+      duration += '${hours}h';
+    }
+
+    return duration.trim().isNotEmpty ? duration.trim() : 'Late';
   }
 
   Color _getStatusColor() {

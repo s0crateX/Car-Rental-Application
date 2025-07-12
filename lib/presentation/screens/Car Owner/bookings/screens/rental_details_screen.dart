@@ -9,8 +9,9 @@ import '../../../../../models/car owner  models/booking model/vehicle.dart';
 
 class RentalDetailsScreen extends StatefulWidget {
   final Rent rent;
-  
-  const RentalDetailsScreen({super.key, required this.rent});
+  final bool isHistory;
+
+  const RentalDetailsScreen({super.key, required this.rent, this.isHistory = false});
 
   @override
   State<RentalDetailsScreen> createState() => _RentalDetailsScreenState();
@@ -100,14 +101,6 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
       flexibleSpace: FlexibleSpaceBar(
         background: _buildHeroImage(),
       ),
-      actions: [
-        IconButton(
-          onPressed: () {
-            // TODO: Add share functionality
-          },
-          icon: const Icon(Icons.share),
-        ),
-      ],
     );
   }
 
@@ -382,6 +375,31 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                       _buildDetailRow('Payment Method', widget.rent.paymentMethod ?? 'N/A', Icons.payment),
                       _buildDetailRow('Car Rental Cost', widget.rent.formatCurrency(widget.rent.carRentalCost ?? 0), Icons.directions_car),
                       _buildDetailRow('Total Amount', widget.rent.formatCurrency(widget.rent.totalPrice ?? 0), null, svgAsset: 'assets/svg/peso_blue.svg'),
+                      if (widget.rent.extraCharges != null && widget.rent.extraCharges!.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            Text(
+                              'Extra Charges:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.navy,
+                              ),
+                            ),
+                            ...widget.rent.extraCharges!.map(
+                               (charge) {
+                                final amount = double.tryParse(charge.amount) ?? 0.0;
+                                return _buildDetailRow(
+                                  charge.name,
+                                  widget.rent.formatCurrency(amount),
+                                  Icons.add_shopping_cart,
+                                );
+                              },
+                             ),
+                          ],
+                        ),
                       if (widget.rent.downPayment != null && widget.rent.downPayment! > 0)
                         _buildDetailRow('Down Payment', widget.rent.formatCurrency(widget.rent.downPayment!), Icons.money),
                       
@@ -436,8 +454,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                       _buildDetailRow('Booking ID', widget.rent.id ?? 'N/A', Icons.confirmation_number),
                       if (widget.rent.notes != null && widget.rent.notes!.isNotEmpty)
                         _buildDetailRow('Notes', widget.rent.notes!, Icons.notes, isMultiline: true),
-                      if (widget.rent.extraCharges?.notes != null && widget.rent.extraCharges!.notes!.isNotEmpty)
-                        _buildDetailRow('Extra Charges Notes', widget.rent.extraCharges!.notes!, Icons.note_add, isMultiline: true),
+
                     ],
                   ),
                 ),
@@ -513,6 +530,39 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
   }
 
   Widget _buildActionButtons() {
+    final status = widget.rent.status?.toUpperCase();
+
+    if (widget.isHistory && status == 'CONFIRMED') {
+      return _buildMarkAsCompleteAction();
+    }
+
+    if (!widget.isHistory && status == 'PENDING') {
+      return _buildPendingActions();
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildMarkAsCompleteAction() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue, // Or any color you prefer
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: _isLoading ? null : () => _updateBookingStatus('COMPLETED'),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Text('Mark as Complete', style: TextStyle(fontSize: 16, color: Colors.white)),
+      ),
+    );
+  }
+
+  Widget _buildPendingActions() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -530,13 +580,13 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: _isLoading ? null : () => _updateBookingStatus('CONFIRMED'),
-              icon: _isLoading 
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check_circle,color: Colors.white),
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_circle, color: Colors.white),
               label: Text(_isLoading ? 'Processing...' : 'Approve'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
@@ -552,7 +602,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: _isLoading ? null : () => _updateBookingStatus('CANCELLED'),
-              icon: const Icon(Icons.cancel,color: Colors.white),
+              icon: const Icon(Icons.cancel, color: Colors.white),
               label: const Text('Reject'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -603,60 +653,60 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     }
   }
 
-  void _updateBookingStatus(String status) async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _updateBookingStatus(String newStatus) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
 
     try {
-      final batch = FirebaseFirestore.instance.batch();
-      final originalDocRef = FirebaseFirestore.instance.collection('rent_request').doc(widget.rent.id);
+      // For pending requests, we move the document
+      if (newStatus == 'CONFIRMED' || newStatus == 'CANCELLED') {
+        final batch = FirebaseFirestore.instance.batch();
+        final requestDocRef = FirebaseFirestore.instance.collection('rent_request').doc(widget.rent.id);
+        final rentData = widget.rent.toMap();
 
-      if (status == 'CONFIRMED') {
-        final newDocRef = FirebaseFirestore.instance.collection('rent_approve').doc(widget.rent.id);
-        final approvedRentData = widget.rent.toMap()..['status'] = 'CONFIRMED';
-        batch.set(newDocRef, approvedRentData);
-        batch.delete(originalDocRef);
-      } else if (status == 'CANCELLED') {
-        final newDocRef = FirebaseFirestore.instance.collection('rent_rejected').doc(widget.rent.id);
-        final rejectedRentData = widget.rent.toMap()..['status'] = 'CANCELLED';
-        batch.set(newDocRef, rejectedRentData);
-        batch.delete(originalDocRef);
+        if (newStatus == 'CONFIRMED') {
+          final approveDocRef = FirebaseFirestore.instance.collection('rent_approve').doc(widget.rent.id);
+          rentData['status'] = 'CONFIRMED';
+          batch.set(approveDocRef, rentData);
+        } else if (newStatus == 'CANCELLED') {
+          final rejectDocRef = FirebaseFirestore.instance.collection('rent_reject').doc(widget.rent.id);
+          rentData['status'] = 'CANCELLED';
+          batch.set(rejectDocRef, rentData);
+        }
+
+        batch.delete(requestDocRef);
+        await batch.commit();
+      } else if (newStatus == 'COMPLETED') {
+        // For confirmed requests, we move from approve to completed
+        final approveDocRef = FirebaseFirestore.instance.collection('rent_approve').doc(widget.rent.id);
+        final docSnapshot = await approveDocRef.get();
+
+        if (docSnapshot.exists) {
+          final completedDocRef = FirebaseFirestore.instance.collection('rent_completed').doc(widget.rent.id);
+          final completedData = docSnapshot.data()!..['status'] = 'COMPLETED';
+
+          await FirebaseFirestore.instance.runTransaction((transaction) async {
+            transaction.set(completedDocRef, completedData);
+            transaction.delete(approveDocRef);
+          });
+        } else {
+          throw Exception("Approved document not found.");
+        }
       }
 
-      await batch.commit();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Booking has been ${status.toLowerCase()}'),
-            backgroundColor: status == 'CONFIRMED' ? Colors.green : Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        Navigator.of(context).pop();
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booking has been ${newStatus.toLowerCase()}.')),
+      );
+      Navigator.pop(context, true); // Return true to indicate success
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update booking: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating booking: $e')),
+      );
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }

@@ -45,7 +45,7 @@ class RentTab extends StatelessWidget {
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               final booking = bookings[index];
-              return BookingInfoCard(rent: booking);
+              return BookingInfoCard(rent: booking, isHistory: false);
             },
           );
         },

@@ -75,28 +75,24 @@ class RentalDocuments {
   }
 }
 
-class ExtraCharges {
-  final bool? isPaid;
-  final String? notes;
-  final double? amount;
+class ExtraChargeItem {
+  final String name;
+  final String amount;
 
-  ExtraCharges({this.isPaid, this.notes, this.amount});
+  ExtraChargeItem({required this.name, required this.amount});
 
-  factory ExtraCharges.fromMap(Map<String, dynamic>? map) {
-    if (map == null) return ExtraCharges();
-
-    return ExtraCharges(
-      isPaid: map['isPaid'] as bool? ?? false,
-      notes: map['notes'],
-      amount:
-          map['amount'] is double
-              ? map['amount']
-              : (map['amount'] as num?)?.toDouble(),
+  factory ExtraChargeItem.fromMap(Map<String, dynamic> map) {
+    return ExtraChargeItem(
+      name: map['name'] ?? '',
+      amount: map['amount'] ?? '0',
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {'isPaid': isPaid, 'notes': notes, 'amount': amount};
+    return {
+      'name': name,
+      'amount': amount,
+    };
   }
 }
 
