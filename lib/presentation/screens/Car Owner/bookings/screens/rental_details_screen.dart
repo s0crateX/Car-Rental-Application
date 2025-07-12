@@ -669,7 +669,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
           rentData['status'] = 'CONFIRMED';
           batch.set(approveDocRef, rentData);
         } else if (newStatus == 'CANCELLED') {
-          final rejectDocRef = FirebaseFirestore.instance.collection('rent_reject').doc(widget.rent.id);
+          final rejectDocRef = FirebaseFirestore.instance.collection('rent_rejected').doc(widget.rent.id);
           rentData['status'] = 'CANCELLED';
           batch.set(rejectDocRef, rentData);
         }

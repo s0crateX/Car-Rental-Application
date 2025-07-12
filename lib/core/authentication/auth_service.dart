@@ -407,6 +407,10 @@ class AuthService with ChangeNotifier {
     try {
       await _auth.signOut();
       await _clearSession();
+      _user = null;
+      _userData = null;
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
     } catch (e) {
       _errorMessage = 'Error signing out';
       notifyListeners();
