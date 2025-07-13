@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
+import 'package:car_rental_app/presentation/screens/customer/owner/owner_cars_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../models/Firebase_car_model.dart';
@@ -159,11 +160,23 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
         final ownerName = ownerData['fullName'] ?? 'Car Owner';
         final ownerImageUrl = ownerData['profileImageUrl'];
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OwnerCarsScreen(
+                  ownerId: car.carOwnerDocumentId,
+                  ownerName: ownerName,
+                ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
               SizedBox(
                 width: 40,
                 height: 40,
@@ -207,7 +220,8 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
             ],
           ),
-        );
+        ),
+       );
       },
     );
   }
