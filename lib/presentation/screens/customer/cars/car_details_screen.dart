@@ -216,6 +216,13 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                         fontStyle: FontStyle.italic,
                       ),
                     ),
+                  if (ownerData['phoneNumber'] != null && ownerData['phoneNumber'].isNotEmpty)
+                    Text(
+                      'Phone: ${ownerData['phoneNumber']}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                      ),
+                    ),
                 ],
               ),
             ],
