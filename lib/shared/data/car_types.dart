@@ -17,6 +17,23 @@ class CarTypes {
     'Hybrid Car',
   ];
 
+  static const Map<String, String> seatsPerType = {
+    'Sedan': '4-5 seats',
+    'SUV': '5-8 seats',
+    'Hatchback': '4-5 seats',
+    'Crossover': '5 seats',
+    'Minivan': '7-8 seats',
+    'Coupe': '2-4 seats',
+    'Convertible': '2-4 seats',
+    'Pickup': '2-5 seats',
+    'Van': '8-15 seats',
+    'Wagon': '5 seats',
+    'Sports Car': '2 seats',
+    'Luxury Car': '4-5 seats',
+    'Electric Car': '4-5 seats',
+    'Hybrid Car': '4-5 seats',
+  };
+
   // A nested map defining available types for each brand and model.
   // Format: Map<Brand, Map<Model, List<Type>>>
   static const Map<String, Map<String, List<String>>> typesByBrandAndModel = {

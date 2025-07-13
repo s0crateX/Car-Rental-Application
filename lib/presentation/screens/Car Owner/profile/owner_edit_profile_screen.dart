@@ -27,6 +27,7 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
   final TextEditingController mobileController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController organizationNameController = TextEditingController();
+  final TextEditingController messengerLinkController = TextEditingController();
 
   bool _hasChanges = false;
   bool _isSaving = false;
@@ -39,6 +40,7 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
       mobileController,
       addressController,
       organizationNameController,
+      messengerLinkController,
     ]) {
       controller.addListener(() {
         if (mounted) {
@@ -76,6 +78,7 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
         mobileController.text = ownerData['phoneNumber'] ?? '';
         addressController.text = ownerData['address'] ?? '';
         organizationNameController.text = ownerData['organizationName'] ?? '';
+        messengerLinkController.text = ownerData['messengerLink'] ?? '';
         _profileImageUrl = ownerData['profileImageUrl'] as String?;
         final createdAt = ownerData['createdAt'];
         if (createdAt != null) {
@@ -142,6 +145,7 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
     mobileController.dispose();
     addressController.dispose();
     organizationNameController.dispose();
+    messengerLinkController.dispose();
     super.dispose();
   }
 
@@ -190,6 +194,7 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
       'phoneNumber': mobileController.text.trim(),
       'address': addressController.text.trim(),
       'organizationName': organizationNameController.text.trim(),
+      'messengerLink': messengerLinkController.text.trim(),
     };
     
     if (uploadedImageUrl != null) {
@@ -431,6 +436,22 @@ class _OwnerEditProfileScreenState extends State<OwnerEditProfileScreen> {
                   controller: mobileController,
                   hint: 'Enter your mobile number',
                   keyboardType: TextInputType.phone,
+                ),
+                _buildEditableField(
+                  label: 'Messenger Link',
+                  controller: messengerLinkController,
+                  hint: 'e.g., m.me/your.username',
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 8, left: 4),
+                  child: Text(
+                    'Provide your Facebook Messenger link for easy communication.',
+                    style: TextStyle(
+                      color: AppTheme.paleBlue.withOpacity(0.8),
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 ),
                 _buildEditableField(
                   label: 'Organization Name',

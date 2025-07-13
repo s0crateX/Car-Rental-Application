@@ -2,7 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:car_rental_app/presentation/screens/customer/owner/owner_cars_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../models/Firebase_car_model.dart';
 import 'widgets/car_app_bar.dart';
 import 'widgets/car_bottom_bar.dart';
@@ -159,6 +161,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
         final ownerData = snapshot.data!;
         final ownerName = ownerData['fullName'] ?? 'Car Owner';
         final ownerImageUrl = ownerData['profileImageUrl'];
+        final messengerLink = ownerData['messengerLink'];
 
         return GestureDetector(
           onTap: () {
@@ -175,58 +178,83 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: ownerImageUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(20.0),
-                        child: CachedNetworkImage(
-                          imageUrl: ownerImageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              const Center(child: CircularProgressIndicator()),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.person, size: 40),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: ownerImageUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(20.0),
+                          child: CachedNetworkImage(
+                            imageUrl: ownerImageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator()),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.person, size: 40),
+                          ),
+                        )
+                      : const CircleAvatar(
+                          radius: 20,
+                          child: Icon(Icons.person, size: 20),
                         ),
-                      )
-                    : const CircleAvatar(
-                        radius: 20,
-                        child: Icon(Icons.person, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Name: $ownerName',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
-              ),
-              SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Name: $ownerName',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                    ),
+                    if (ownerData['organizationName'] != null &&
+                        ownerData['organizationName'].isNotEmpty)
+                      Text(
+                        'Organization: ${ownerData['organizationName']}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    if (ownerData['phoneNumber'] != null &&
+                        ownerData['phoneNumber'].isNotEmpty)
+                      Text(
+                        'Phone: ${ownerData['phoneNumber']}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
+                const Spacer(),
+                if (messengerLink != null && messengerLink.isNotEmpty)
+                  InkWell(
+                    onTap: () async {
+                      final Uri url = Uri.parse(messengerLink);
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url,
+                            mode: LaunchMode.externalApplication);
+                      } else {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Could not launch $messengerLink')),
+                        );
+                      }
+                    },
+                    child: SvgPicture.asset(
+                      'assets/svg/brand-messenger.svg',
+                      width: 30,
+                      height: 30,
+                      colorFilter:
+                          const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
                     ),
                   ),
-                  if (ownerData['organizationName'] != null && ownerData['organizationName'].isNotEmpty)
-                    Text(
-                      'Organization: ${ownerData['organizationName']}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  if (ownerData['phoneNumber'] != null && ownerData['phoneNumber'].isNotEmpty)
-                    Text(
-                      'Phone: ${ownerData['phoneNumber']}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
         ),
        );
       },

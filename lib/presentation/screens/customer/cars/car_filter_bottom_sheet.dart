@@ -406,22 +406,32 @@ class _CarFilterBottomSheetState extends State<CarFilterBottomSheet> {
               ),
               borderRadius: BorderRadius.circular(12),
               items:
-                  options
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(
-                              fontWeight:
-                                  e == value
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                            ),
+                  options.map((e) {
+                final seats = CarTypes.seatsPerType[e];
+                return DropdownMenuItem(
+                  value: e,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        e,
+                        style: TextStyle(
+                          fontWeight:
+                              e == value ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                      if (seats != null)
+                        Text(
+                          seats,
+                          style: TextStyle(
+                            color: theme.colorScheme.secondary,
+                            fontSize: 12,
                           ),
                         ),
-                      )
-                      .toList(),
+                    ],
+                  ),
+                );
+              }).toList(),
               onChanged: (val) {
                 if (val != null) onChanged(val);
               },

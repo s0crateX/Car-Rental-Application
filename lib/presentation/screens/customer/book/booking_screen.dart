@@ -29,11 +29,20 @@ class _BookingScreenState extends State<BookingScreen>
     super.dispose();
   }
   
+  Future<void> _onRefresh() async {
+    // Simulate a network request
+    await Future.delayed(const Duration(seconds: 2));
+    // Add your refresh logic here, e.g., re-fetch data
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkNavy,
-      body: Column(
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: Column(
         children: [
           // Custom header with modern tab design
           Container(
@@ -127,7 +136,7 @@ class _BookingScreenState extends State<BookingScreen>
           ),
         ],
       ),
-    );
+    ),);
   }
   
   Widget _buildTab({

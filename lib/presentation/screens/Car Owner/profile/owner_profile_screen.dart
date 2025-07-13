@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../config/theme.dart';
 import '../../../../config/routes.dart';
 import '../../../../core/authentication/auth_service.dart';
@@ -220,9 +221,8 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                              )
-                            else
-                              const SizedBox(height: 12.0),
+                              ),
+                            const SizedBox(height: 12.0),
                           ],
                         )
                         : const SizedBox.shrink(),
