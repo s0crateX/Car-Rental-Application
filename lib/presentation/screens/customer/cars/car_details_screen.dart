@@ -1,4 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../models/Firebase_car_model.dart';
 import 'widgets/car_app_bar.dart';
 import 'widgets/car_bottom_bar.dart';
@@ -119,7 +122,13 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
             Expanded(
               child: SingleChildScrollView(
                 physics: const NeverScrollableScrollPhysics(),
-                child: CarHeaderInfo(car: car),
+                child: Column(
+                  children: [
+                    CarHeaderInfo(car: car),
+                    SizedBox(height: 10),
+                    _buildOwnerInfo(context),
+                  ],
+                ),
               ),
             ),
 
@@ -134,11 +143,80 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     );
   }
 
-  @override
-  double get maxExtent => 180.0; // Increased height to accommodate content
+  Widget _buildOwnerInfo(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: authService.getUserById(car.carOwnerDocumentId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return Center(child: Text('Could not load owner info'));
+        }
+
+        final ownerData = snapshot.data!;
+        final ownerName = ownerData['fullName'] ?? 'Car Owner';
+        final ownerImageUrl = ownerData['profileImageUrl'];
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: ownerImageUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(20.0),
+                        child: CachedNetworkImage(
+                          imageUrl: ownerImageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.person, size: 40),
+                        ),
+                      )
+                    : const CircleAvatar(
+                        radius: 20,
+                        child: Icon(Icons.person, size: 20),
+                      ),
+              ),
+              SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Name: $ownerName',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (ownerData['organizationName'] != null && ownerData['organizationName'].isNotEmpty)
+                    Text(
+                      'Organization: ${ownerData['organizationName']}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
-  double get minExtent => 180.0;
+  double get maxExtent => 260.0; // Increased height to accommodate content
+
+  @override
+  double get minExtent => 260.0;
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {

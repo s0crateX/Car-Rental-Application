@@ -11,11 +11,17 @@ class OwnerNavScreen extends StatefulWidget {
 class _OwnerNavScreenState extends State<OwnerNavScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    OwnerHomeScreen(),
-    // Add more screens here as needed, e.g. MyCarsScreen(), OwnerProfileScreen(), etc.
-    Center(child: Text('Other Tab (Placeholder)')),
-  ];
+  late final List<Widget> _widgetOptions;
+
+  @override
+  void initState() {
+    super.initState();
+    _widgetOptions = <Widget>[
+      OwnerHomeScreen(onNavigateToBookings: _onItemTapped),
+      // Add more screens here as needed, e.g. MyCarsScreen(), OwnerProfileScreen(), etc.
+      const Center(child: Text('Other Tab (Placeholder)')),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {

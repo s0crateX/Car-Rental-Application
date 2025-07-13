@@ -70,6 +70,18 @@ class AuthService with ChangeNotifier {
       throw Exception('Failed to update profile image URL.');
     }
   }
+
+  Future<Map<String, dynamic>?> getUserById(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        return doc.data();
+      }
+    } catch (e) {
+      print('Error fetching user by ID: $e');
+    }
+    return null;
+  }
   EmailVerificationStatus get emailVerificationStatus =>
       _emailVerificationStatus;
   bool get isEmailVerified => _user?.emailVerified ?? false;

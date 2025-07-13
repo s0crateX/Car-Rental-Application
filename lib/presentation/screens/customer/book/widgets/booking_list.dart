@@ -1,6 +1,4 @@
 import 'package:car_rental_app/core/services/booking_service.dart';
-import 'package:car_rental_app/models/customer%20models/booking%20model/rent_request_model.dart';
-import 'package:car_rental_app/presentation/screens/customer/book/widgets/rent_request_info_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
@@ -59,6 +57,7 @@ class BookingList extends StatelessWidget {
               rent: booking,
               isHistory: true,
               isRequest: collection == 'rent_request',
+              isCarOwner: false, // This is the customer view
             );
           },
         );

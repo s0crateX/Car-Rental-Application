@@ -1,8 +1,10 @@
+import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:car_rental_app/config/theme.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../../models/car owner  models/booking model/rent.dart';
 import '../../../../../models/car owner  models/booking model/vehicle.dart';
@@ -89,6 +91,21 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
       bottomNavigationBar: _buildActionButtons(),
     ),
     );
+  }
+
+  Widget _buildActionButtons() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final status = widget.rent.status?.toUpperCase();
+
+    if (authService.isCarOwner && status == 'CONFIRMED') {
+      return _buildMarkAsCompleteAction();
+    }
+
+    if (authService.isCarOwner && !widget.isHistory && status == 'PENDING') {
+      return _buildPendingActions();
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildAppBar() {
@@ -529,89 +546,62 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     return '${days}d ${hours}h';
   }
 
-  Widget _buildActionButtons() {
-    final status = widget.rent.status?.toUpperCase();
 
-    if (widget.isHistory && status == 'CONFIRMED') {
-      return _buildMarkAsCompleteAction();
-    }
-
-    if (!widget.isHistory && status == 'PENDING') {
-      return _buildPendingActions();
-    }
-
-    return const SizedBox.shrink();
-  }
 
   Widget _buildMarkAsCompleteAction() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton(
+        onPressed: _isLoading ? null : _markAsComplete,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue, // Or any color you prefer
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: AppTheme.green,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        onPressed: _isLoading ? null : () => _updateBookingStatus('COMPLETED'),
         child: _isLoading
             ? const CircularProgressIndicator(color: Colors.white)
-            : const Text('Mark as Complete', style: TextStyle(fontSize: 16, color: Colors.white)),
+            : const Text('Mark as Complete'),
       ),
     );
   }
 
   Widget _buildPendingActions() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _isLoading ? null : () => _updateBookingStatus('CONFIRMED'),
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check_circle, color: Colors.white),
-              label: Text(_isLoading ? 'Processing...' : 'Approve'),
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _approveBooking,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: AppTheme.green,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Approve'),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _isLoading ? null : () => _updateBookingStatus('CANCELLED'),
-              icon: const Icon(Icons.cancel, color: Colors.white),
-              label: const Text('Reject'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+            child: OutlinedButton(
+              onPressed: _isLoading ? null : _rejectBooking,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.surface,
+                side: BorderSide(color: AppTheme.surface),
+                minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: const Text('Reject'),
             ),
           ),
         ],
@@ -653,61 +643,152 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     }
   }
 
-  Future<void> _updateBookingStatus(String newStatus) async {
+  Future<bool?> _showConfirmationDialog({
+    required String title,
+    required String content,
+    required String confirmText,
+    Color confirmColor = AppTheme.green,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: Colors.white,
+          title: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.navy,
+              fontSize: 18,
+            ),
+          ),
+          content: Text(
+            content,
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: confirmColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(confirmText, style: const TextStyle(fontSize: 11)),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _approveBooking() async {
+    final confirmed = await _showConfirmationDialog(
+      title: 'Approve Booking',
+      content: 'Are you sure you want to approve this booking?',
+      confirmText: 'Approve',
+    );
+    if (confirmed == true) {
+      await _updateBookingStatus('CONFIRMED');
+    }
+  }
+
+  void _rejectBooking() async {
+    final confirmed = await _showConfirmationDialog(
+      title: 'Reject Booking',
+      content: 'Are you sure you want to reject this booking?',
+      confirmText: 'Reject',
+      confirmColor: AppTheme.surface,
+    );
+    if (confirmed == true) {
+      await _updateBookingStatus('REJECTED');
+    }
+  }
+
+  void _markAsComplete() async {
+    final confirmed = await _showConfirmationDialog(
+      title: 'Mark as Complete',
+      content: 'Are you sure you want to mark this booking as complete?',
+      confirmText: 'Complete'
+    );
+    if (confirmed == true) {
+      await _updateBookingStatus('COMPLETED');
+    }
+  }
+
+  Future<void> _updateBookingStatus(String status) async {
     if (_isLoading) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      // For pending requests, we move the document
-      if (newStatus == 'CONFIRMED' || newStatus == 'CANCELLED') {
-        final batch = FirebaseFirestore.instance.batch();
-        final requestDocRef = FirebaseFirestore.instance.collection('rent_request').doc(widget.rent.id);
-        final rentData = widget.rent.toMap();
+      final batch = FirebaseFirestore.instance.batch();
 
-        if (newStatus == 'CONFIRMED') {
-          final approveDocRef = FirebaseFirestore.instance.collection('rent_approve').doc(widget.rent.id);
-          rentData['status'] = 'CONFIRMED';
-          batch.set(approveDocRef, rentData);
-        } else if (newStatus == 'CANCELLED') {
-          final rejectDocRef = FirebaseFirestore.instance.collection('rent_rejected').doc(widget.rent.id);
-          rentData['status'] = 'CANCELLED';
-          batch.set(rejectDocRef, rentData);
-        }
+      // Original request document reference
+      final requestDocRef = FirebaseFirestore.instance.collection('rent_request').doc(widget.rent.id);
 
-        batch.delete(requestDocRef);
-        await batch.commit();
-      } else if (newStatus == 'COMPLETED') {
-        // For confirmed requests, we move from approve to completed
+      if (status == 'CONFIRMED') {
+        // Move to 'rent_approve'
         final approveDocRef = FirebaseFirestore.instance.collection('rent_approve').doc(widget.rent.id);
-        final docSnapshot = await approveDocRef.get();
-
+        final docSnapshot = await requestDocRef.get();
         if (docSnapshot.exists) {
-          final completedDocRef = FirebaseFirestore.instance.collection('rent_completed').doc(widget.rent.id);
-          final completedData = docSnapshot.data()!..['status'] = 'COMPLETED';
-
-          await FirebaseFirestore.instance.runTransaction((transaction) async {
-            transaction.set(completedDocRef, completedData);
-            transaction.delete(approveDocRef);
-          });
-        } else {
-          throw Exception("Approved document not found.");
+          final data = docSnapshot.data()!;
+          data['status'] = 'CONFIRMED';
+          batch.set(approveDocRef, data);
+          batch.delete(requestDocRef);
+        }
+      } else if (status == 'REJECTED') {
+        // Move to 'rent_rejected'
+        final rejectDocRef = FirebaseFirestore.instance.collection('rent_rejected').doc(widget.rent.id);
+        final docSnapshot = await requestDocRef.get();
+        if (docSnapshot.exists) {
+          final data = docSnapshot.data()!;
+          data['status'] = 'REJECTED';
+          batch.set(rejectDocRef, data);
+          batch.delete(requestDocRef);
+        }
+      } else if (status == 'COMPLETED') {
+        // Move from 'rent_approve' to 'rent_completed'
+        final approveDocRef = FirebaseFirestore.instance.collection('rent_approve').doc(widget.rent.id);
+        final completedDocRef = FirebaseFirestore.instance.collection('rent_completed').doc(widget.rent.id);
+        final docSnapshot = await approveDocRef.get();
+        if (docSnapshot.exists) {
+          final data = docSnapshot.data()!;
+          data['status'] = 'COMPLETED';
+          batch.set(completedDocRef, data);
+          batch.delete(approveDocRef);
         }
       }
 
-      if (!mounted) return;
+      await batch.commit();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Booking has been ${newStatus.toLowerCase()}.')),
+        SnackBar(content: Text('Booking $status successfully.')),
       );
-      Navigator.pop(context, true); // Return true to indicate success
+      Navigator.of(context).pop();
     } catch (e) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating booking: $e')),
+        SnackBar(content: Text('Failed to update booking: $e')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 }

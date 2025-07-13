@@ -4,7 +4,9 @@ import 'package:car_rental_app/config/theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../../core/authentication/auth_service.dart';
 import '../../../../../models/car owner  models/booking model/vehicle.dart';
 import '../screens/rental_details_screen.dart';
 
@@ -12,12 +14,14 @@ class BookingInfoCard extends StatelessWidget {
   final Rent rent;
   final bool isHistory;
   final bool isRequest;
+  final bool isCarOwner;
   
   const BookingInfoCard({
     super.key,
     required this.rent,
     this.isHistory = false,
     this.isRequest = false,
+    this.isCarOwner = false,
   });
 
   void _navigateToDetails(BuildContext context) {
@@ -33,6 +37,8 @@ class BookingInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isCustomer = authService.isCustomer;
     return GestureDetector(
       onTap: () => _navigateToDetails(context),
       child: Container(
@@ -75,7 +81,8 @@ class BookingInfoCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   
                   // Action buttons
-                  _buildCompactActionRow(context),
+                  if (isCarOwner || (isCustomer && isRequest))
+                    _buildCompactActionRow(context, isCustomer),
                 ],
               ),
             ),
@@ -219,7 +226,7 @@ class BookingInfoCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (isHistory && _calculateLateDuration() != null)
+              if (_calculateLateDuration() != null)
                 Container(
                   margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -228,7 +235,7 @@ class BookingInfoCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    'Late: ${_calculateLateDuration()}',
+                    'Late: ${_calculateLateDuration()!}',
                     style: const TextStyle(
                       color: Colors.red,
                       fontSize: 10,
@@ -434,7 +441,7 @@ class BookingInfoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactActionRow(BuildContext context) {
+  Widget _buildCompactActionRow(BuildContext context, bool isCustomer) {
     return Row(
       children: [
         Expanded(
@@ -455,7 +462,7 @@ class BookingInfoCard extends StatelessWidget {
           ),
         ),
         
-        if (isRequest) ...[
+        if (isRequest && isCustomer) ...[
           const SizedBox(width: 8),
           Expanded(
             child: ElevatedButton(
@@ -520,7 +527,7 @@ class BookingInfoCard extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Keep Booking', style: TextStyle(color: AppTheme.lightBlue)),
+              child: const Text('Keep Booking', style: TextStyle(color: AppTheme.lightBlue, fontSize: 11)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -534,7 +541,7 @@ class BookingInfoCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Confirm Cancel'),
+              child: const Text('Confirm', style: TextStyle(fontSize: 11),),
             ),
           ],
         );
@@ -598,7 +605,7 @@ class BookingInfoCard extends StatelessWidget {
 
   String? _calculateLateDuration() {
     final status = rent.status?.toUpperCase();
-    if (status == 'PENDING' || status == 'CANCELLED' || rent.rentalPeriod?.endDate == null) {
+    if (status != 'CONFIRMED' || rent.rentalPeriod?.endDate == null) {
       return null;
     }
 

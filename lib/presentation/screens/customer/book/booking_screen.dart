@@ -38,7 +38,7 @@ class _BookingScreenState extends State<BookingScreen>
           // Custom header with modern tab design
           Container(
             decoration: BoxDecoration(
-              color: AppTheme.navy,
+              color: AppTheme.darkNavy,
              
             ),
             child: SafeArea(

@@ -15,12 +15,18 @@ class CarOwnerScreen extends StatefulWidget {
 class _CarOwnerScreenState extends State<CarOwnerScreen> {
   int _selectedIndex = 0;
 
-  static final List<Widget> _screens = <Widget>[
-    const OwnerHomeScreen(),
-    const OwnerBookingsScreen(),
-    const OwnerMyCarsScreen(),
-    const OwnerProfileScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      OwnerHomeScreen(onNavigateToBookings: _onItemTapped),
+      const OwnerBookingsScreen(),
+      const OwnerMyCarsScreen(),
+      const OwnerProfileScreen(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {

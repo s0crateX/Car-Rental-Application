@@ -1,4 +1,5 @@
 import 'package:car_rental_app/presentation/screens/Car%20Owner/profile/document_verification_Carowner.dart';
+import 'owner_rentals_history_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -270,6 +271,17 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                       builder:
                           (context) =>
                               const DocumentVerificationCarOwnerScreen(),
+                    ),
+                  );
+                },
+              ),
+              OwnerProfileMenuItem(
+                icon: 'assets/svg/history.svg',
+                title: 'Rentals History',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const OwnerRentalsHistoryScreen(),
                     ),
                   );
                 },
