@@ -48,14 +48,14 @@ class CarAppBar extends StatelessWidget {
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            shape: BoxShape.circle,
-          ),
+          // decoration: BoxDecoration(
+          //   color: Theme.of(context).colorScheme.surface,
+          //   shape: BoxShape.circle,
+          // ),
           child: SvgPicture.asset(
             'assets/svg/arrow-left.svg',
-            width: 24,
-            height: 24,
+            width: 30,
+            height: 30,
             colorFilter: ColorFilter.mode(AppTheme.white, BlendMode.srcIn),
           ),
         ),

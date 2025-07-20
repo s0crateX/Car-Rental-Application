@@ -311,12 +311,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final userLoc = _userLocation;
 
     // Filter for available cars and sort them by distance
-    var availableCars =
-        _allCars
-            .where(
-              (car) => car.availabilityStatus == AvailabilityStatus.available,
-            )
-            .toList();
+    var availableCars = _allCars
+        .where((car) =>
+            car.availabilityStatus == AvailabilityStatus.available &&
+            car.verificationStatus == VerificationStatus.verified)
+        .toList();
 
     if (userLoc != null) {
       availableCars.sort((a, b) {

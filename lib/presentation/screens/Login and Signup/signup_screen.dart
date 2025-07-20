@@ -263,7 +263,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.navy,
+      backgroundColor: AppTheme.darkNavy,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -337,9 +337,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.navy.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppTheme.lightBlue.withOpacity(0.5),
-                        ),
+                        // border: Border.all(
+                        //   color: AppTheme.lightBlue.withOpacity(0.5),
+                        // ),
                       ),
                       child: const Text(
                         '+63',
@@ -523,8 +523,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     Text(
                       'I am a',
                       style: TextStyle(
-                        color: AppTheme.paleBlue,
-                        fontWeight: FontWeight.bold,
+                        color: AppTheme.white,
+                        fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
                     ),
@@ -543,7 +543,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               decoration: BoxDecoration(
                                 color: _selectedRole == 'Customer'
                                     ? AppTheme.mediumBlue
-                                    : AppTheme.navy,
+                                    : AppTheme.darkNavy,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: _selectedRole == 'Customer'
@@ -559,7 +559,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     color: _selectedRole == 'Customer'
                                         ? Colors.white
                                         : AppTheme.lightBlue,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -579,7 +579,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               decoration: BoxDecoration(
                                 color: _selectedRole == 'Car Owner'
                                     ? AppTheme.mediumBlue
-                                    : AppTheme.navy,
+                                    : AppTheme.darkNavy,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: _selectedRole == 'Car Owner'
@@ -595,7 +595,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     color: _selectedRole == 'Car Owner'
                                         ? Colors.white
                                         : AppTheme.lightBlue,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -666,7 +666,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     onPressed: _isSubmitting ? null : _registerUser,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.lightBlue,
-                      foregroundColor: AppTheme.navy,
+                      foregroundColor: AppTheme.darkNavy,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.0),
                       ),
@@ -676,7 +676,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       'SIGN UP',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -700,7 +700,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         'Sign in',
                         style: TextStyle(
                           color: Colors.lightBlueAccent,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

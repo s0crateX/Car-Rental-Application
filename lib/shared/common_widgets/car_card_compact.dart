@@ -33,6 +33,8 @@ class CarCardCompact extends StatelessWidget {
     final theme = Theme.of(context);
     final distanceText = _formatDistance(distanceInMeters);
 
+
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -302,8 +304,8 @@ class CarCardCompact extends StatelessWidget {
                           Text(
                             car.hourlyRate.toStringAsFixed(0),
                             style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
                               color: theme.colorScheme.primary,
                             ),
                           ),

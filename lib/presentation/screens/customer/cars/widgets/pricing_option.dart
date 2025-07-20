@@ -25,10 +25,10 @@ class PricingOption extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        margin: const EdgeInsets.symmetric(vertical: 1.0),
         decoration: BoxDecoration(
           color: isRecommended 
-              ? AppTheme.navy.withOpacity(0.15) 
+              ? AppTheme.darkNavy.withOpacity(0.15) 
               : Theme.of(context).colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(10),
           border: isRecommended 
@@ -43,7 +43,7 @@ class PricingOption extends StatelessWidget {
                 Text(
                   period,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: isRecommended ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isRecommended ? FontWeight.w600 : FontWeight.normal,
                     color: isRecommended ? Theme.of(context).primaryColor : null,
                   ),
                 ),
@@ -59,7 +59,7 @@ class PricingOption extends StatelessWidget {
                       'Best Value',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -91,7 +91,7 @@ class PricingOption extends StatelessWidget {
             _getCurrencySymbol(currency),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
             ),
           ),
         const SizedBox(width: 4),
@@ -99,7 +99,7 @@ class PricingOption extends StatelessWidget {
           _formatPrice(price),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

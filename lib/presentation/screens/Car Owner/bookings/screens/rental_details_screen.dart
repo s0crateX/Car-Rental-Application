@@ -52,7 +52,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: AppTheme.darkNavy,
         body: NestedScrollView(
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return <Widget>[
@@ -114,7 +114,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
       floating: false,
       pinned: true,
       backgroundColor: AppTheme.navy,
-      foregroundColor: Colors.white,
+      foregroundColor: AppTheme.white,
       flexibleSpace: FlexibleSpaceBar(
         background: _buildHeroImage(),
       ),
@@ -223,7 +223,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     margin: const EdgeInsets.all(16),
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppTheme.navy,
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
@@ -241,7 +241,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppTheme.navy,
+            color: AppTheme.white,
           ),
         ),
         const SizedBox(height: 16),
@@ -283,7 +283,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                 'End Date',
                 _formatDate(widget.rent.rentalPeriod?.endDate),
                 Icons.event,
-                Colors.purple,
+                Colors.red,
               ),
             ),
           ],
@@ -324,8 +324,8 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
           value,
           style: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -338,40 +338,44 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
 
 
   Widget _buildRenterTab() {
-    return SizedBox.expand(
-      child: SafeArea(
-      top: false,
-      bottom: false,
-      child: Builder(
-        builder: (BuildContext context) {
-          return CustomScrollView(
-            key: const PageStorageKey<String>('renter'),
-            slivers: <Widget>[
-              SliverPadding(
-                padding: const EdgeInsets.all(20.0),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate(
-                    <Widget>[
-                      _buildDetailRow('Name', widget.rent.customerName ?? 'N/A', Icons.person),
-                      if (widget.rent.customerPhone != null)
-                        _buildDetailRow('Phone', widget.rent.customerPhone!, Icons.phone),
-                      if (widget.rent.deliveryAddress?.address != null) ...[
-                        const SizedBox(height: 16),
-                        _buildDetailRow('Delivery Address', widget.rent.deliveryAddress!.address!, Icons.location_on),
-                        if (widget.rent.deliveryAddress?.latitude != null && widget.rent.deliveryAddress?.longitude != null)
-                          _buildDetailRow('Coordinates', 
-                            '${widget.rent.deliveryAddress!.latitude}, ${widget.rent.deliveryAddress!.longitude}', 
-                            Icons.map),
+    return Container(
+      color: AppTheme.darkNavy,
+      child: SizedBox.expand(
+        child: SafeArea(
+        top: false,
+        bottom: false,
+        child: Builder(
+          builder: (BuildContext context) {
+            return CustomScrollView(
+              key: const PageStorageKey<String>('renter'),
+              slivers: <Widget>[
+                SliverPadding(
+                  padding: const EdgeInsets.all(20.0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate(
+                      <Widget>[
+                        _buildDetailRow('Name', widget.rent.customerName ?? 'N/A', Icons.person, color: Colors.white),
+                        if (widget.rent.customerPhone != null)
+                          _buildDetailRow('Phone', "+63 ${widget.rent.customerPhone!}", Icons.phone, color: Colors.white),
+                        if (widget.rent.deliveryAddress?.address != null) ...[
+                          const SizedBox(height: 16),
+                          _buildDetailRow('Delivery Address', widget.rent.deliveryAddress!.address!, Icons.location_on, color: Colors.white),
+                          if (widget.rent.deliveryAddress?.latitude != null && widget.rent.deliveryAddress?.longitude != null)
+                            _buildDetailRow('Coordinates', 
+                              '${widget.rent.deliveryAddress!.latitude}, ${widget.rent.deliveryAddress!.longitude}', 
+                              Icons.map, color: Colors.white),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
-    ));
+      ),
+    );
   }
 
   Widget _buildPaymentTab() {
@@ -389,9 +393,9 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     <Widget>[
-                      _buildDetailRow('Payment Method', widget.rent.paymentMethod ?? 'N/A', Icons.payment),
-                      _buildDetailRow('Car Rental Cost', widget.rent.formatCurrency(widget.rent.carRentalCost ?? 0), Icons.directions_car),
-                      _buildDetailRow('Total Amount', widget.rent.formatCurrency(widget.rent.totalPrice ?? 0), null, svgAsset: 'assets/svg/peso_blue.svg'),
+                      _buildDetailRow('Payment Method', widget.rent.paymentMethod ?? 'N/A', Icons.payment, color: Colors.white),
+                      _buildDetailRow('Car Rental Cost', widget.rent.formatCurrency(widget.rent.carRentalCost ?? 0), Icons.directions_car, color: Colors.white),
+                      _buildDetailRow('Total Amount', widget.rent.formatCurrency(widget.rent.totalPrice ?? 0), null, svgAsset: 'assets/svg/peso_blue.svg', color: Colors.white),
                       if (widget.rent.extraCharges != null && widget.rent.extraCharges!.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +406,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.navy,
+                                color: AppTheme.white,
                               ),
                             ),
                             ...widget.rent.extraCharges!.map(
@@ -412,13 +416,14 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                                   charge.name,
                                   widget.rent.formatCurrency(amount),
                                   Icons.add_shopping_cart,
+                                  color: Colors.white,
                                 );
                               },
                              ),
                           ],
                         ),
                       if (widget.rent.downPayment != null && widget.rent.downPayment! > 0)
-                        _buildDetailRow('Down Payment', widget.rent.formatCurrency(widget.rent.downPayment!), Icons.money),
+                        _buildDetailRow('Down Payment', widget.rent.formatCurrency(widget.rent.downPayment!), Icons.money, color: Colors.white),
                       
                       if (widget.rent.receiptImageUrl != null && widget.rent.receiptImageUrl!.isNotEmpty) ...[
                         const SizedBox(height: 20),
@@ -427,7 +432,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.navy,
+                            color: AppTheme.white,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -467,10 +472,10 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     <Widget>[
-                      _buildDetailRow('Booking Type', widget.rent.bookingType?.toUpperCase() ?? 'N/A', Icons.category),
-                      _buildDetailRow('Booking ID', widget.rent.id ?? 'N/A', Icons.confirmation_number),
+                      _buildDetailRow('Booking Type', widget.rent.bookingType?.toUpperCase() ?? 'N/A', Icons.category, color: Colors.white),
+                      _buildDetailRow('Booking ID', widget.rent.id ?? 'N/A', Icons.confirmation_number, color: Colors.white),
                       if (widget.rent.notes != null && widget.rent.notes!.isNotEmpty)
-                        _buildDetailRow('Notes', widget.rent.notes!, Icons.notes, isMultiline: true),
+                        _buildDetailRow('Notes', widget.rent.notes!, Icons.notes, isMultiline: true, color: Colors.white),
 
                     ],
                   ),
@@ -483,23 +488,27 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     ));
   }
 
-  Widget _buildDetailRow(String label, String value, IconData? icon, {bool isMultiline = false, String? svgAsset}) {
+  Widget _buildDetailRow(String label, String value, IconData? icon, {bool isMultiline = false, String? svgAsset, Color? color}) {
+    final iconColor = color ?? AppTheme.lightBlue;
+    final textColor = color ?? Colors.black87;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.lightBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+          if(icon != null || svgAsset != null)
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: svgAsset != null
+                  ? SvgPicture.asset(svgAsset, color: iconColor, width: 16, height: 16)
+                  : Icon(icon, color: iconColor, size: 16),
             ),
-            child: svgAsset != null
-                ? SvgPicture.asset(svgAsset, color: AppTheme.lightBlue, width: 16, height: 16)
-                : Icon(icon, color: AppTheme.lightBlue, size: 16),
-          ),
-          const SizedBox(width: 12),
+          if(icon != null || svgAsset != null) const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +516,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                 Text(
                   label,
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: textColor.withOpacity(0.8),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -515,10 +524,10 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                   maxLines: isMultiline ? null : 2,
                   overflow: isMultiline ? TextOverflow.visible : TextOverflow.ellipsis,

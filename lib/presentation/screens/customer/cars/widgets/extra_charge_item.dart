@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../config/theme.dart';
 
 class ExtraChargeItem extends StatelessWidget {
@@ -42,12 +43,27 @@ class ExtraChargeItem extends StatelessWidget {
         color: AppTheme.mediumBlue.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        '₱ ${amount.toStringAsFixed(2)}${unit != null ? ' $unit' : ''}',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: AppTheme.mediumBlue,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SvgPicture.asset(
+            'assets/svg/peso.svg',
+            width: 12,
+            height: 12,
+            colorFilter: ColorFilter.mode(
+              AppTheme.mediumBlue,
+              BlendMode.srcIn,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${amount.toStringAsFixed(2)}${unit != null ? ' $unit' : ''}',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.mediumBlue,
+                ),
+          ),
+        ],
       ),
     );
   }

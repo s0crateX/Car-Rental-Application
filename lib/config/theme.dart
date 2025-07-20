@@ -8,6 +8,9 @@ class AppTheme {
   static const Color lightBlue = Color(0xFF7DA0C4);
   static const Color paleBlue = Color(0xFFC1E8FF);
   static const Color green = Colors.green;
+  static const Color red = Colors.red;
+  static const Color orange = Colors.orange;
+  static const Color blue = Colors.blue;
 
   // Additional standard colors
   static const Color white = Colors.white;

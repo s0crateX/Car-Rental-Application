@@ -306,7 +306,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppTheme.mediumBlue,
+                            color: AppTheme.white,
                             width: 2,
                           ),
                         ),
@@ -344,7 +344,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       right: 0,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.mediumBlue,
+                          color: AppTheme.navy,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         padding: const EdgeInsets.all(4),

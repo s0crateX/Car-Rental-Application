@@ -288,6 +288,11 @@ class _CarsScreenState extends State<CarsScreen> {
             var cars =
                 docs.map((doc) => CarModel.fromFirestore(doc)).toList();
 
+            // Filter for verified cars only
+            cars = cars
+                .where((car) => car.verificationStatus == VerificationStatus.verified)
+                .toList();
+
             // Apply search query
             if (_searchQuery.isNotEmpty) {
               cars = cars

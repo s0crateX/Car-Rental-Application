@@ -128,8 +128,8 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                 child: Column(
                   children: [
                     CarHeaderInfo(car: car),
-                    SizedBox(height: 10),
-                    _buildOwnerInfo(context),
+                    const SizedBox(height: 10),
+                    OwnerInfoWidget(carOwnerDocumentId: car.carOwnerDocumentId),
                   ],
                 ),
               ),
@@ -146,16 +146,128 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     );
   }
 
-  Widget _buildOwnerInfo(BuildContext context) {
+  @override
+  double get maxExtent => 260.0; // Increased height to accommodate content
+
+  @override
+  double get minExtent => 260.0;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return oldDelegate is! _StickyHeaderDelegate ||
+        oldDelegate.car != car ||
+        oldDelegate.tabController != tabController;
+  }
+}
+
+class OwnerInfoWidget extends StatefulWidget {
+  final String carOwnerDocumentId;
+
+  const OwnerInfoWidget({super.key, required this.carOwnerDocumentId});
+
+  @override
+  State<OwnerInfoWidget> createState() => _OwnerInfoWidgetState();
+}
+
+class _OwnerInfoWidgetState extends State<OwnerInfoWidget> {
+  late Future<Map<String, dynamic>?> _ownerFuture;
+
+  @override
+  void initState() {
+    super.initState();
     final authService = Provider.of<AuthService>(context, listen: false);
+    _ownerFuture = authService.getUserById(widget.carOwnerDocumentId);
+  }
+
+  // Helper method to format messenger URL properly
+  String _formatMessengerUrl(String messengerLink) {
+    String link = messengerLink.trim();
+    
+    // If it's already a complete messenger URL, return as is
+    if (link.startsWith('https://m.me/') || 
+        link.startsWith('https://messenger.com/t/') ||
+        link.startsWith('http://m.me/')) {
+      return link;
+    }
+    
+    // If it starts with m.me/, add https://
+    if (link.startsWith('m.me/')) {
+      return 'https://$link';
+    }
+    
+    // If it's just a username or profile ID, format as m.me URL
+    if (!link.contains('/') && !link.startsWith('http')) {
+      return 'https://m.me/$link';
+    }
+    
+    // If it's a facebook.com profile URL, extract username and convert
+    if (link.contains('facebook.com/')) {
+      RegExp regExp = RegExp(r'facebook\.com/([^/?]+)');
+      Match? match = regExp.firstMatch(link);
+      if (match != null) {
+        String username = match.group(1)!;
+        return 'https://m.me/$username';
+      }
+    }
+    
+    // Default: ensure it has https://
+    if (!link.startsWith('http://') && !link.startsWith('https://')) {
+      return 'https://$link';
+    }
+    
+    return link;
+  }
+
+  // Method to launch messenger with fallback options
+  Future<void> _launchMessenger(String messengerLink, BuildContext context) async {
+    try {
+      String formattedUrl = _formatMessengerUrl(messengerLink);
+      Uri url = Uri.parse(formattedUrl);
+      
+      // Try to launch the URL
+      bool launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      
+      if (!launched) {
+        // If that fails, try with platformDefault mode
+        launched = await launchUrl(
+          url,
+          mode: LaunchMode.platformDefault,
+        );
+      }
+      
+      if (!launched && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open Messenger. Please check the link or install Messenger app.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening Messenger: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>?>(
-      future: authService.getUserById(car.carOwnerDocumentId),
+      future: _ownerFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-          return Center(child: Text('Could not load owner info'));
+          return const Center(child: Text('Could not load owner info'));
         }
 
         final ownerData = snapshot.data!;
@@ -169,7 +281,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
               context,
               MaterialPageRoute(
                 builder: (context) => OwnerCarsScreen(
-                  ownerId: car.carOwnerDocumentId,
+                  ownerId: widget.carOwnerDocumentId,
                   ownerName: ownerName,
                 ),
               ),
@@ -188,10 +300,10 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                           child: CachedNetworkImage(
                             imageUrl: ownerImageUrl,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator()),
+                            placeholder: (context, url) =>
+                                const Center(child: CircularProgressIndicator()),
                             errorWidget: (context, url, error) =>
-                                const Icon(Icons.person, size: 40),
+                                const Icon(Icons.person, size: 30),
                           ),
                         )
                       : const CircleAvatar(
@@ -200,77 +312,66 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                         ),
                 ),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Name: $ownerName',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (ownerData['organizationName'] != null &&
-                        ownerData['organizationName'].isNotEmpty)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        'Organization: ${ownerData['organizationName']}',
+                        'Name: $ownerName',
                         style: const TextStyle(
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    if (ownerData['phoneNumber'] != null &&
-                        ownerData['phoneNumber'].isNotEmpty)
-                      Text(
-                        'Phone: ${ownerData['phoneNumber']}',
-                        style: const TextStyle(
-                          fontSize: 12,
+                      if (ownerData['organizationName'] != null &&
+                          ownerData['organizationName'].isNotEmpty)
+                        Text(
+                          'Organization: ${ownerData['organizationName']}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
-                      ),
-                  ],
+                      if (ownerData['phoneNumber'] != null &&
+                          ownerData['phoneNumber'].isNotEmpty)
+                        Text(
+                          'Phone: ${ownerData['phoneNumber']}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (messengerLink != null && messengerLink.isNotEmpty)
-                  InkWell(
-                    onTap: () async {
-                      final Uri url = Uri.parse(messengerLink);
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url,
-                            mode: LaunchMode.externalApplication);
-                      } else {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text('Could not launch $messengerLink')),
-                        );
-                      }
-                    },
-                    child: SvgPicture.asset(
-                      'assets/svg/brand-messenger.svg',
-                      width: 30,
-                      height: 30,
-                      colorFilter:
-                          const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => _launchMessenger(messengerLink, context),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SvgPicture.asset(
+                          'assets/svg/brand-messenger.svg',
+                          width: 24,
+                          height: 24,
+                          colorFilter: const ColorFilter.mode(
+                            Colors.blue,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
               ],
             ),
-        ),
-       );
+          ),
+        );
       },
     );
-  }
-
-  @override
-  double get maxExtent => 260.0; // Increased height to accommodate content
-
-  @override
-  double get minExtent => 260.0;
-
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    return oldDelegate is! _StickyHeaderDelegate ||
-        oldDelegate.car != car ||
-        oldDelegate.tabController != tabController;
   }
 }

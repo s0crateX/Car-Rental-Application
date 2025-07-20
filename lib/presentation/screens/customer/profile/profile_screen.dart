@@ -98,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppTheme.mediumBlue,
+                              color: AppTheme.white,
                               width: 2,
                             ),
                           ),
@@ -132,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       child: const Icon(
                                         Icons.person,
                                         size: 50,
-                                        color: AppTheme.paleBlue,
+                                        color: AppTheme.white,
                                       ),
                                     ),
                           ),
@@ -151,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               name,
                               style: const TextStyle(
                                 fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
                                 color: AppTheme.white,
                               ),
                             ),
@@ -160,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               email,
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: AppTheme.lightBlue,
+                                color: AppTheme.paleBlue,
                               ),
                             ),
                           ],
@@ -183,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Edit Profile'),
+                      child: const Text('Edit Profile', style: TextStyle(color: AppTheme.darkNavy),),
                     ),
                     const SizedBox(height: 30),
                   ],

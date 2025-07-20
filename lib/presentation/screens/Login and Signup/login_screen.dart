@@ -141,76 +141,63 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // App logo section
                 Center(
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: AppTheme.navy,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // This is a placeholder for the car logo
-                        Icon(
-                          Icons.directions_car,
-                          size: 60,
-                          color: AppTheme.lightBlue,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: AppTheme.darkNavy,
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        // Additional graphic elements similar to the design
-                        Positioned(
-                          top: 20,
-                          left: 20,
-                          child: Container(
-                            height: 30,
-                            width: 30,
-                            decoration: BoxDecoration(
-                              color: AppTheme.mediumBlue,
-                              shape: BoxShape.circle,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/logo/logo.png',
+                              width: 120,
+                              height: 120,
                             ),
-                          ),
+                            // Additional graphic elements similar to the design
+                          ],
                         ),
-                        Positioned(
-                          bottom: 15,
-                          right: 15,
-                          child: Container(
-                            height: 20,
-                            width: 20,
-                            decoration: BoxDecoration(
-                              color: AppTheme.lightBlue.withOpacity(0.7),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'GenRide',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 
-                const SizedBox(height: 30),
+                const SizedBox(height: 150),
                 
-                // Login text
-                Text(
-                  'Login',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 28,
-                  ),
-                ),
+                // // Login text
+                // Text(
+                //   'Login',
+                //   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                //     color: Colors.white,
+                //     fontWeight: FontWeight.w600,
+                //     fontSize: 28,
+                //   ),
+                // ),
                 
-                const SizedBox(height: 10),
+                // const SizedBox(height: 10),
                 
-                // Instruction text
-                Text(
-                  'Please fill the input below here',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.paleBlue,
-                  ),
-                ),
+                // // Instruction text
+                // Text(
+                //   'Please fill the input below here',
+                //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                //     color: AppTheme.paleBlue,
+                //   ),
+                // ),
                 
-                const SizedBox(height: 40),
+                
                 
                 // Email field
                 TextField(
@@ -341,7 +328,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       'LOGIN',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
+                        color : AppTheme.darkNavy,
                       ),
                     ),
                   ),
@@ -382,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Sign up',
                         style: TextStyle(
                           color: Colors.lightBlueAccent,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

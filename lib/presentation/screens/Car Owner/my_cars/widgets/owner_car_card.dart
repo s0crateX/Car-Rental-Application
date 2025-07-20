@@ -686,6 +686,11 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         statusColor = Colors.orange;
         statusIcon = Icons.hourglass_empty_outlined;
         break;
+      case VerificationStatus.verified:
+        statusText = 'Verified';
+        statusColor = Colors.blue;
+        statusIcon = Icons.verified_user_outlined;
+        break;
     }
 
     return Container(
@@ -733,6 +738,10 @@ class _OwnerCarCardState extends State<OwnerCarCard>
       case VerificationStatus.pending:
         message = 'Awaiting admin verification.';
         color = Colors.orange;
+        break;
+      case VerificationStatus.verified:
+        message = 'This car is verified.';
+        color = Colors.blue;
         break;
     }
 

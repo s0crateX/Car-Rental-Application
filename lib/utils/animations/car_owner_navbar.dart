@@ -71,7 +71,7 @@ class AnimatedUnderlineNavBar extends StatelessWidget {
                                     : theme.unselectedWidgetColor,
                             fontWeight:
                                 isSelected
-                                    ? FontWeight.bold
+                                    ? FontWeight.w600
                                     : FontWeight.normal,
                           ),
                         ),

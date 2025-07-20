@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum AvailabilityStatus { available, rented, maintenance }
 
-enum VerificationStatus { pending, approved, rejected }
+enum VerificationStatus { pending, approved, rejected, verified }
 
 class CarModel {
   final String id; // Document ID from Firestore
@@ -177,6 +177,8 @@ class CarModel {
         return VerificationStatus.approved;
       case 'rejected':
         return VerificationStatus.rejected;
+      case 'verified':
+        return VerificationStatus.verified;
       default:
         return VerificationStatus.pending;
     }
