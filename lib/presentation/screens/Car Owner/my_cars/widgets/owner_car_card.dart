@@ -328,7 +328,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.white,
-                    fontSize: 18, // Slightly smaller to prevent overflow
+                    fontSize: 16, // Slightly smaller to prevent overflow
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -374,8 +374,8 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                   children: [
                     SvgPicture.asset(
                       'assets/svg/peso.svg',
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       colorFilter: const ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcIn,
@@ -388,7 +388,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
                         style: theme.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 20,
+                          fontSize: 18,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -477,7 +477,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
           style: theme.textTheme.bodyMedium?.copyWith(
             color: AppTheme.white,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 12,
           ),
         ),
       ],
@@ -562,15 +562,15 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         children: [
           Expanded(
             child: OutlinedButton.icon(
-              icon: const Icon(Icons.remove_red_eye_outlined, size: 16),
-              label: const Text('View Details'),
+              icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
+              label: const Text('View Details', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.lightBlue,
                 side: BorderSide(color: AppTheme.lightBlue.withOpacity(0.3)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 8),
               ),
               onPressed: () {
                 Navigator.push(
@@ -596,6 +596,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
               icon: Icon(
                 Icons.delete_outline,
                 color: Colors.redAccent.withOpacity(0.8),
+                size: 18,
               ),
               onPressed: () => _showDeleteDialog(context),
               tooltip: 'Delete Car',
@@ -741,7 +742,7 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         break;
       case VerificationStatus.verified:
         message = 'This car is verified.';
-        color = Colors.blue;
+        color = Colors.green;
         break;
     }
 
@@ -760,39 +761,119 @@ class _OwnerCarCardState extends State<OwnerCarCard>
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppTheme.navy,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange),
-              const SizedBox(width: 12),
-              const Text('Delete Car', style: TextStyle(color: AppTheme.white)),
-            ],
-          ),
-          content: Text(
-            'Are you sure you want to delete "${car.type}"? This action cannot be undone.',
-            style: TextStyle(color: AppTheme.paleBlue),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                widget.onDelete?.call();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppTheme.navy,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppTheme.lightBlue.withOpacity(0.2),
+                width: 1.5,
               ),
-              child: const Text('Delete'),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: AppTheme.lightBlue.withOpacity(0.1),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Delete Car',
+                  style: TextStyle(
+                    color: AppTheme.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Are you sure you want to delete "${car.type}"?\nThis action cannot be undone.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTheme.paleBlue.withOpacity(0.9),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: AppTheme.lightBlue.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: AppTheme.lightBlue,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          widget.onDelete?.call();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

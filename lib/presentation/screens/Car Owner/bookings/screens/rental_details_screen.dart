@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../../models/car owner  models/booking model/rent.dart';
 import '../../../../../models/car owner  models/booking model/vehicle.dart';
+import '../../../../../shared/common_widgets/snackbars/success_snackbar.dart';
+import '../../../../../shared/common_widgets/snackbars/error_snackbar.dart';
 
 class RentalDetailsScreen extends StatefulWidget {
   final Rent rent;
@@ -786,13 +788,31 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
 
       await batch.commit();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Booking $status successfully.')),
+      // Show success message based on the status
+      String successMessage;
+      switch (status) {
+        case 'CONFIRMED':
+          successMessage = 'Booking approved successfully!';
+          break;
+        case 'REJECTED':
+          successMessage = 'Booking rejected successfully.';
+          break;
+        case 'COMPLETED':
+          successMessage = 'Booking marked as completed!';
+          break;
+        default:
+          successMessage = 'Booking updated successfully.';
+      }
+
+      SuccessSnackbar.show(
+        context: context,
+        message: successMessage,
       );
       Navigator.of(context).pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update booking: $e')),
+      ErrorSnackbar.show(
+        context: context,
+        message: 'Failed to update booking: $e',
       );
     } finally {
       setState(() {
