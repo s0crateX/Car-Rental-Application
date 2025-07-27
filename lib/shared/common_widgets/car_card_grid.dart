@@ -37,31 +37,70 @@ class CarCardGrid extends StatelessWidget {
         topLeft: Radius.circular(16),
         topRight: Radius.circular(16),
       ),
-      child: Image.network(
-        car.image,
-        height: 120,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return Container(
+      child: Stack(
+        children: [
+          Image.network(
+            car.image,
             height: 120,
-            color: Colors.grey[200],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        },
-        errorBuilder:
-            (context, error, stackTrace) => Container(
-              height: 120,
-              color: Colors.grey[300],
-              child: const Icon(
-                Icons.directions_car,
-                size: 40,
-                color: Colors.grey,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return Container(
+                height: 120,
+                color: Colors.grey[200],
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            },
+            errorBuilder:
+                (context, error, stackTrace) => Container(
+                  height: 120,
+                  color: Colors.grey[300],
+                  child: const Icon(
+                    Icons.directions_car,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
+                ),
+          ),
+          // Rating overlay in top right corner
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SvgPicture.asset(
+                    'assets/svg/star-filled.svg',
+                    width: 12,
+                    height: 12,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.amber,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    car.rating.toStringAsFixed(1),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+        ],
       ),
     );
   }

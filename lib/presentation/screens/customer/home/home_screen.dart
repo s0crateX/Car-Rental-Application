@@ -310,15 +310,23 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeaturedCarsSection(ThemeData theme) {
     final userLoc = _userLocation;
 
-    // Filter for available cars and sort them by distance
+    // Filter for available cars and sort them by rating first, then by distance
     var availableCars = _allCars
         .where((car) =>
             car.availabilityStatus == AvailabilityStatus.available &&
             car.verificationStatus == VerificationStatus.verified)
         .toList();
 
-    if (userLoc != null) {
-      availableCars.sort((a, b) {
+    // Sort by rating (highest first), then by distance (closest first)
+    availableCars.sort((a, b) {
+      // Primary sort: by rating (descending - highest rating first)
+      final ratingComparison = b.rating.compareTo(a.rating);
+      if (ratingComparison != 0) {
+        return ratingComparison;
+      }
+
+      // Secondary sort: by distance (ascending - closest first)
+      if (userLoc != null) {
         final distanceA =
             (a.location.containsKey('latitude') &&
                     a.location.containsKey('longitude'))
@@ -342,8 +350,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 : double.infinity;
 
         return distanceA.compareTo(distanceB);
-      });
-    }
+      }
+      
+      return 0; // If no location data, maintain current order
+    });
 
     // Use a subset of cars for the featured section
     final featuredCars = availableCars.take(3).toList();

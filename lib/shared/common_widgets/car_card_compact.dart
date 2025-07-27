@@ -54,39 +54,78 @@ class CarCardCompact extends StatelessWidget {
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
-              child: Image.network(
-                car.image,
-                width: double.infinity,
-                height: 80,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        value:
-                            loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
+              child: Stack(
+                children: [
+                  Image.network(
+                    car.image,
+                    width: double.infinity,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            value:
+                                loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder:
+                        (context, error, stackTrace) => Container(
+                          width: double.infinity,
+                          height: 80,
+                          color: Colors.grey[300],
+                          child: const Icon(
+                            Icons.car_rental,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        ),
+                  ),
+                  // Rating overlay in top right corner
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/svg/star-filled.svg',
+                            width: 10,
+                            height: 10,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.amber,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            car.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-                errorBuilder:
-                    (context, error, stackTrace) => Container(
-                      width: double.infinity,
-                      height: 80,
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.car_rental,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
-                    ),
+                  ),
+                ],
               ),
             ),
             Padding(
