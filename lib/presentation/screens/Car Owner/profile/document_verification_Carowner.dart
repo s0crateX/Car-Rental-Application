@@ -38,13 +38,6 @@ class _DocumentVerificationCarOwnerScreenState
       'icon': 'assets/svg/id-card.svg',
     },
     {
-      'key': 'business_registration_certificate',
-      'label': 'DTI/SEC Registration',
-      'description': 'Certificate of Registration from DTI or SEC.',
-      'required': true,
-      'icon': 'assets/svg/business.svg',
-    },
-    {
       'key': 'mayors_permit',
       'label': "Mayor's / Business Permit",
       'description': 'Valid business permit from the local government unit.',
