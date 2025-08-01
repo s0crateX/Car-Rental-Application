@@ -193,7 +193,7 @@ class CarCardCompact extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -297,7 +297,7 @@ class CarCardCompact extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 15),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -321,7 +321,7 @@ class CarCardCompact extends StatelessWidget {
                           Text(
                             car.hourlyRate.toStringAsFixed(0),
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.primary,
                             ),
@@ -329,7 +329,7 @@ class CarCardCompact extends StatelessWidget {
                           Text(
                             ' / hour',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: theme.colorScheme.onSurface.withOpacity(
                                 0.6,
                               ),
@@ -348,11 +348,11 @@ class CarCardCompact extends StatelessWidget {
                               BlendMode.srcIn,
                             ),
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 1),
                           Text(
                             distanceText,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: theme.colorScheme.primary,
                             ),
                           ),
