@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/images/logo/logo.png" alt="Car Rental App Logo" width="120" height="120">
   
-  # Car Rental App
+  # GenRide App
   
   **A comprehensive Flutter-based car rental platform connecting car owners with customers**
   
@@ -12,7 +12,7 @@
 
 ## 📱 About
 
-Car Rental App is a modern, feature-rich mobile application built with Flutter that facilitates seamless car rental experiences. The platform serves two primary user types: **Car Owners** who want to rent out their vehicles and **Customers** who need to rent cars for various purposes.
+GenRide App is a modern, feature-rich mobile application built with Flutter that facilitates seamless car rental experiences. The platform serves two primary user types: **Car Owners** who want to rent out their vehicles and **Customers** who need to rent cars for various purposes.
 
 ## ✨ Key Features
 
