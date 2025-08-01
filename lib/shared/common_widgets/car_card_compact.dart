@@ -193,29 +193,7 @@ class CarCardCompact extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/svg/location.svg',
-                        width: 10,
-                        height: 10,
-                        colorFilter: ColorFilter.mode(
-                          theme.colorScheme.primary,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        distanceText,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -319,7 +297,7 @@ class CarCardCompact extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 25),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
