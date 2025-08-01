@@ -23,12 +23,12 @@ class _DocumentVerificationScreenState
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
 
-  // Document state: {type: {file, url, status}}
+  // Document state: {type: {file, url, status, rejectionReason}}
   final Map<String, Map<String, dynamic>> _documents = {
-    'license_front': {'file': null, 'url': null, 'status': null},
-    'license_back': {'file': null, 'url': null, 'status': null},
-    'government_id': {'file': null, 'url': null, 'status': null},
-    'selfie_with_license': {'file': null, 'url': null, 'status': null},
+    'license_front': {'file': null, 'url': null, 'status': null, 'rejectionReason': null},
+    'license_back': {'file': null, 'url': null, 'status': null, 'rejectionReason': null},
+    'government_id': {'file': null, 'url': null, 'status': null, 'rejectionReason': null},
+    'selfie_with_license': {'file': null, 'url': null, 'status': null, 'rejectionReason': null},
   };
 
   @override
@@ -39,8 +39,10 @@ class _DocumentVerificationScreenState
     if (docData != null) {
       for (final key in _documents.keys) {
         if (docData[key] != null) {
+          final rejectionReason = docData[key]['rejectionReason'] as String?;
           _documents[key]!['url'] = docData[key]['url'];
           _documents[key]!['status'] = docData[key]['status'];
+          _documents[key]!['rejectionReason'] = rejectionReason;
         }
       }
     }
@@ -218,17 +220,18 @@ class _DocumentVerificationScreenState
     final File? imageFile = doc['file'] as File?;
     final String? url = doc['url'] as String?;
     final String? status = doc['status'] as String?;
+    final String? rejectionReason = doc['rejectionReason'] as String?;
     final bool isUploaded = imageFile != null || url != null;
 
     String statusLabel = 'Not Uploaded';
     Color statusColor = AppTheme.paleBlue.withOpacity(0.7);
-    if (status == 'pending') {
+    if (status?.toLowerCase() == 'pending') {
       statusLabel = 'Pending';
       statusColor = Colors.orangeAccent;
-    } else if (status == 'verified') {
+    } else if (status?.toLowerCase() == 'verified') {
       statusLabel = 'Verified';
       statusColor = Colors.greenAccent;
-    } else if (status == 'rejected') {
+    } else if (status?.toLowerCase() == 'rejected') {
       statusLabel = 'Rejected';
       statusColor = Colors.redAccent;
     }
@@ -344,6 +347,54 @@ class _DocumentVerificationScreenState
                 ),
               ],
             ),
+            // Show rejection reason if document is rejected
+            if (status?.toLowerCase() == 'rejected' && rejectionReason != null && rejectionReason.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: Colors.red.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.red,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Rejection Reason:',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      rejectionReason,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.red.shade300,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -372,12 +423,25 @@ class _DocumentVerificationScreenState
                       final docType = entry.key;
                       final doc = entry.value;
                       String? url = doc['url'] as String?;
+                      String? status = doc['status'] as String?;
+                      String? rejectionReason = doc['rejectionReason'] as String?;
+                      
+                      // If there's a new file to upload
                       if (doc['file'] != null) {
                         url = await ImageUploadService.uploadProfileImage(
                           doc['file'],
                         );
+                        status = 'pending'; // Set to pending only for newly uploaded files
+                        rejectionReason = null; // Clear rejection reason for newly uploaded files
                       }
-                      uploadData[docType] = {'url': url, 'status': 'pending'};
+                      
+                      // Prepare document data
+                      final Map<String, dynamic> docData = {'url': url, 'status': status};
+                      if (rejectionReason != null) {
+                        docData['rejectionReason'] = rejectionReason;
+                      }
+                      
+                      uploadData[docType] = docData;
                     }
                     await Provider.of<AuthService>(
                       context,
@@ -480,6 +544,7 @@ class _DocumentVerificationScreenState
       if (pickedFile != null) {
         setState(() {
           _documents[documentType]!['file'] = File(pickedFile.path);
+          _documents[documentType]!['rejectionReason'] = null; // Clear rejection reason when uploading new image
         });
         SuccessSnackbar.show(
           context: context,

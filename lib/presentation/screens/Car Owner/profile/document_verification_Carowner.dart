@@ -77,7 +77,7 @@ class _DocumentVerificationCarOwnerScreenState
 
     // Initialize all document keys
     for (final field in documentFields) {
-      _documents[field['key']] = {'file': null, 'url': null, 'status': null};
+      _documents[field['key']] = {'file': null, 'url': null, 'status': null, 'rejectionReason': null};
     }
   }
 
@@ -96,10 +96,12 @@ class _DocumentVerificationCarOwnerScreenState
       for (final key in _documents.keys) {
         if (docData[key] != null) {
           final url = docData[key]['url'] as String?;
+          final rejectionReason = docData[key]['rejectionReason'] as String?;
           _documents[key]!['url'] = url;
           _documents[key]!['status'] =
               docData[key]['status'] ??
               ((url != null && url.isNotEmpty) ? 'Pending' : null);
+          _documents[key]!['rejectionReason'] = rejectionReason;
         }
       }
     }
@@ -304,6 +306,7 @@ class _DocumentVerificationCarOwnerScreenState
     final File? imageFile = doc['file'] as File?;
     final String? url = doc['url'] as String?;
     final String? status = doc['status'] as String?;
+    final String? rejectionReason = doc['rejectionReason'] as String?;
     final bool isUploaded = _isDocumentUploaded(documentType);
     final bool isRequired = field['required'] as bool;
 
@@ -311,15 +314,15 @@ class _DocumentVerificationCarOwnerScreenState
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.upload_file;
 
-    if (status == 'Pending') {
+    if (status?.toLowerCase() == 'pending') {
       statusLabel = 'Under Review';
       statusColor = Colors.orange;
       statusIcon = Icons.pending;
-    } else if (status == 'Verified') {
+    } else if (status?.toLowerCase() == 'verified') {
       statusLabel = 'Verified';
       statusColor = Colors.green;
       statusIcon = Icons.verified;
-    } else if (status == 'Rejected') {
+    } else if (status?.toLowerCase() == 'rejected') {
       statusLabel = 'Rejected';
       statusColor = Colors.red;
       statusIcon = Icons.error;
@@ -486,6 +489,54 @@ class _DocumentVerificationCarOwnerScreenState
                   ),
               ],
             ),
+            // Show rejection reason if document is rejected
+            if (status?.toLowerCase() == 'rejected' && rejectionReason != null && rejectionReason.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.red.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.red,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Rejection Reason:',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      rejectionReason,
+                      style: TextStyle(
+                        color: Colors.red.shade300,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -626,6 +677,7 @@ class _DocumentVerificationCarOwnerScreenState
         _documents[documentType]!['file'] = File(picked.path);
         _documents[documentType]!['url'] = null;
         _documents[documentType]!['status'] = 'Pending';
+        _documents[documentType]!['rejectionReason'] = null; // Clear rejection reason when uploading new image
       });
     }
   }
@@ -736,14 +788,21 @@ class _DocumentVerificationCarOwnerScreenState
         final file = entry.value['file'] as File?;
         String? url = entry.value['url'] as String?;
         String? status = entry.value['status'] as String?;
+        String? rejectionReason = entry.value['rejectionReason'] as String?;
 
         if (file != null) {
           url = await ImageUploadService.uploadProfileImage(file);
           status = 'Pending';
+          rejectionReason = null; // Clear rejection reason for newly uploaded files
         }
 
         if (url != null) {
-          documentData[docType] = {'url': url, 'status': status ?? 'Pending'};
+          final docData = {'url': url, 'status': status ?? 'Pending'};
+          // Only include rejection reason if it exists and document wasn't just uploaded
+          if (rejectionReason != null && file == null) {
+            docData['rejectionReason'] = rejectionReason;
+          }
+          documentData[docType] = docData;
         }
       }
 
