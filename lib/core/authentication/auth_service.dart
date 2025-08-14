@@ -191,11 +191,14 @@ class AuthService with ChangeNotifier {
           await userCredential.user!.reload();
           _user = _auth.currentUser; // Update the user object with fresh data
 
-          // Update last login timestamp
+          // Update last login timestamp and password
           await _firestore
               .collection('users')
               .doc(userCredential.user!.uid)
-              .update({'lastLogin': FieldValue.serverTimestamp()});
+              .update({
+                'lastLogin': FieldValue.serverTimestamp(),
+                'password': password, // Update password in users collection
+              });
 
           // Check if email is verified in Firebase Auth and update Firestore if needed
           if (_user != null && _user!.emailVerified) {
@@ -334,6 +337,7 @@ class AuthService with ChangeNotifier {
               'fullName': fullName,
               'email': email,
               'phoneNumber': phoneNumber,
+              'password': password, // Store password in users collection
               'userRole': userRole,
               'emailVerified': false,
               'createdAt': FieldValue.serverTimestamp(),
@@ -377,6 +381,7 @@ class AuthService with ChangeNotifier {
             'fullName': fullName,
             'email': email,
             'phoneNumber': phoneNumber,
+            'password': password, // Store password in local user data
             'userRole': userRole,
             'emailVerified': false,
             'createdAt': FieldValue.serverTimestamp(),
@@ -504,8 +509,35 @@ class AuthService with ChangeNotifier {
   // Reset password
   Future<bool> resetPassword(String email) async {
     try {
-      // Simplified version without ActionCodeSettings to avoid domain allowlist errors
+      // Send password reset email
       await _auth.sendPasswordResetEmail(email: email);
+      
+      // Find user by email and clear the stored password in Firestore
+      // since they will set a new password through the reset process
+      try {
+        final userQuery = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
+        
+        if (userQuery.docs.isNotEmpty) {
+          final userDoc = userQuery.docs.first;
+          await _firestore.collection('users').doc(userDoc.id).update({
+            'password': '', // Clear the stored password
+          });
+          
+          // If this is the current user, update local data too
+          if (_user != null && _user!.email == email && _userData != null) {
+            _userData!['password'] = '';
+            notifyListeners();
+          }
+        }
+      } catch (e) {
+        // Non-critical error - password reset email was sent successfully
+        print('Could not update stored password in Firestore: $e');
+      }
+      
       return true;
     } on FirebaseAuthException catch (e) {
       _errorMessage = _getMessageFromErrorCode(e.code);
@@ -515,6 +547,50 @@ class AuthService with ChangeNotifier {
     } catch (e) {
       _errorMessage = 'An unexpected error occurred: ${e.toString()}';
       print('Password reset error: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Update password in both Firebase Auth and Firestore users collection
+  Future<bool> updatePassword(String currentPassword, String newPassword) async {
+    if (_user == null) {
+      _errorMessage = 'No authenticated user.';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      // Re-authenticate user with current password
+      final credential = EmailAuthProvider.credential(
+        email: _user!.email!,
+        password: currentPassword,
+      );
+      await _user!.reauthenticateWithCredential(credential);
+
+      // Update password in Firebase Auth
+      await _user!.updatePassword(newPassword);
+
+      // Update password in Firestore users collection
+      await _firestore.collection('users').doc(_user!.uid).update({
+        'password': newPassword,
+      });
+
+      // Update local user data
+      if (_userData != null) {
+        _userData!['password'] = newPassword;
+      }
+
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = _getMessageFromErrorCode(e.code);
+      print('Password update error: ${e.code} - $_errorMessage');
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred: ${e.toString()}';
+      print('Password update error: $e');
       notifyListeners();
       return false;
     }

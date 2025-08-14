@@ -25,6 +25,7 @@ import 'widgets/calendar_section.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
 import 'package:car_rental_app/core/services/image_upload_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:signature/signature.dart';
 import 'contract_viewer_screen.dart';
 // Add dotted_border to pubspec.yaml if not present: dotted_border: ^2.0.0
 
@@ -71,6 +72,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
   bool _isLoadingContract = false;
   bool _contractSigned = false;
   Uint8List? _signatureData;
+  List<Point>? _signaturePoints;
 
   @override
   void initState() {
@@ -79,6 +81,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
     _fetchUserDocuments();
     _fetchCarRentalDates();
     _fetchOwnerContract();
+    _fetchExistingSignature();
   }
 
   Future<void> _fetchUserDocuments() async {
@@ -863,6 +866,11 @@ class _RentCarScreenState extends State<RentCarScreen> {
           'url': _ownerContractUrl,
           'signed': _contractSigned,
           'signatureData': _signatureData != null ? base64Encode(_signatureData!) : null,
+          'signaturePoints': _signaturePoints?.map((point) => {
+            'x': point.offset.dx,
+            'y': point.offset.dy,
+            'type': point.type.toString(),
+          }).toList(),
         },
       };
       print('Saving booking data: $bookingData');
@@ -1272,6 +1280,68 @@ class _RentCarScreenState extends State<RentCarScreen> {
     }
   }
 
+  Future<void> _fetchExistingSignature() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userId = authService.user?.uid;
+
+      if (userId == null) return;
+
+      // Check both rent_request and rent_approve collections for existing bookings
+      final collections = ['rent_request', 'rent_approve'];
+      
+      for (String collection in collections) {
+        final query = FirebaseFirestore.instance
+            .collection(collection)
+            .where('carId', isEqualTo: widget.car.id)
+            .where('customerId', isEqualTo: userId)
+            .orderBy('createdAt', descending: true)
+            .limit(1);
+
+        final snapshot = await query.get();
+        
+        if (snapshot.docs.isNotEmpty) {
+          final bookingData = snapshot.docs.first.data();
+          final contract = bookingData['contract'] as Map<String, dynamic>?;
+          
+          if (contract != null) {
+            final signatureBase64 = contract['signature'] as String?;
+            final signaturePointsData = contract['signaturePoints'] as List<dynamic>?;
+            
+            if (signatureBase64 != null && signatureBase64.isNotEmpty) {
+              // Decode base64 signature
+              final signatureBytes = base64Decode(signatureBase64);
+              
+              // Convert signature points data back to List<Point>
+              List<Point>? signaturePoints;
+              if (signaturePointsData != null) {
+                signaturePoints = signaturePointsData.map((pointData) {
+                  final pointMap = pointData as Map<String, dynamic>;
+                  return Point(
+                    pointMap['x']?.toDouble() ?? 0.0,
+                    pointMap['y']?.toDouble() ?? 0.0,
+                    pointMap['type'] ?? PointType.tap,
+                  );
+                }).toList();
+              }
+              
+              setState(() {
+                _contractSigned = contract['signed'] == true;
+                _signatureData = signatureBytes;
+                _signaturePoints = signaturePoints;
+              });
+              
+              print('Loaded existing signature for car ${widget.car.id}');
+              break; // Found signature, no need to check other collections
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching existing signature: $e');
+    }
+  }
+
   Widget _buildContractSection() {
     return Card(
       child: Padding(
@@ -1313,33 +1383,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
-                      if (_contractSigned)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                'Signed',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                     
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -1385,10 +1429,13 @@ class _RentCarScreenState extends State<RentCarScreen> {
                                     contractUrl: _ownerContractUrl!,
                                     ownerName: _ownerOrganizationName?.isNotEmpty == true ? _ownerOrganizationName! : widget.car.carOwnerFullName,
                                     carModel: '${widget.car.brand} ${widget.car.model}',
-                                    onSignatureComplete: (signature) {
+                                    existingSignature: _signatureData,
+                                    existingSignaturePoints: _signaturePoints,
+                                    onSignatureComplete: (signature, points) {
                                       setState(() {
                                         _contractSigned = true;
                                         _signatureData = signature;
+                                        _signaturePoints = points;
                                       });
                                     },
                                   ),
@@ -1412,10 +1459,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
                               }
                             }
                           },
-                          icon: Icon(
-                            _contractSigned ? Icons.check_circle : Icons.visibility,
-                            size: 14,
-                          ),
+                          
                           label: Text(_contractSigned ? 'Signed' : 'View & Sign',style: Theme.of(context).textTheme.bodySmall,),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _contractSigned ? Colors.green : AppTheme.navy,

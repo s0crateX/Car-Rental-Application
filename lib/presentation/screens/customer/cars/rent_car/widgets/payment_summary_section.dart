@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:car_rental_app/models/Firebase_car_model.dart';
+import 'package:car_rental_app/config/theme.dart';
 
 class PaymentSummarySection extends StatelessWidget {
   final DateTime? startDate;
@@ -18,13 +20,40 @@ class PaymentSummarySection extends StatelessWidget {
   });
 
   // Helper method to build section titles with consistent styling
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.titleLarge,
       ),
+    );
+  }
+
+  // Helper method to create peso icon with amount
+  Widget _buildPesoAmount(String amount, {TextStyle? textStyle, Color? iconColor}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset(
+          'assets/svg/peso.svg',
+          width: 16,
+          height: 16,
+          colorFilter: ColorFilter.mode(
+            iconColor ?? AppTheme.white,
+            BlendMode.srcIn,
+          ),
+        ),
+        const SizedBox(width: 2),
+        Flexible(
+          child: Text(
+            amount,
+            style: textStyle,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
+      ],
     );
   }
 
@@ -83,135 +112,287 @@ class PaymentSummarySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Payment Summary'),
+        _buildSectionTitle('Payment Summary', context),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
+            color: AppTheme.navy,
+            border: Border.all(color: AppTheme.lightBlue.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Car Rental (${totalDays}d ${remainingHours}h / ${totalHours}h total)'),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (discountPercentage > 0) ...[
-                        Text(
-                          '₱${originalCarRentalCost.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            decoration: TextDecoration.lineThrough,
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '${discountPercentage.toStringAsFixed(0)}% OFF',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Car Rental (${totalDays}d ${remainingHours}h / ${totalHours}h total)',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (discountPercentage > 0) ...[
+                           _buildPesoAmount(
+                             originalCarRentalCost.toStringAsFixed(2),
+                             textStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                               decoration: TextDecoration.lineThrough,
+                               color: AppTheme.lightBlue.withOpacity(0.6),
+                             ),
+                             iconColor: AppTheme.lightBlue.withOpacity(0.6),
+                           ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.green,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${discountPercentage.toStringAsFixed(0)}% OFF',
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: AppTheme.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text('₱${carRentalCost.toStringAsFixed(2)}'),
-                          ],
-                        ),
-                      ] else
-                        Text('₱${carRentalCost.toStringAsFixed(2)}'),
-                    ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                           _buildPesoAmount(
+                             carRentalCost.toStringAsFixed(2),
+                             textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                               fontWeight: FontWeight.w600,
+                             ),
+                           ),
+                         ] else
+                           _buildPesoAmount(
+                             carRentalCost.toStringAsFixed(2),
+                             textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                               fontWeight: FontWeight.w600,
+                             ),
+                           ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${startDate!.day}/${startDate!.month}/${startDate!.year} ${startDate!.hour}:${startDate!.minute.toString().padLeft(2, '0')} - ${endDate!.day}/${endDate!.month}/${endDate!.year} ${endDate!.hour}:${endDate!.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      '${startDate!.day}/${startDate!.month}/${startDate!.year} ${startDate!.hour}:${startDate!.minute.toString().padLeft(2, '0')} - ${endDate!.day}/${endDate!.month}/${endDate!.year} ${endDate!.hour}:${endDate!.minute.toString().padLeft(2, '0')}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
                   ),
-                  Text('${car.hourlyRate.toStringAsFixed(2)}/hour', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                     flex: 1,
+                     child: Row(
+                       mainAxisAlignment: MainAxisAlignment.end,
+                       children: [
+                         SvgPicture.asset(
+                           'assets/svg/peso.svg',
+                           width: 12,
+                           height: 12,
+                           colorFilter: ColorFilter.mode(
+                             AppTheme.paleBlue,
+                             BlendMode.srcIn,
+                           ),
+                         ),
+                         Flexible(
+                           child: Text(
+                             '${car.hourlyRate.toStringAsFixed(2)}/hour',
+                             style: Theme.of(context).textTheme.bodySmall,
+                             overflow: TextOverflow.ellipsis,
+                             maxLines: 1,
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
                 ],
               ),
               if (discountPercentage > 0) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      discountType,
-                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+                    Expanded(
+                      child: Text(
+                        discountType,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.green,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
-                    Text(
-                      '-₱${discountAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+                    const SizedBox(width: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '-',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SvgPicture.asset(
+                          'assets/svg/peso.svg',
+                          width: 14,
+                          height: 14,
+                          colorFilter: ColorFilter.mode(
+                            AppTheme.green,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          discountAmount.toStringAsFixed(2),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
               if (totalExtraCharges > 0) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Extra Charges'),
-                    Text('₱${totalExtraCharges.toStringAsFixed(2)}'),
+                    Expanded(
+                      child: Text(
+                        'Extra Charges',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPesoAmount(
+                       totalExtraCharges.toStringAsFixed(2),
+                       textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                         fontWeight: FontWeight.w500,
+                       ),
+                     ),
                   ],
                 ),
               ],
               if (deliveryCharge > 0) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Delivery Charge'),
-                    Text('₱${deliveryCharge.toStringAsFixed(2)}'),
+                    Expanded(
+                      child: Text(
+                        'Delivery Charge',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPesoAmount(
+                       deliveryCharge.toStringAsFixed(2),
+                       textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                         fontWeight: FontWeight.w500,
+                       ),
+                     ),
                   ],
                 ),
               ],
-              const Divider(height: 24),
+              Divider(
+                height: 32,
+                color: AppTheme.lightBlue.withOpacity(0.3),
+                thickness: 1,
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Total Payment',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  Text(
-                    '₱${grandTotal.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  Expanded(
+                    child: Text(
+                      'Total Payment',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  _buildPesoAmount(
+                     grandTotal.toStringAsFixed(2),
+                     textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                       fontWeight: FontWeight.bold,
+                       color: AppTheme.lightBlue,
+                     ),
+                     iconColor: AppTheme.lightBlue,
+                   ),
                 ],
               ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Down Payment (50%)'),
-                  Text('₱${downPayment.toStringAsFixed(2)}'),
+                  Expanded(
+                    child: Text(
+                      'Down Payment (50%)',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildPesoAmount(
+                     downPayment.toStringAsFixed(2),
+                     textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                       fontWeight: FontWeight.w600,
+                       color: AppTheme.mediumBlue,
+                     ),
+                     iconColor: AppTheme.mediumBlue,
+                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              const Text(
+              const SizedBox(height: 12),
+              Text(
                 'A 50% down payment is required to confirm the booking, excluding extra charges. The remaining balance, along with any applicable extra charges, must be paid upon return of the vehicle. Additional fees may apply for late returns or based on the condition and usage of the vehicle.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.justify,
+                softWrap: true,
               ),
             ],
           ),

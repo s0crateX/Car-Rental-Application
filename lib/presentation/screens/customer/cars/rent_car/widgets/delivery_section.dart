@@ -9,7 +9,6 @@ import 'package:car_rental_app/shared/common_widgets/maps/full_screen_map.dart';
 import 'package:car_rental_app/shared/common_widgets/maps/interactive_map.dart';
 import 'package:car_rental_app/models/Firebase_car_model.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 
@@ -952,7 +951,7 @@ class _FullScreenMapDialogState extends State<_FullScreenMapDialog> {
                 controller: _searchController,
                 onChanged: _onSearchChanged,
                 style: const TextStyle(
-                  color: AppTheme.darkNavy,
+                  color: AppTheme.paleBlue,
                   fontSize: 16,
                 ),
                 decoration: InputDecoration(

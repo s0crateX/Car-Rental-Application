@@ -52,7 +52,7 @@ class CarBottomBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Price',
+          'Rate',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Colors.grey[600],
                 fontSize: 13,

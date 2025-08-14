@@ -15,7 +15,9 @@ class ContractViewerScreen extends StatefulWidget {
   final String contractUrl;
   final String ownerName;
   final String carModel;
-  final Function(Uint8List signature) onSignatureComplete;
+  final Function(Uint8List signature, List<Point> points) onSignatureComplete;
+  final Uint8List? existingSignature;
+  final List<Point>? existingSignaturePoints;
 
   const ContractViewerScreen({
     super.key,
@@ -23,6 +25,8 @@ class ContractViewerScreen extends StatefulWidget {
     required this.ownerName,
     required this.carModel,
     required this.onSignatureComplete,
+    this.existingSignature,
+    this.existingSignaturePoints,
   });
 
   @override
@@ -34,11 +38,7 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> with Ticker
   bool _isPdf = false;
   String? _localFilePath;
   String? _errorMessage;
-  final SignatureController _signatureController = SignatureController(
-    penStrokeWidth: 2,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
-  );
+  late final SignatureController _signatureController;
   bool _hasSignature = false;
   bool _isSubmitting = false;
   bool _isSignatureSectionVisible = true;
@@ -50,6 +50,15 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> with Ticker
   @override
   void initState() {
     super.initState();
+    
+    // Initialize signature controller with existing points if available
+    _signatureController = SignatureController(
+      penStrokeWidth: 2,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white,
+      points: widget.existingSignaturePoints ?? <Point>[],
+    );
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -59,12 +68,18 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> with Ticker
     );
     _animationController.forward();
     _loadContract();
+    
+    // Set initial signature state
+    _hasSignature = _signatureController.isNotEmpty;
+    
     _signatureController.addListener(() {
       setState(() {
         _hasSignature = _signatureController.isNotEmpty;
       });
     });
   }
+
+
 
   @override
   void dispose() {
@@ -133,8 +148,9 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> with Ticker
 
     try {
       final signature = await _signatureController.toPngBytes();
+      final points = _signatureController.points;
       if (signature != null) {
-        widget.onSignatureComplete(signature);
+        widget.onSignatureComplete(signature, points);
         if (mounted) {
           Navigator.of(context).pop(true);
         }
