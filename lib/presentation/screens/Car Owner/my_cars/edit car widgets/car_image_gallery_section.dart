@@ -24,52 +24,52 @@ class CarImageGallerySection extends StatefulWidget {
 class _CarImageGallerySectionState extends State<CarImageGallerySection> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
-  static const int maxImages = 4;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Image Gallery', Icons.photo_library),
-        const SizedBox(height: 8),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(context, 'Image Gallery', Icons.photo_library),
+          const SizedBox(height: 16),
 
-        // Main image grid
-        _buildImageGrid(context),
-      ],
+          // Main image grid
+          _buildImageGrid(context),
+        ],
+      ),
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: AppTheme.lightBlue.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppTheme.lightBlue, size: 20),
+          child: Icon(icon, color: AppTheme.lightBlue, size: 22),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         const Spacer(),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: AppTheme.lightBlue.withOpacity(0.2),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            '${widget.carImageGallery.length}/$maxImages images',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            '${widget.carImageGallery.length} images',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppTheme.paleBlue,
+            ),
           ),
         ),
       ],
@@ -78,35 +78,34 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
 
   Widget _buildImageGrid(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth > 600 ? 2 : 2;
+    final crossAxisCount = screenWidth > 600 ? 3 : 2;
     final aspectRatio = screenWidth > 600 ? 1.2 : 1.0;
 
-    // Create list with exactly 4 slots
+    // Create list with all existing images plus one add image card
     final List<Widget> gridItems = [];
 
-    // Add existing images and empty slots up to maxImages
-    for (int i = 0; i < maxImages; i++) {
-      if (i < widget.carImageGallery.length) {
-        // Show existing image
-        gridItems.add(_buildImageCard(i, widget.carImageGallery[i]));
-      } else {
-        // Show add image card for empty slots
-        gridItems.add(_buildAddImageCard(i));
+    // Add all existing images
+    for (int i = 0; i < widget.carImageGallery.length; i++) {
+      if (widget.carImageGallery[i].isNotEmpty) {
+        gridItems.add(_buildImageCard(context, i, widget.carImageGallery[i]));
       }
     }
+
+    // Add one "add image" card at the end
+    gridItems.add(_buildAddImageCard(context, widget.carImageGallery.length));
 
     return GridView.count(
       crossAxisCount: crossAxisCount,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
       childAspectRatio: aspectRatio,
       children: gridItems,
     );
   }
 
-  Widget _buildImageCard(int index, String imageUrl) {
+  Widget _buildImageCard(BuildContext context, int index, String imageUrl) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -126,29 +125,28 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
             child: Container(
               width: double.infinity,
               height: double.infinity,
-              color: Colors.grey[800],
+              color: AppTheme.navy,
               child:
                   imageUrl.isEmpty
-                      ? _buildEmptyImagePlaceholder()
+                      ? _buildEmptyImagePlaceholder(context)
                       : _buildNetworkImage(imageUrl),
             ),
           ),
 
           // Image number badge
           Positioned(
-            top: 8,
-            left: 8,
+            top: 10,
+            left: 10,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '${index + 1}',
-                style: const TextStyle(
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: Colors.white,
-                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -157,11 +155,11 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
 
           // Edit button
           Positioned(
-            top: 8,
-            right: 8,
+            top: 10,
+            right: 10,
             child: _buildActionButton(
               icon: Icons.edit,
-              color: Colors.blue,
+              color: AppTheme.mediumBlue,
               onTap: () => _showEditOptions(context, index),
             ),
           ),
@@ -169,19 +167,18 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
           // Primary image indicator
           if (index == 0)
             Positioned(
-              bottom: 8,
-              left: 8,
+              bottom: 10,
+              left: 10,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppTheme.lightBlue,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   'PRIMARY',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Colors.white,
-                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -192,15 +189,15 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
     );
   }
 
-  Widget _buildAddImageCard(int slotIndex) {
+  Widget _buildAddImageCard(BuildContext context, int slotIndex) {
     return GestureDetector(
       onTap: _isLoading ? null : () => _showAddImageOptions(context, slotIndex),
       child: DottedBorder(
-        color: AppTheme.lightBlue.withOpacity(0.3),
+        color: AppTheme.lightBlue.withOpacity(0.4),
         borderType: BorderType.RRect,
         radius: const Radius.circular(12),
         dashPattern: [8, 4],
-        strokeWidth: 1.5,
+        strokeWidth: 2,
         child: Container(
           width: double.infinity,
           height: double.infinity,
@@ -212,13 +209,12 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.add_a_photo, color: AppTheme.lightBlue, size: 32),
-                const SizedBox(height: 8),
+                Icon(Icons.add_a_photo, color: AppTheme.lightBlue, size: 36),
+                const SizedBox(height: 12),
                 Text(
-                  'Add Image ${slotIndex + 1}',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
+                  'Add Image',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.lightBlue,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -238,7 +234,7 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.9),
           shape: BoxShape.circle,
@@ -250,28 +246,27 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
             ),
           ],
         ),
-        child: Icon(icon, color: Colors.white, size: 16),
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }
 
-  Widget _buildEmptyImagePlaceholder() {
+  Widget _buildEmptyImagePlaceholder(BuildContext context) {
     return Container(
-      color: Colors.grey[800],
+      color: AppTheme.navy,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.image_outlined,
-            color: Colors.white.withOpacity(0.3),
-            size: 32,
+            color: AppTheme.paleBlue.withOpacity(0.5),
+            size: 36,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             'Empty Slot',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
-              fontSize: 12,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppTheme.paleBlue.withOpacity(0.7),
             ),
           ),
         ],
@@ -288,7 +283,7 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
         return Container(
-          color: Colors.grey[800],
+          color: AppTheme.navy,
           child: Center(
             child: CircularProgressIndicator(
               value:
@@ -303,17 +298,16 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
       },
       errorBuilder:
           (context, error, stackTrace) => Container(
-            color: Colors.grey[800],
+            color: AppTheme.navy,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.broken_image, color: Colors.red, size: 32),
-                const SizedBox(height: 8),
+                const Icon(Icons.broken_image, color: AppTheme.red, size: 36),
+                const SizedBox(height: 12),
                 Text(
                   'Failed to load',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.paleBlue.withOpacity(0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -333,7 +327,7 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
       builder:
           (context) => SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -341,21 +335,18 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
+                      color: AppTheme.paleBlue.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Add Image ${slotIndex + 1}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                   const SizedBox(height: 24),
+                  Text(
+                    'Add Image',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 32),
                   _buildOptionTile(
+                    context,
                     icon: Icons.camera_alt,
                     title: 'Take Photo',
                     subtitle: 'Use camera to capture image',
@@ -364,8 +355,9 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
                       _pickImage(ImageSource.camera, slotIndex);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   _buildOptionTile(
+                    context,
                     icon: Icons.photo_library,
                     title: 'Choose from Gallery',
                     subtitle: 'Select from your photo library',
@@ -374,7 +366,7 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
                       _pickImage(ImageSource.gallery, slotIndex);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -392,7 +384,7 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
       builder:
           (context) => SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -400,21 +392,18 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
+                      color: AppTheme.paleBlue.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Edit Image ${index + 1}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                   const SizedBox(height: 24),
+                  Text(
+                    'Edit Image',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 32),
                   _buildOptionTile(
+                    context,
                     icon: Icons.camera_alt,
                     title: 'Replace with Camera',
                     subtitle: 'Take new photo',
@@ -423,8 +412,9 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
                       _replaceImage(index, ImageSource.camera);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   _buildOptionTile(
+                    context,
                     icon: Icons.photo_library,
                     title: 'Replace from Gallery',
                     subtitle: 'Choose new photo',
@@ -433,7 +423,7 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
                       _replaceImage(index, ImageSource.gallery);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -441,7 +431,8 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
     );
   }
 
-  Widget _buildOptionTile({
+  Widget _buildOptionTile(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -451,7 +442,7 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
@@ -459,41 +450,34 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppTheme.lightBlue.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: AppTheme.lightBlue, size: 20),
+              child: Icon(icon, color: AppTheme.lightBlue, size: 22),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 14,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
             ),
             Icon(
               Icons.arrow_forward_ios,
-              color: Colors.white.withOpacity(0.3),
-              size: 16,
+              color: AppTheme.paleBlue.withOpacity(0.5),
+              size: 18,
             ),
           ],
         ),
@@ -526,13 +510,9 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
 
           if (imageUrl != null) {
             final updatedImages = List<String>.from(widget.carImageGallery);
-
-            // Ensure the list is long enough to insert at the specified slot
-            while (updatedImages.length <= slotIndex) {
-              updatedImages.add('');
-            }
-
-            updatedImages[slotIndex] = imageUrl;
+            
+            // Add the new image to the end of the list
+            updatedImages.add(imageUrl);
             widget.onImagesChanged(updatedImages);
 
             _showSnackBar('Image uploaded successfully!', isError: false);
@@ -620,10 +600,15 @@ class _CarImageGallerySectionState extends State<CarImageGallerySection> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: isError ? Colors.red : AppTheme.lightBlue,
+          content: Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.white,
+            ),
+          ),
+          backgroundColor: isError ? AppTheme.red : AppTheme.lightBlue,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }

@@ -14,7 +14,6 @@ class SampleCarData {
   final double price;
   final String pricePeriod;
   final String seatsCount;
-  final String luggageCapacity;
   final String transmissionType;
   final String fuelType;
   final String year;
@@ -29,7 +28,6 @@ class SampleCarData {
     required this.price,
     required this.pricePeriod,
     required this.seatsCount,
-    required this.luggageCapacity,
     required this.transmissionType,
     required this.fuelType,
     required this.year,
@@ -447,15 +445,6 @@ class _OwnerCarCardState extends State<OwnerCarCard>
         _buildStatItem(
           icon: Icons.event_seat,
           value: car.seatsCount.isNotEmpty ? car.seatsCount : '5',
-          theme: theme,
-        ),
-        const SizedBox(height: 6),
-        _buildStatItem(
-          icon: Icons.luggage,
-          value:
-              car.luggageCapacity.isNotEmpty
-                  ? car.luggageCapacity.split(' ')[0]
-                  : '2',
           theme: theme,
         ),
       ],

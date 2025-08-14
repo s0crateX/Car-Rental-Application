@@ -8,7 +8,6 @@ class BasicInfoSection extends StatelessWidget {
   final TextEditingController modelController;
   final TextEditingController yearController;
   final TextEditingController seatsController;
-  final TextEditingController luggageController;
   final TextEditingController descriptionController;
   final TextEditingController fuelTypeController;
   final TextEditingController transmissionTypeController;
@@ -22,7 +21,6 @@ class BasicInfoSection extends StatelessWidget {
     required this.modelController,
     required this.yearController,
     required this.seatsController,
-    required this.luggageController,
     required this.descriptionController,
     required this.fuelTypeController,
     required this.transmissionTypeController,
@@ -34,50 +32,52 @@ class BasicInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader('Basic Information', Icons.info_outline),
-            const SizedBox(height: 16),
+            _buildSectionHeader(context, 'Basic Information', Icons.info_outline),
+            const SizedBox(height: 24),
 
             // Vehicle Identity Section (Read-only)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: AppTheme.navy.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: AppTheme.lightBlue.withOpacity(0.1)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: Text(
                       'Vehicle Identity (Cannot be changed)',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.lightBlue.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   _buildModernTextField(
+                    context: context,
                     controller: typeController,
                     label: 'Car Type',
                     icon: Icons.directions_car,
                     readOnly: true,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   _buildModernTextField(
+                    context: context,
                     controller: brandController,
                     label: 'Brand',
                     icon: Icons.branding_watermark,
                     readOnly: true,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   _buildModernTextField(
+                    context: context,
                     controller: modelController,
                     label: 'Model',
                     icon: Icons.model_training,
@@ -86,10 +86,11 @@ class BasicInfoSection extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
 
             // Editable fields
             _buildModernTextField(
+              context: context,
               controller: yearController,
               label: 'Year',
               hint: '2024',
@@ -97,53 +98,39 @@ class BasicInfoSection extends StatelessWidget {
               isRequired: true,
               keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
 
-            // Seats and luggage
-            Row(
-              children: [
-                Expanded(
-                  child: _buildModernTextField(
-                    controller: seatsController,
-                    label: 'Seats',
-                    hint: '4',
-                    icon: Icons.airline_seat_recline_normal,
-                    isRequired: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildModernTextField(
-                    controller: luggageController,
-                    label: 'Luggage',
-                    hint: '2 bags',
-                    icon: Icons.luggage,
-                    isRequired: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
+            // Seats
+            _buildModernTextField(
+              context: context,
+              controller: seatsController,
+              label: 'Seats',
+              hint: '4',
+              icon: Icons.airline_seat_recline_normal,
+              isRequired: true,
+              keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
 
             // Fuel type and transmission
             Row(
               children: [
                 Expanded(
                   child: _buildDropdownField(
+                    context: context,
                     controller: fuelTypeController,
-                    label: 'Fuel',
+                    label: 'Fuel Type',
                     icon: Icons.local_gas_station,
                     items: ['Gasoline', 'Unleaded', 'Diesel', 'Electric', 'Hybrid'],
                     isRequired: true,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildDropdownField(
+                    context: context,
                     controller: transmissionTypeController,
-                    label: 'Trans.',
+                    label: 'Transmission',
                     icon: Icons.settings,
                     items: ['Automatic', 'Manual'],
                     isRequired: true,
@@ -151,43 +138,43 @@ class BasicInfoSection extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
 
             // Car owner
             _buildModernTextField(
+              context: context,
               controller: carOwnerFullNameController,
               label: 'Car Owner Name',
               icon: Icons.person,
               readOnly: true,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
 
             // Description
             _buildModernTextField(
+              context: context,
               controller: descriptionController,
               label: 'Description',
               hint: 'Tell us about your car',
-              icon: Icons.description,
+              
               maxLines: 4,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
     return Row(
       children: [
         Icon(icon, color: AppTheme.lightBlue, size: 24),
         const SizedBox(width: 12),
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -195,6 +182,7 @@ class BasicInfoSection extends StatelessWidget {
   }
 
   Widget _buildModernTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     IconData? icon,
@@ -208,13 +196,13 @@ class BasicInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: AppTheme.white,
               fontWeight: FontWeight.w500,
+              letterSpacing: 0.1,
             ),
           ),
         ),
@@ -225,7 +213,7 @@ class BasicInfoSection extends StatelessWidget {
                 ? AppTheme.navy.withOpacity(0.2)
                 : AppTheme.navy.withOpacity(0.4),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: AppTheme.lightBlue.withOpacity(0.2),
               width: 1,
             ),
           ),
@@ -234,27 +222,27 @@ class BasicInfoSection extends StatelessWidget {
             readOnly: readOnly,
             keyboardType: keyboardType,
             maxLines: maxLines,
-            style: TextStyle(
-              color: readOnly ? Colors.white70 : Colors.white,
-              fontSize: 16,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: readOnly ? AppTheme.lightBlue.withOpacity(0.7) : AppTheme.white,
               fontWeight: FontWeight.w400,
+              letterSpacing: 0.15,
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 15,
+              hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.lightBlue.withOpacity(0.5),
+                fontWeight: FontWeight.w300,
               ),
               prefixIcon: icon != null
                   ? Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Icon(icon, color: AppTheme.lightBlue, size: 22),
+                      child: Icon(icon, color: AppTheme.lightBlue, size: 20),
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: icon != null ? 8 : 16,
+                vertical: maxLines > 1 ? 16 : 14,
               ),
             ),
             validator: isRequired && !readOnly
@@ -267,6 +255,7 @@ class BasicInfoSection extends StatelessWidget {
   }
 
   Widget _buildDropdownField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required IconData icon,
@@ -277,13 +266,13 @@ class BasicInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: AppTheme.white,
               fontWeight: FontWeight.w500,
+              letterSpacing: 0.1,
             ),
           ),
         ),
@@ -292,26 +281,25 @@ class BasicInfoSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             color: AppTheme.navy.withOpacity(0.4),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: AppTheme.lightBlue.withOpacity(0.2),
               width: 1,
             ),
           ),
           child: DropdownButtonFormField<String>(
             value: items.contains(controller.text) ? controller.text : null,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppTheme.white,
               fontWeight: FontWeight.w400,
+              letterSpacing: 0.15,
             ),
             dropdownColor: AppTheme.navy.withOpacity(0.95),
             elevation: 0,
             isExpanded: true,
             decoration: InputDecoration(
-              hintText:
-                  'Select ${label.length > 10 ? '${label.substring(0, 10)}...' : label}',
-              hintStyle: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 14,
+              hintText: 'Select $label',
+              hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.lightBlue.withOpacity(0.5),
+                fontWeight: FontWeight.w300,
               ),
               prefixIcon: Padding(
                 padding: const EdgeInsets.all(12),
@@ -319,28 +307,30 @@ class BasicInfoSection extends StatelessWidget {
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(
-                left: 14,
+                left: 8,
                 right: 10,
-                top: 12,
-                bottom: 12,
+                top: 14,
+                bottom: 14,
               ),
             ),
             icon: Icon(
               Icons.keyboard_arrow_down,
               color: AppTheme.lightBlue,
-              size: 22,
+              size: 20,
             ),
-            items:
-                items.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                }).toList(),
+            items: items.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppTheme.white,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
             onChanged: (String? newValue) {
               if (newValue != null) {
                 controller.text = newValue;

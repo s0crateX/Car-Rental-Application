@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../config/theme.dart';
 
 class InteractiveMap extends StatefulWidget {
@@ -11,6 +12,7 @@ class InteractiveMap extends StatefulWidget {
   final MapController? mapController;
   final List<dynamic>? carMarkers; // Accepts List<CarModel> or List<Map<String, dynamic>>
   final String? userProfileImageUrl;
+  final bool showLocationPin;
 
   const InteractiveMap({
     super.key,
@@ -21,6 +23,7 @@ class InteractiveMap extends StatefulWidget {
     this.mapController,
     this.carMarkers,
     this.userProfileImageUrl,
+    this.showLocationPin = true,
   });
 
   @override
@@ -36,6 +39,16 @@ class _InteractiveMapState extends State<InteractiveMap> {
     super.initState();
     _mapController = widget.mapController ?? MapController();
     _selectedLocation = widget.initialLocation;
+  }
+
+  @override
+  void didUpdateWidget(InteractiveMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialLocation != widget.initialLocation) {
+      setState(() {
+        _selectedLocation = widget.initialLocation;
+      });
+    }
   }
 
   @override
@@ -131,31 +144,36 @@ class _InteractiveMapState extends State<InteractiveMap> {
                 .toList(),
           ),
         // User selected location marker
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: _selectedLocation,
-              width: 44,
-              height: 44,
-              child: widget.userProfileImageUrl != null &&
-                      widget.userProfileImageUrl!.isNotEmpty
-                  ? CircleAvatar(
-                      radius: 22,
-                      backgroundColor: AppTheme.mediumBlue,
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundImage:
-                            NetworkImage(widget.userProfileImageUrl!),
+        if (widget.showLocationPin)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: _selectedLocation,
+                width: 30,
+                height: 30,
+                child: widget.userProfileImageUrl != null &&
+                        widget.userProfileImageUrl!.isNotEmpty
+                    ? CircleAvatar(
+                        radius: 22,
+                        backgroundColor: AppTheme.mediumBlue,
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundImage:
+                              NetworkImage(widget.userProfileImageUrl!),
+                        ),
+                      )
+                    : SvgPicture.asset(
+                        'assets/svg/location.svg',
+                        width: 32,
+                        height: 32,
+                        colorFilter: ColorFilter.mode(
+                          AppTheme.darkNavy,
+                          BlendMode.srcIn,
+                        ),
                       ),
-                    )
-                  : const Icon(
-                      Icons.location_on,
-                      color: AppTheme.mediumBlue,
-                      size: 40,
-                    ),
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
       ],
     );
   }

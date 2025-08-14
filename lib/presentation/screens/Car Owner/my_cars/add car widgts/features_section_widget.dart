@@ -17,127 +17,227 @@ class FeaturesSectionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildFeaturesInput(),
-        const SizedBox(height: 12),
-        _buildFeaturesList(),
+        _buildFeaturesInput(context),
+        const SizedBox(height: 16),
+        _buildFeaturesList(context),
       ],
     );
   }
 
-  Widget _buildFeaturesInput() {
+  Widget _buildFeaturesInput(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(
           child: TextFormField(
             controller: featureNameController,
-            style: const TextStyle(color: AppTheme.white),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppTheme.white,
+              fontFamily: 'General Sans',
+            ),
             decoration: InputDecoration(
               labelText: 'Add a feature',
-              hintText: 'e.g., GPS, Sunroof',
-              prefixIcon: const Icon(
-                Icons.star_outline,
-                size: 18,
-                color: AppTheme.lightBlue,
-              ),
+              hintText: 'e.g., Bluetooth',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppTheme.mediumBlue.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppTheme.lightBlue,
+                  width: 2,
+                ),
               ),
               filled: true,
               fillColor: AppTheme.darkNavy,
-              isDense: true,
               contentPadding: const EdgeInsets.symmetric(
-                vertical: 14,
-                horizontal: 12,
+                vertical: 16,
+                horizontal: 16,
               ),
-              labelStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.8)),
-              hintStyle: TextStyle(color: AppTheme.paleBlue.withOpacity(0.6)),
+              labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.lightBlue,
+                fontFamily: 'General Sans',
+              ),
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.paleBlue.withOpacity(0.7),
+                fontFamily: 'General Sans',
+              ),
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          onPressed: onAddFeature,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.lightBlue,
-            foregroundColor: AppTheme.darkNavy,
-            padding: const EdgeInsets.all(12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        const SizedBox(width: 12),
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.lightBlue, AppTheme.mediumBlue],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            minimumSize: const Size(48, 48),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.lightBlue.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: const Icon(Icons.add, size: 20, color: AppTheme.darkNavy),
+          child: ElevatedButton(
+            onPressed: onAddFeature,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              foregroundColor: AppTheme.darkNavy,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              minimumSize: const Size(56, 56),
+            ),
+            child: const Icon(
+              Icons.add,
+              size: 24,
+              color: AppTheme.darkNavy,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildFeaturesList() {
+  Widget _buildFeaturesList(BuildContext context) {
     if (featuresList.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppTheme.darkNavy.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.mediumBlue.withOpacity(0.2)),
+          color: AppTheme.navy.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.mediumBlue.withOpacity(0.3),
+            width: 1,
+          ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
             Icon(
-              Icons.info_outline,
-              color: AppTheme.paleBlue.withOpacity(0.7),
-              size: 18,
+              Icons.star_border_rounded,
+              color: AppTheme.paleBlue.withOpacity(0.8),
+              size: 32,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(height: 8),
             Text(
               'No features added yet',
-              style: TextStyle(
-                color: AppTheme.paleBlue.withOpacity(0.7),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.paleBlue.withOpacity(0.8),
+                fontFamily: 'General Sans',
                 fontStyle: FontStyle.italic,
               ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Add features to make your car more attractive',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppTheme.paleBlue.withOpacity(0.6),
+                fontFamily: 'General Sans',
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
       );
     }
 
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      children: featuresList
-          .map(
-            (feature) => Chip(
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              backgroundColor: AppTheme.darkNavy,
-              side: BorderSide(color: AppTheme.lightBlue.withOpacity(0.3)),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              avatar: const Icon(
-                Icons.star,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.star_rounded,
                 color: AppTheme.lightBlue,
-                size: 12,
+                size: 18,
               ),
-              label: Text(
-                feature,
-                style: const TextStyle(
-                  color: AppTheme.white,
+              const SizedBox(width: 8),
+              Text(
+                'Added Features (${featuresList.length})',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppTheme.lightBlue,
+                  fontFamily: 'General Sans',
                   fontWeight: FontWeight.w500,
-                  fontSize: 11,
                 ),
               ),
-              deleteIcon: const Icon(
-                Icons.close,
-                color: Colors.redAccent,
-                size: 12,
-              ),
-              onDeleted: () => onRemoveFeature(feature),
-            ),
-          )
-          .toList(),
+            ],
+          ),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: featuresList
+              .map(
+                (feature) => Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.navy,
+                        AppTheme.darkNavy,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppTheme.lightBlue.withOpacity(0.4),
+                      width: 1.5,
+                    ),
+                    
+                  ),
+                  child: Chip(
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    backgroundColor: Colors.transparent,
+                    side: BorderSide.none,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    
+                    label: Text(
+                      feature,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AppTheme.white,
+                        fontFamily: 'General Sans',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    deleteIcon: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.red.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: AppTheme.red,
+                        size: 14,
+                      ),
+                    ),
+                    onDeleted: () => onRemoveFeature(feature),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
     );
   }
 }

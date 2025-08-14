@@ -30,14 +30,118 @@ class AppTheme {
         error: Colors.redAccent,
       ),
       textTheme: const TextTheme(
-        displayLarge: TextStyle(color: white, fontWeight: FontWeight.bold),
-        displayMedium: TextStyle(color: white, fontWeight: FontWeight.bold),
-        displaySmall: TextStyle(color: white, fontWeight: FontWeight.bold),
-        headlineMedium: TextStyle(color: white, fontWeight: FontWeight.w700),
-        headlineSmall: TextStyle(color: white, fontWeight: FontWeight.w700),
-        titleLarge: TextStyle(color: white, fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(color: white),
-        bodyMedium: TextStyle(color: paleBlue),
+        // Large display text (32px)
+        displayLarge: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w300,
+          fontSize: 32,
+          fontFamily: 'General Sans',
+          letterSpacing: -0.5,
+        ),
+        // Medium display text (28px)
+        displayMedium: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w300,
+          fontSize: 28,
+          fontFamily: 'General Sans',
+          letterSpacing: -0.25,
+        ),
+        // Small display text (24px)
+        displaySmall: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w400,
+          fontSize: 24,
+          fontFamily: 'General Sans',
+          letterSpacing: 0,
+        ),
+        // Medium headline (22px) - for important headers
+        headlineMedium: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w500,
+          fontSize: 22,
+          fontFamily: 'General Sans',
+          letterSpacing: 0,
+        ),
+        // Small headline (20px) - for section headers
+        headlineSmall: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w500,
+          fontSize: 20,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.15,
+        ),
+        // Large title (18px) - for card titles, dialog titles
+        titleLarge: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w500,
+          fontSize: 18,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.15,
+        ),
+        // Medium title (16px) - for list item titles
+        titleMedium: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w400,
+          fontSize: 16,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.15,
+        ),
+        // Small title (14px) - for smaller titles
+        titleSmall: TextStyle(
+          color: white, 
+          fontWeight: FontWeight.w400,
+          fontSize: 14,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.1,
+        ),
+        // Large body text (16px) - for important content
+        bodyLarge: TextStyle(
+          color: white,
+          fontWeight: FontWeight.w300,
+          fontSize: 16,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.5,
+        ),
+        // Medium body text (14px) - for regular content
+        bodyMedium: TextStyle(
+          color: paleBlue,
+          fontWeight: FontWeight.w300,
+          fontSize: 14,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.25,
+        ),
+        // Small body text (12px) - for captions and small text
+        bodySmall: TextStyle(
+          color: paleBlue,
+          fontWeight: FontWeight.w300,
+          fontSize: 12,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.4,
+        ),
+        // Label large (14px) - for button text and form labels
+        labelLarge: TextStyle(
+          color: white,
+          fontWeight: FontWeight.w400,
+          fontSize: 14,
+          fontFamily: 'General Sans',
+          letterSpacing: 1.25,
+        ),
+        // Label medium (12px) - for smaller labels
+        labelMedium: TextStyle(
+          color: white,
+          fontWeight: FontWeight.w400,
+          fontSize: 12,
+          fontFamily: 'General Sans',
+          letterSpacing: 1.5,
+        ),
+        // Label small (11px) - for very small labels and captions
+        labelSmall: TextStyle(
+          color: lightBlue,
+          fontWeight: FontWeight.w300,
+          fontSize: 11,
+          fontFamily: 'General Sans',
+          letterSpacing: 1.5,
+        ),
       ),
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
@@ -55,7 +159,18 @@ class AppTheme {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: mediumBlue),
         ),
-        hintStyle: const TextStyle(color: lightBlue),
+        hintStyle: const TextStyle(
+          color: lightBlue,
+          fontWeight: FontWeight.w300,
+          fontSize: 14,
+          fontFamily: 'General Sans',
+        ),
+        labelStyle: const TextStyle(
+          color: lightBlue,
+          fontWeight: FontWeight.w300,
+          fontSize: 14,
+          fontFamily: 'General Sans',
+        ),
       ),
       // Button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -70,8 +185,10 @@ class AppTheme {
           ),
           textStyle: WidgetStateProperty.all(
             const TextStyle(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
               fontFamily: 'General Sans',
+              letterSpacing: 1.25,
             ),
           ),
         ),
@@ -81,10 +198,24 @@ class AppTheme {
           foregroundColor: WidgetStateProperty.all(lightBlue),
           textStyle: WidgetStateProperty.all(
             const TextStyle(
-              fontWeight: FontWeight.normal,
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
               fontFamily: 'General Sans',
+              letterSpacing: 1.25,
             ),
           ),
+        ),
+      ),
+      // AppBar theme for header titles
+      appBarTheme: const AppBarTheme(
+        backgroundColor: darkNavy,
+        foregroundColor: white,
+        titleTextStyle: TextStyle(
+          color: white,
+          fontWeight: FontWeight.w500,
+          fontSize: 20,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.15,
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car w
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/car_image_gallery_section.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/features_section.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/price_section.dart';
+import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/car_issue_images_section.dart';
 
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/add car widgts/rental_requirements_section_widget.dart';
 import 'package:car_rental_app/presentation/screens/Car Owner/my_cars/edit car widgets/document_upload_section.dart';
@@ -44,6 +45,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
   List<String> _orDocuments = [];
   List<String> _crDocuments = [];
   List<String> _rentalRequirements = [];
+  List<String> _issueImages = [];
   double _deliveryCharge = 0.0;
   bool _isLoading = false;
   int _currentStep = 0;
@@ -85,6 +87,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
     _orDocuments = List<String>.from(widget.car.orDocuments);
     _crDocuments = List<String>.from(widget.car.crDocuments);
     _rentalRequirements = List<String>.from(widget.car.rentalRequirements);
+    _issueImages = List<String>.from(widget.car.issueImages);
     _deliveryCharge = widget.car.deliveryCharge;
 
     _typeController = TextEditingController(text: widget.car.type);
@@ -174,6 +177,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
             'rentalRequirements': _rentalRequirements,
             'orDocuments': _orDocuments,
             'crDocuments': _crDocuments,
+            'issueImages': _issueImages,
             'deliveryCharge': _deliveryCharge,
           });
 
@@ -343,6 +347,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
       'Pricing',
       'Rental Requirements',
       'Documents',
+      'Issue Images',
     ];
 
     return Container(
@@ -387,7 +392,6 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
           modelController: _modelController,
           yearController: _yearController,
           seatsController: _seatsController,
-          luggageController: _luggageController,
           descriptionController: _descriptionController,
           fuelTypeController: _fuelTypeController,
           transmissionTypeController: _transmissionTypeController,
@@ -443,6 +447,12 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
             ],
           ),
         );
+      case 6:
+        return CarIssueImagesSection(
+          issueImageUrls: _issueImages,
+          onIssueImagesChanged: (images) => setState(() => _issueImages = images),
+          carId: widget.car.id,
+        );
       default:
         return const SizedBox();
     }
@@ -471,14 +481,14 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
         Expanded(
           child: ElevatedButton.icon(
             onPressed:
-                _currentStep < 5
+                _currentStep < 6
                     ? () => setState(() => _currentStep++)
                     : _showConfirmationDialog,
             icon: Icon(
-              _currentStep < 5 ? Icons.arrow_forward : Icons.save,
+              _currentStep < 6 ? Icons.arrow_forward : Icons.save,
               color: Colors.black,
             ),
-            label: Text(_currentStep < 5 ? 'Next' : 'Save Changes'),
+            label: Text(_currentStep < 6 ? 'Next' : 'Save Changes'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.lightBlue,
               foregroundColor: AppTheme.darkNavy,
@@ -508,6 +518,7 @@ class _EditCarDetailsScreenState extends State<EditCarDetailsScreen> {
           _orDocuments = List<String>.from(updatedCar.orDocuments);
           _crDocuments = List<String>.from(updatedCar.crDocuments);
           _carImageGallery = List<String>.from(updatedCar.imageGallery);
+          _issueImages = List<String>.from(updatedCar.issueImages);
           _deliveryCharge = updatedCar.deliveryCharge;
         });
       }

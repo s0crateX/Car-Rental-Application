@@ -5,6 +5,8 @@ import '../../../../../config/theme.dart';
 class PricingOption extends StatelessWidget {
   final String period;
   final double price;
+  final double? originalPrice;
+  final double? discount;
   final String currency;
   final bool isRecommended;
   final VoidCallback? onTap;
@@ -13,6 +15,8 @@ class PricingOption extends StatelessWidget {
     super.key, 
     required this.period, 
     required this.price, 
+    this.originalPrice,
+    this.discount,
     this.currency = 'PHP',
     this.isRecommended = false,
     this.onTap,
@@ -47,7 +51,24 @@ class PricingOption extends StatelessWidget {
                     color: isRecommended ? Theme.of(context).primaryColor : null,
                   ),
                 ),
-                if (isRecommended) ...[  
+                if (discount != null && discount! > 0) ...[  
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${discount!.toStringAsFixed(0)}% OFF',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+                if (isRecommended && (discount == null || discount! == 0)) ...[  
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -66,41 +87,81 @@ class PricingOption extends StatelessWidget {
                 ],
               ],
             ),
-            _buildPriceWidget(context, price, currency),
+            _buildPriceWidget(context, price, currency, originalPrice),
           ],
         ),
       ),
     );
   }
   
-  Widget _buildPriceWidget(BuildContext context, double price, String currency) {
-    return Row(
+  Widget _buildPriceWidget(BuildContext context, double price, String currency, double? originalPrice) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (currency == 'PHP')
-          SvgPicture.asset(
-            'assets/svg/peso.svg',
-            width: 18,
-            height: 18,
-            colorFilter: ColorFilter.mode(
-              Theme.of(context).primaryColor,
-              BlendMode.srcIn,
-            ),
-          )
-        else
-          Text(
-            _getCurrencySymbol(currency),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.w500,
-            ),
+        // Show original price with strikethrough if there's a discount
+        if (originalPrice != null && originalPrice > price) ...[
+          Row(
+            children: [
+              if (currency == 'PHP')
+                SvgPicture.asset(
+                  'assets/svg/peso.svg',
+                  width: 14,
+                  height: 14,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                )
+              else
+                Text(
+                  _getCurrencySymbol(currency),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+              const SizedBox(width: 2),
+              Text(
+                _formatPrice(originalPrice),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey,
+                  decoration: TextDecoration.lineThrough,
+                ),
+              ),
+            ],
           ),
-        const SizedBox(width: 4),
-        Text(
-          _formatPrice(price),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.w500,
-          ),
+          const SizedBox(height: 2),
+        ],
+        // Current/discounted price
+        Row(
+          children: [
+            if (currency == 'PHP')
+              SvgPicture.asset(
+                'assets/svg/peso.svg',
+                width: 18,
+                height: 18,
+                colorFilter: ColorFilter.mode(
+                  Theme.of(context).primaryColor,
+                  BlendMode.srcIn,
+                ),
+              )
+            else
+              Text(
+                _getCurrencySymbol(currency),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            const SizedBox(width: 4),
+            Text(
+              _formatPrice(price),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).primaryColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -26,34 +26,84 @@ class PricingSectionWidget extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: const TextStyle(color: AppTheme.white),
+      style: TextStyle(
+        color: AppTheme.white,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        fontFamily: 'General Sans',
+        letterSpacing: 0.25,
+      ),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Padding(
-          padding: const EdgeInsets.all(12.0),
+        hintText: 'e.g. 500',
+        labelStyle: TextStyle(
+          color: AppTheme.lightBlue.withOpacity(0.8),
+          fontSize: 14,
+          fontWeight: FontWeight.w300,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.25,
+        ),
+        hintStyle: TextStyle(
+          color: AppTheme.lightBlue.withOpacity(0.6),
+          fontSize: 14,
+          fontWeight: FontWeight.w300,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.25,
+        ),
+        prefixIcon: Container(
+          padding: const EdgeInsets.all(12),
           child: SvgPicture.asset(
             icon,
             width: 20,
             height: 20,
-            color: AppTheme.lightBlue,
+            colorFilter: ColorFilter.mode(
+              AppTheme.lightBlue.withOpacity(0.8),
+              BlendMode.srcIn,
+            ),
           ),
         ),
         filled: true,
         fillColor: AppTheme.darkNavy,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.mediumBlue.withOpacity(0.3)),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.mediumBlue.withOpacity(0.3)),
+          borderSide: BorderSide(
+            color: AppTheme.mediumBlue.withOpacity(0.3),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.lightBlue, width: 2),
+          borderSide: const BorderSide(
+            color: AppTheme.lightBlue,
+            width: 2,
+          ),
         ),
-        errorStyle: const TextStyle(color: Colors.orange),
-        labelStyle: TextStyle(color: AppTheme.lightBlue.withOpacity(0.8)),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppTheme.red,
+            width: 1,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppTheme.red,
+            width: 2,
+          ),
+        ),
+        errorStyle: TextStyle(
+          color: AppTheme.red,
+          fontSize: 12,
+          fontWeight: FontWeight.w300,
+          fontFamily: 'General Sans',
+          letterSpacing: 0.4,
+        ),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

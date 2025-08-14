@@ -69,20 +69,23 @@ class _FeaturesSectionState extends State<FeaturesSection> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: AppTheme.navy,
-          title: const Text(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
             'Add Custom Feature',
-            style: TextStyle(color: Colors.white),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
           content: TextField(
             autofocus: true,
-            style: const TextStyle(color: Colors.white),
+            style: Theme.of(context).textTheme.bodyLarge,
             decoration: InputDecoration(
               hintText: 'Feature name',
-              hintStyle: const TextStyle(color: Colors.white54),
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.paleBlue),
               enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
               ),
               focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: AppTheme.lightBlue),
               ),
             ),
@@ -91,14 +94,17 @@ class _FeaturesSectionState extends State<FeaturesSection> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
+              child: Text(
                 'Cancel',
-                style: TextStyle(color: Colors.white70),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.paleBlue),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(input),
-              child: Text('Add', style: TextStyle(color: AppTheme.lightBlue)),
+              child: Text(
+                'Add', 
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.lightBlue),
+              ),
             ),
           ],
         );
@@ -158,80 +164,79 @@ class _FeaturesSectionState extends State<FeaturesSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Delivery Charge Field
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            children: [
-              SvgPicture.asset('assets/svg/peso.svg', width: 20, height: 20, color: AppTheme.lightBlue),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _deliveryChargeController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                  decoration: const InputDecoration(
-                    labelText: 'Delivery Charge',
-                    labelStyle: TextStyle(color: Colors.white70),
-                    hintText: 'Enter delivery charge',
-                    hintStyle: TextStyle(color: Colors.white54),
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.transparent,
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Delivery Charge Field
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              children: [
+                SvgPicture.asset('assets/svg/peso.svg', width: 22, height: 22, color: AppTheme.lightBlue),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _deliveryChargeController,
+                    keyboardType: TextInputType.number,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                    decoration: InputDecoration(
+                      labelText: 'Delivery Charge',
+                      labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.paleBlue),
+                      hintText: 'Enter delivery charge',
+                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.paleBlue),
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    onChanged: (value) {
+                      final intCharge = int.tryParse(value) ?? 0;
+                      widget.onDeliveryChargeChanged(intCharge.toDouble());
+                    },
                   ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  onChanged: (value) {
-                    final intCharge = int.tryParse(value) ?? 0;
-                    widget.onDeliveryChargeChanged(intCharge.toDouble());
-                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        _buildSectionHeader('Features & Extras', Icons.star_outline),
-        const SizedBox(height: 16),
+          _buildSectionHeader(context, 'Features & Extras', Icons.star_outline),
+          const SizedBox(height: 20),
 
-        // Features section
-        _buildFeaturesSection(),
-        const SizedBox(height: 24),
+          // Features section
+          _buildFeaturesSection(context),
+          const SizedBox(height: 24),
 
-        // Extra charges section
-        _buildExtraChargesSection(),
-      ],
+          // Extra charges section
+          _buildExtraChargesSection(context),
+        ],
+      ),
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: AppTheme.lightBlue.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: AppTheme.lightBlue, size: 20),
+          child: Icon(icon, color: AppTheme.lightBlue, size: 22),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ],
     );
   }
 
-  Widget _buildFeaturesSection() {
+  Widget _buildFeaturesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -240,48 +245,44 @@ class _FeaturesSectionState extends State<FeaturesSection> {
             const Icon(
               Icons.featured_play_list,
               color: Colors.white70,
-              size: 18,
+              size: 20,
             ),
-            const SizedBox(width: 8),
-            const Text(
+            const SizedBox(width: 12),
+            Text(
               'Car Features',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppTheme.lightBlue.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '${_features.length} features',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         // Suggested features
-        _buildSuggestedFeatures(),
-        const SizedBox(height: 16),
+        _buildSuggestedFeatures(context),
+        const SizedBox(height: 18),
 
         // Add feature button
-        _buildAddFeatureButton(),
-        const SizedBox(height: 16),
+        _buildAddFeatureButton(context),
+        const SizedBox(height: 18),
 
         // Features list
-        _buildFeaturesList(),
+        _buildFeaturesList(context),
       ],
     );
   }
 
-  Widget _buildSuggestedFeatures() {
+  Widget _buildSuggestedFeatures(BuildContext context) {
     final suggestedFeatures = [
       'Air Conditioning',
       'GPS Navigation',
@@ -300,18 +301,14 @@ class _FeaturesSectionState extends State<FeaturesSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Quick Add Features:',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.paleBlue),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 10,
+          runSpacing: 10,
           children:
               suggestedFeatures.map((feature) {
                 final isAdded = _features.contains(feature);
@@ -320,8 +317,8 @@ class _FeaturesSectionState extends State<FeaturesSection> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 14,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color:
@@ -339,18 +336,15 @@ class _FeaturesSectionState extends State<FeaturesSection> {
                         if (isAdded)
                           Icon(
                             Icons.check,
-                            size: 14,
+                            size: 16,
                             color: AppTheme.lightBlue,
                           ),
-                        if (isAdded) const SizedBox(width: 4),
+                        if (isAdded) const SizedBox(width: 6),
                         Text(
                           feature,
-                          style: TextStyle(
-                            color:
-                                isAdded ? AppTheme.lightBlue : Colors.white70,
-                            fontSize: 12,
-                            fontWeight:
-                                isAdded ? FontWeight.w600 : FontWeight.normal,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isAdded ? AppTheme.lightBlue : Colors.white70,
+                            fontWeight: isAdded ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -363,15 +357,15 @@ class _FeaturesSectionState extends State<FeaturesSection> {
     );
   }
 
-  Widget _buildAddFeatureButton() {
+  Widget _buildAddFeatureButton(BuildContext context) {
     return GestureDetector(
       onTap: _addFeature,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppTheme.lightBlue.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppTheme.lightBlue.withOpacity(0.3),
             style: BorderStyle.solid,
@@ -380,14 +374,11 @@ class _FeaturesSectionState extends State<FeaturesSection> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add, color: AppTheme.lightBlue, size: 20),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.add, color: AppTheme.lightBlue, size: 22),
+            const SizedBox(width: 12),
+            Text(
               'Add Custom Feature',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
             ),
           ],
         ),
@@ -395,32 +386,28 @@ class _FeaturesSectionState extends State<FeaturesSection> {
     );
   }
 
-  Widget _buildFeaturesList() {
+  Widget _buildFeaturesList(BuildContext context) {
     if (_features.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
         decoration: BoxDecoration(
           color: AppTheme.navy.withOpacity(0.3),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white12),
         ),
-        child: const Column(
+        child: Column(
           children: [
-            Icon(Icons.star_border, color: Colors.white54, size: 48),
-            SizedBox(height: 12),
+            const Icon(Icons.star_border, color: Colors.white54, size: 48),
+            const SizedBox(height: 16),
             Text(
               'No features added yet',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white54),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Add features to make your car more attractive',
-              style: TextStyle(color: Colors.white38, fontSize: 14),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white38),
               textAlign: TextAlign.center,
             ),
           ],
@@ -429,23 +416,22 @@ class _FeaturesSectionState extends State<FeaturesSection> {
     }
 
     return Wrap(
-      spacing: 8.0,
-      runSpacing: 4.0,
+      spacing: 10.0,
+      runSpacing: 8.0,
       children: _features.map((feature) {
         return Chip(
           label: Text(feature),
           backgroundColor: AppTheme.lightBlue.withOpacity(0.15),
-          labelStyle: TextStyle(
+          labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: AppTheme.lightBlue,
-            fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
           onDeleted: () => _removeFeature(feature),
           deleteIcon: Icon(Icons.close,
               size: 18, color: AppTheme.lightBlue.withOpacity(0.7)),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             side: BorderSide(color: AppTheme.lightBlue.withOpacity(0.3)),
           ),
         );
@@ -453,7 +439,7 @@ class _FeaturesSectionState extends State<FeaturesSection> {
     );
   }
 
-  Widget _buildExtraChargesSection() {
+  Widget _buildExtraChargesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -465,63 +451,59 @@ class _FeaturesSectionState extends State<FeaturesSection> {
               height: 24,
               color: AppTheme.lightBlue,
             ),
-            const SizedBox(width: 8),
-            const Text(
+            const SizedBox(width: 12),
+            Text(
               'Extra Charges',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppTheme.lightBlue.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '${_extraCharges.length} charges',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             GestureDetector(
               onTap: _addExtraCharge,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.green.withOpacity(0.8),
-                      Colors.green.withOpacity(0.6),
+                      AppTheme.green.withOpacity(0.8),
+                      AppTheme.green.withOpacity(0.6),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.green.withOpacity(0.3),
+                      color: AppTheme.green.withOpacity(0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 20),
+                child: const Icon(Icons.add, color: Colors.white, size: 22),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         if (_extraCharges.isEmpty)
           GestureDetector(
             onTap: _addExtraCharge,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
               decoration: BoxDecoration(
                 color: AppTheme.navy.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
@@ -533,7 +515,7 @@ class _FeaturesSectionState extends State<FeaturesSection> {
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: AppTheme.lightBlue.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(50),
@@ -544,19 +526,15 @@ class _FeaturesSectionState extends State<FeaturesSection> {
                       size: 32,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: 16),
+                  Text(
                     'Add Extra Charges',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  const SizedBox(height: 8),
+                  Text(
                     'Tap here to add insurance, GPS, or other charges',
-                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -567,18 +545,18 @@ class _FeaturesSectionState extends State<FeaturesSection> {
           ..._extraCharges
               .asMap()
               .entries
-              .map((entry) => _buildExtraChargeCard(entry.key, entry.value)),
+              .map((entry) => _buildExtraChargeCard(context, entry.key, entry.value)),
       ],
     );
   }
 
-  Widget _buildExtraChargeCard(int index, Map<String, dynamic> charge) {
+  Widget _buildExtraChargeCard(BuildContext context, int index, Map<String, dynamic> charge) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.navy.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Row(
@@ -586,15 +564,17 @@ class _FeaturesSectionState extends State<FeaturesSection> {
           Expanded(
             flex: 3,
             child: _buildCompactTextField(
+              context: context,
               initialValue: charge['name']?.toString() ?? '',
               hint: 'e.g., Insurance',
               onChanged: (value) => _updateExtraCharge(index, 'name', value),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             flex: 2,
             child: _buildCompactTextField(
+              context: context,
               initialValue:
                   charge['amount'] == 0.0 ? '' : charge['amount']?.toString() ?? '',
               hint: '0.00',
@@ -603,16 +583,16 @@ class _FeaturesSectionState extends State<FeaturesSection> {
               onChanged: (value) => _updateExtraCharge(index, 'amount', value),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: () => _removeExtraCharge(index),
             child: Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
+                color: AppTheme.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.close, color: Colors.red, size: 16),
+              child: Icon(Icons.close, color: AppTheme.red, size: 18),
             ),
           ),
         ],
@@ -621,6 +601,7 @@ class _FeaturesSectionState extends State<FeaturesSection> {
   }
 
   Widget _buildCompactTextField({
+    required BuildContext context,
     required String initialValue,
     required String hint,
     required Function(String) onChanged,
@@ -631,20 +612,20 @@ class _FeaturesSectionState extends State<FeaturesSection> {
       initialValue: initialValue,
       onChanged: onChanged,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
       decoration: InputDecoration(
         isDense: true,
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.paleBlue),
         border: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         prefixIcon: prefixIcon != null
             ? Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 child: SvgPicture.asset(
                   prefixIcon,
-                  width: 8,
-                  height: 8,
+                  width: 10,
+                  height: 10,
                   color: AppTheme.lightBlue,
                 ),
               )
@@ -652,4 +633,5 @@ class _FeaturesSectionState extends State<FeaturesSection> {
       ),
     );
   }
+
 }

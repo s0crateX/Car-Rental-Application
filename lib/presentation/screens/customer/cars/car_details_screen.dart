@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:car_rental_app/presentation/screens/customer/owner/owner_cars_screen.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ import 'widgets/car_header_info.dart';
 import 'widgets/car_tab_bar.dart';
 import 'widgets/details_tab_content.dart';
 import 'widgets/reviews_tab_content.dart';
+import 'widgets/issues_tab_content.dart';
 
 class CarDetailsScreen extends StatefulWidget {
   final CarModel car;
@@ -30,7 +32,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -68,6 +70,8 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
         },
         body: TabBarView(
           controller: _tabController,
+          physics: const ClampingScrollPhysics(),
+          dragStartBehavior: DragStartBehavior.start,
           children: [
             // Details Tab
             DetailsTabContent(
@@ -81,6 +85,12 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
               car: widget.car,
               sectionTitleBuilder: _sectionTitle,
               formatDate: _formatDate,
+            ),
+
+            // Issues Tab
+            IssuesTabContent(
+              car: widget.car,
+              sectionTitleBuilder: _sectionTitle,
             ),
           ],
         ),
@@ -136,7 +146,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
             ),
 
             // Tab Bar - Fixed height container at the bottom
-            SizedBox(
+            Container(
               height: tabBarHeight,
               child: CarTabBar(tabController: tabController),
             ),

@@ -32,6 +32,14 @@ class DetailsTabContent extends StatelessWidget {
             _buildSpecifications(context),
             const SizedBox(height: 16),
 
+            // Description
+            if (car.description.isNotEmpty) ...[
+              sectionTitleBuilder('Description'),
+              const SizedBox(height: 12),
+              _buildDescription(context),
+              const SizedBox(height: 16),
+            ],
+
             // Pricing Options
             sectionTitleBuilder('Pricing Options'),
             const SizedBox(height: 12),
@@ -71,10 +79,6 @@ class DetailsTabContent extends StatelessWidget {
       children: [
         SpecItem(svgAssetPath: 'assets/svg/seats.svg', text: car.seatsCount),
         SpecItem(
-          svgAssetPath: 'assets/svg/luggage.svg',
-          text: car.luggageCapacity,
-        ),
-        SpecItem(
           svgAssetPath: 'assets/svg/gas-station.svg',
           text: car.fuelType,
         ),
@@ -91,6 +95,10 @@ class DetailsTabContent extends StatelessWidget {
     );
   }
 
+  Widget _buildDescription(BuildContext context) {
+    return ExpandableDescription(description: car.description);
+  }
+
   Widget _buildPricingOptions(BuildContext context) {
     if (car.hourlyRate <= 0) {
       return Container(
@@ -105,23 +113,49 @@ class DetailsTabContent extends StatelessWidget {
       );
     }
 
+    // Calculate prices with discounts
+    final threeDaysPrice = car.hourlyRate * 24 * 3;
+    final weeklyPrice = car.hourlyRate * 24 * 7;
+    final monthlyPrice = car.hourlyRate * 24 * 30;
+    
+    // Apply discounts if available
+    final threeDaysDiscount = car.discounts['3days'] ?? 0.0;
+    final weeklyDiscount = car.discounts['1week'] ?? 0.0;
+    final monthlyDiscount = car.discounts['1month'] ?? 0.0;
+    
+    final discountedThreeDaysPrice = threeDaysPrice * (1 - threeDaysDiscount / 100);
+    final discountedWeeklyPrice = weeklyPrice * (1 - weeklyDiscount / 100);
+    final discountedMonthlyPrice = monthlyPrice * (1 - monthlyDiscount / 100);
+
     final pricingData = [
-      {'period': '1 Hour', 'price': car.hourlyRate, 'isRecommended': false},
+      {'period': '1 Hour', 'price': car.hourlyRate, 'isRecommended': false, 'discount': 0.0},
       {
         'period': '12 Hours',
         'price': car.hourlyRate * 12,
         'isRecommended': false,
+        'discount': 0.0,
       },
-      {'period': 'Daily', 'price': car.hourlyRate * 24, 'isRecommended': true},
+      {'period': 'Daily', 'price': car.hourlyRate * 24, 'isRecommended': true, 'discount': 0.0},
+      {
+        'period': '3 Days',
+        'price': discountedThreeDaysPrice,
+        'originalPrice': threeDaysDiscount > 0 ? threeDaysPrice : null,
+        'isRecommended': threeDaysDiscount > 0,
+        'discount': threeDaysDiscount,
+      },
       {
         'period': 'Weekly',
-        'price': car.hourlyRate * 24 * 7,
-        'isRecommended': false,
+        'price': discountedWeeklyPrice,
+        'originalPrice': weeklyDiscount > 0 ? weeklyPrice : null,
+        'isRecommended': weeklyDiscount > 0,
+        'discount': weeklyDiscount,
       },
       {
         'period': 'Monthly',
-        'price': car.hourlyRate * 24 * 30,
-        'isRecommended': false,
+        'price': discountedMonthlyPrice,
+        'originalPrice': monthlyDiscount > 0 ? monthlyPrice : null,
+        'isRecommended': monthlyDiscount > 0,
+        'discount': monthlyDiscount,
       },
     ];
 
@@ -137,6 +171,8 @@ class DetailsTabContent extends StatelessWidget {
               return PricingOption(
                 period: option['period'] as String,
                 price: option['price'] as double,
+                originalPrice: option['originalPrice'] as double?,
+                discount: option['discount'] as double?,
                 isRecommended: option['isRecommended'] as bool,
                 onTap: () {
                   // Handle selection - could navigate to booking screen with selected period
@@ -252,5 +288,92 @@ class DetailsTabContent extends StatelessWidget {
             );
           }).toList(),
     );
+  }
+}
+
+class ExpandableDescription extends StatefulWidget {
+  final String description;
+  
+  const ExpandableDescription({super.key, required this.description});
+  
+  @override
+  State<ExpandableDescription> createState() => _ExpandableDescriptionState();
+}
+
+class _ExpandableDescriptionState extends State<ExpandableDescription> {
+  bool _isExpanded = false;
+  static const int _maxLines = 3;
+  
+  @override
+  Widget build(BuildContext context) {
+    if (widget.description.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnimatedCrossFade(
+            firstChild: Text(
+              widget.description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                height: 1.5,
+              ),
+              maxLines: _maxLines,
+              overflow: TextOverflow.ellipsis,
+            ),
+            secondChild: Text(
+              widget.description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                height: 1.5,
+              ),
+            ),
+            crossFadeState: _isExpanded 
+                ? CrossFadeState.showSecond 
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+          if (_shouldShowToggle()) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Text(
+                _isExpanded ? 'See Less' : 'See More',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  bool _shouldShowToggle() {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: widget.description,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          height: 1.5,
+        ),
+      ),
+      maxLines: _maxLines,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout(maxWidth: MediaQuery.of(context).size.width - 64); // Account for padding
+    return textPainter.didExceedMaxLines;
   }
 }

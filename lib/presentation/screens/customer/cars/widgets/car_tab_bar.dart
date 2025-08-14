@@ -27,9 +27,18 @@ class CarTabBar extends StatelessWidget {
         labelColor: Theme.of(context).primaryColor,
         unselectedLabelColor: Colors.grey,
         indicatorColor: Theme.of(context).primaryColor,
+        indicatorWeight: 3.0,
+        indicatorSize: TabBarIndicatorSize.tab,
+        isScrollable: false,
+        physics: const ClampingScrollPhysics(),
+        onTap: (index) {
+          // Ensure tab controller animates to the selected tab
+          tabController.animateTo(index);
+        },
         tabs: const [
           Tab(text: 'Details'),
           Tab(text: 'Reviews'),
+          Tab(text: 'Issues'),
         ],
       ),
     );

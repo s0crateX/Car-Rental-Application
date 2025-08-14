@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:car_rental_app/config/theme.dart';
 import 'widgets/extra_charges_section.dart';
@@ -22,6 +24,8 @@ import 'widgets/terms_and_conditions_screen.dart';
 import 'widgets/calendar_section.dart';
 import 'package:car_rental_app/shared/common_widgets/snackbars/error_snackbar.dart';
 import 'package:car_rental_app/core/services/image_upload_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'contract_viewer_screen.dart';
 // Add dotted_border to pubspec.yaml if not present: dotted_border: ^2.0.0
 
 class RentCarScreen extends StatefulWidget {
@@ -60,12 +64,21 @@ class _RentCarScreenState extends State<RentCarScreen> {
   // List of unavailable dates for the car
   Set<DateTime> _unavailableDates = {};
 
+  // Car owner contract
+  String? _ownerContractUrl;
+  String? _contractFileExtension;
+  String? _ownerOrganizationName;
+  bool _isLoadingContract = false;
+  bool _contractSigned = false;
+  Uint8List? _signatureData;
+
   @override
   void initState() {
     super.initState();
     _car = widget.car; // Initialize the car from the widget
     _fetchUserDocuments();
     _fetchCarRentalDates();
+    _fetchOwnerContract();
   }
 
   Future<void> _fetchUserDocuments() async {
@@ -156,42 +169,36 @@ class _RentCarScreenState extends State<RentCarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Rental Requirements')),
+      appBar: AppBar(
+        title: Text(
+          'Rental Requirements',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+      ),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(20.0),
                 child: ListView(
                   children: [
-                    // Document verification section
-                    DocumentVerificationSection(
-                      userDocuments: _userDocuments,
-                      onDocumentUploaded: _fetchUserDocuments,
-                    ),
-
-                    const SizedBox(height: 24),
-
                     // Calendar Widget - Display only to show availability
                     Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Car Availability Calendar',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
+                            const SizedBox(height: 12),
+                            Text(
                               'This calendar shows car availability. Please use the date selectors below to set your booking dates.',
-                              style: TextStyle(fontSize: 14),
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 20),
                             CalendarSection(
                               initialDate: _getInitialSelectableDate(),
                               firstDate: DateTime.now(),
@@ -213,8 +220,8 @@ class _RentCarScreenState extends State<RentCarScreen> {
                         color: AppTheme.navy,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.all(20.0),
+                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -227,7 +234,7 @@ class _RentCarScreenState extends State<RentCarScreen> {
                               });
                             },
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
                           RentalPeriodSection(
                             bookingType: _bookingType,
@@ -275,14 +282,11 @@ class _RentCarScreenState extends State<RentCarScreen> {
                     const SizedBox(height: 24),
 
                     // 4. Notes Section
-                    const Text(
+                    Text(
                       'Notes (Optional)',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     TextField(
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
@@ -308,7 +312,12 @@ class _RentCarScreenState extends State<RentCarScreen> {
                     ),
 
                     const SizedBox(height: 16),
-                    // 6. Payment Option Section (at bottom)
+
+                    // 6. Car Owner Contract Section
+                    _buildContractSection(),
+
+                    const SizedBox(height: 16),
+                    // 7. Payment Option Section (at bottom)
                     PaymentModeSection(
                       selectedPaymentMode: _selectedPaymentMode,
                       paymentModes: _paymentModes,
@@ -361,7 +370,9 @@ class _RentCarScreenState extends State<RentCarScreen> {
                                             MaterialPageRoute(
                                               builder:
                                                   (context) =>
-                                                      const TermsAndConditionsScreen(),
+                                                      TermsAndConditionsScreen(
+                                                        carOwnerDocumentId: widget.car.carOwnerDocumentId,
+                                                      ),
                                             ),
                                           );
                                         },
@@ -439,59 +450,249 @@ class _RentCarScreenState extends State<RentCarScreen> {
     final bool isButtonEnabled =
         allRequirementsUploaded && allRequiredFieldsFilled && _agreedToTerms;
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          // ===== BUTTON COLORS - START =====
-          // You can customize button colors here:
-          // Enabled button background color (currently using primary theme color)
-          backgroundColor:
-              isButtonEnabled
-                  ? Theme.of(context)
-                      .colorScheme
-                      .primary // Change this color for enabled button
-                  : Theme.of(context)
-                      .colorScheme
-                      .surfaceVariant, // Change this color for disabled button
-          // Button text colors
-          foregroundColor:
-              isButtonEnabled
-                  ? Colors
-                      .white // Change this color for enabled button text
-                  : Colors.white, // Change this color for disabled button text
-          // These properties are used when button is disabled with onPressed: null
-          disabledBackgroundColor: Colors.grey, // Change disabled background
-          disabledForegroundColor: Colors.white, // Change disabled text color
-          // ===== BUTTON COLORS - END =====
-        ),
-        onPressed:
-            isButtonEnabled
-                ? () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder:
-                        (context) => ConfirmBookingDialog(
-                          period: periodDisplayText,
-                          paymentMode: _selectedPaymentMode,
-                          startDate: startDisplayText,
-                          endDate: endDisplayText,
-                          notes: _notes,
-                          onCancel: () => Navigator.of(context).pop(false),
-                          onConfirm: () => Navigator.of(context).pop(true),
+    return Column(
+      children: [
+        // Show verification status message if documents aren't verified
+        if (!allRequirementsUploaded)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Theme.of(context).colorScheme.error,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Verification Required',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.bold,
                         ),
-                  );
-                  if (confirmed == true) {
-                    _onBookNow();
-                  }
-                }
-                : null,
-        child: const Text('Confirm'),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Please complete your identity verification to proceed with booking.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _showDocumentVerificationDialog();
+                  },
+                  child: Text(
+                    'Verify Now',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        Container(
+          width: double.infinity,
+          height: 56,
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  isButtonEnabled
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.surfaceVariant,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey,
+              disabledForegroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed:
+                isButtonEnabled
+                    ? () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => ConfirmBookingDialog(
+                              period: periodDisplayText,
+                              paymentMode: _selectedPaymentMode,
+                              startDate: startDisplayText,
+                              endDate: endDisplayText,
+                              notes: _notes,
+                              onCancel: () => Navigator.of(context).pop(false),
+                              onConfirm: () => Navigator.of(context).pop(true),
+                            ),
+                      );
+                      if (confirmed == true) {
+                        _onBookNow();
+                      }
+                    }
+                    : null,
+            child: Text(
+              'Confirm',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDocumentVerificationDialog() {
+    showDialog(
+      context: context,
+      useSafeArea: true,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Identity Verification',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: DocumentVerificationSection(
+                  userDocuments: _userDocuments,
+                  onDocumentUploaded: () {
+                    _fetchUserDocuments();
+                    // Check if all documents are now verified
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      final List<String> documentTypes = [
+                        'government_id',
+                        'license_front',
+                        'license_back',
+                        'selfie_with_license',
+                      ];
+                      
+                      bool allVerified = true;
+                      for (String docType in documentTypes) {
+                        final String status = _userDocuments?[docType]?['status'] ?? 'pending';
+                        if (status.toLowerCase() != 'approved' &&
+                            status.toLowerCase() != 'verified') {
+                          allVerified = false;
+                          break;
+                        }
+                      }
+                      
+                      if (allVerified) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Verification completed successfully!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   void _onBookNow() async {
+    // Check if all required documents are verified
+    final List<String> documentTypes = [
+      'government_id',
+      'license_front',
+      'license_back',
+      'selfie_with_license',
+    ];
+
+    bool allRequirementsUploaded = true;
+    for (String docType in documentTypes) {
+      final String status = _userDocuments?[docType]?['status'] ?? 'pending';
+      if (status.toLowerCase() != 'approved' &&
+          status.toLowerCase() != 'verified') {
+        allRequirementsUploaded = false;
+        break;
+      }
+    }
+
+    if (!allRequirementsUploaded) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Verification Required'),
+          content: const Text('Please complete your identity verification before proceeding with the booking.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showDocumentVerificationDialog();
+              },
+              child: const Text('Verify Now'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Check if contract is signed (if contract exists)
+    if (_ownerContractUrl != null && _ownerContractUrl!.isNotEmpty && !_contractSigned) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Contract Signature Required'),
+          content: const Text('Please review and sign the rental contract before proceeding with your booking.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     // Require receipt image for GCash/PayMaya
     if ((_selectedPaymentMode == 'GCash' ||
             _selectedPaymentMode == 'PayMaya') &&
@@ -576,10 +777,22 @@ class _RentCarScreenState extends State<RentCarScreen> {
       final periodDisplayText =
           "${rentalDuration.inDays}d ${rentalDuration.inHours.remainder(24)}h";
 
-      // Calculate prices
-      final carRentalCost =
-          (rentalDuration.inHours > 0 ? rentalDuration.inHours : 1) *
-          widget.car.hourlyRate;
+      // Calculate prices with discount
+      final totalHours = rentalDuration.inHours > 0 ? rentalDuration.inHours : 1;
+      double carRentalCost = totalHours * widget.car.hourlyRate;
+      
+      // Apply discounts based on rental duration
+      double discountPercentage = 0.0;
+      if (totalHours >= 720) { // 30 days (1 month)
+        discountPercentage = widget.car.discounts['1month'] ?? 0.0;
+      } else if (totalHours >= 168) { // 7 days (1 week)
+        discountPercentage = widget.car.discounts['1week'] ?? 0.0;
+      } else if (totalHours >= 72) { // 3 days
+        discountPercentage = widget.car.discounts['3days'] ?? 0.0;
+      }
+      
+      final discountAmount = carRentalCost * (discountPercentage / 100);
+      carRentalCost = carRentalCost - discountAmount;
 
       double totalExtraCharges = 0;
       _selectedExtras.forEach((name, isSelected) {
@@ -621,6 +834,9 @@ class _RentCarScreenState extends State<RentCarScreen> {
           'endDate': Timestamp.fromDate(_endDate!),
         },
         'carRentalCost': carRentalCost,
+        'originalCarRentalCost': totalHours * widget.car.hourlyRate,
+        'discountPercentage': discountPercentage,
+        'discountAmount': discountAmount,
         'totalExtraCharges': totalExtraCharges,
         'totalPrice': totalPrice,
         'downPayment': downPayment,
@@ -642,6 +858,11 @@ class _RentCarScreenState extends State<RentCarScreen> {
         'documents': {
           'license': _userDocuments?['license_front']?['url'],
           'id': _userDocuments?['government_id']?['url'],
+        },
+        'contract': {
+          'url': _ownerContractUrl,
+          'signed': _contractSigned,
+          'signatureData': _signatureData != null ? base64Encode(_signatureData!) : null,
         },
       };
       print('Saving booking data: $bookingData');
@@ -1006,6 +1227,303 @@ class _RentCarScreenState extends State<RentCarScreen> {
       // In case of error, assume dates are available to prevent blocking the user
       // You might want to show an error message instead
       return true;
+    }
+  }
+
+  Future<void> _fetchOwnerContract() async {
+    setState(() {
+      _isLoadingContract = true;
+    });
+
+    try {
+      final ownerDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.car.carOwnerDocumentId)
+          .get();
+
+      if (ownerDoc.exists) {
+         final data = ownerDoc.data()!;
+         final contractUrl = data['rentalContract'] as String?;
+         final organizationName = data['organizationName'] as String?;
+         
+         // Extract file extension from URL
+         String? fileExtension;
+         if (contractUrl != null && contractUrl.isNotEmpty) {
+           final fileName = contractUrl.split('/').last.split('?').first;
+           fileExtension = fileName.split('.').last.toLowerCase();
+         }
+         
+         setState(() {
+           _ownerContractUrl = contractUrl;
+           _contractFileExtension = fileExtension;
+           _ownerOrganizationName = organizationName;
+           _isLoadingContract = false;
+         });
+      } else {
+        setState(() {
+          _isLoadingContract = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching owner contract: $e');
+      setState(() {
+        _isLoadingContract = false;
+      });
+    }
+  }
+
+  Widget _buildContractSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.description,
+                  color: AppTheme.paleBlue,
+                  size:18,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Rental Contract',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isLoadingContract)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_ownerContractUrl != null && _ownerContractUrl!.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Please review and sign the rental contract provided by ${_ownerOrganizationName?.isNotEmpty == true ? _ownerOrganizationName : widget.car.carOwnerFullName}:',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      if (_contractSigned)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Signed',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkNavy,
+                      border: Border.all(color: AppTheme.darkNavy),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getFileIcon(),
+                          color: _getFileIconColor(),
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Rental Contract Document',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              Text(
+                                'Provided by ${widget.car.carOwnerFullName}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final result = await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(
+                                  builder: (context) => ContractViewerScreen(
+                                    contractUrl: _ownerContractUrl!,
+                                    ownerName: _ownerOrganizationName?.isNotEmpty == true ? _ownerOrganizationName! : widget.car.carOwnerFullName,
+                                    carModel: '${widget.car.brand} ${widget.car.model}',
+                                    onSignatureComplete: (signature) {
+                                      setState(() {
+                                        _contractSigned = true;
+                                        _signatureData = signature;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              );
+                              
+                              if (result == true && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Contract signed successfully!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ErrorSnackbar.show(
+                                  context: context,
+                                  message: 'Error opening contract: Please try again later.',
+                                );
+                              }
+                            }
+                          },
+                          icon: Icon(
+                            _contractSigned ? Icons.check_circle : Icons.visibility,
+                            size: 14,
+                          ),
+                          label: Text(_contractSigned ? 'Signed' : 'View & Sign',style: Theme.of(context).textTheme.bodySmall,),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _contractSigned ? Colors.green : AppTheme.navy,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Please read and understand the contract terms before proceeding with your booking.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  border: Border.all(color: Colors.orange[200]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.orange[700],
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'No Contract Available',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text(
+                            'The car owner has not uploaded a rental contract yet. Standard terms and conditions will apply.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getFileIcon() {
+    if (_contractFileExtension == null) return Icons.description;
+    
+    switch (_contractFileExtension!.toLowerCase()) {
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'doc':
+      case 'docx':
+        return Icons.description;
+      case 'txt':
+        return Icons.text_snippet;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return Icons.image;
+      default:
+        return Icons.description;
+    }
+  }
+
+  Color _getFileIconColor() {
+    if (_contractFileExtension == null) return Colors.grey[600]!;
+    
+    switch (_contractFileExtension!.toLowerCase()) {
+      case 'pdf':
+        return Colors.red[600]!;
+      case 'doc':
+      case 'docx':
+        return Colors.blue[600]!;
+      case 'txt':
+        return Colors.grey[600]!;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return Colors.green[600]!;
+      default:
+        return Colors.grey[600]!;
     }
   }
 }

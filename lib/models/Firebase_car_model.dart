@@ -32,7 +32,9 @@ class CarModel {
   final Map<String, double> location;
   final List<String> orDocuments;  // Official Receipt documents
   final List<String> crDocuments;  // Certificate of Registration documents
+  final List<String> issueImages;  // Car issue/damage photos
   final VerificationStatus verificationStatus;  // Admin verification status
+  final Map<String, double> discounts;  // Rental period discounts (3days, 1week, 1month)
 
   CarModel({
     required this.id,
@@ -62,7 +64,9 @@ class CarModel {
     required this.location,
     required this.orDocuments,
     required this.crDocuments,
+    required this.issueImages,
     required this.verificationStatus,
+    required this.discounts,
   });
 
   // Factory constructor to create CarModel from Firestore document
@@ -106,7 +110,9 @@ class CarModel {
       location: _parseLocation(map['location']),
       orDocuments: (map['orDocuments'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       crDocuments: (map['crDocuments'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      issueImages: (map['issueImages'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       verificationStatus: _parseVerificationStatus(map),
+      discounts: _parseDiscounts(map['discounts']),
     );
   }
 
@@ -138,7 +144,9 @@ class CarModel {
       'location': location,
       'orDocuments': orDocuments,
       'crDocuments': crDocuments,
+      'issueImages': issueImages,
       'verificationStatus': verificationStatus.toString().split('.').last,
+      'discounts': discounts,
     };
   }
 
@@ -226,6 +234,26 @@ class CarModel {
     return {};
   }
 
+  static Map<String, double> _parseDiscounts(dynamic discounts) {
+    if (discounts == null) return {'3days': 0.0, '1week': 0.0, '1month': 0.0};
+    if (discounts is Map) {
+      final result = <String, double>{};
+      // Set default values
+      result['3days'] = 0.0;
+      result['1week'] = 0.0;
+      result['1month'] = 0.0;
+      
+      // Override with actual values if they exist
+      discounts.forEach((key, value) {
+        if (value is num) {
+          result[key.toString()] = value.toDouble();
+        }
+      });
+      return result;
+    }
+    return {'3days': 0.0, '1week': 0.0, '1month': 0.0};
+  }
+
   // Copy with method for updates
   CarModel copyWith({
     String? id,
@@ -255,7 +283,9 @@ class CarModel {
     Map<String, double>? location,
     List<String>? orDocuments,
     List<String>? crDocuments,
+    List<String>? issueImages,
     VerificationStatus? verificationStatus,
+    Map<String, double>? discounts,
   }) {
     return CarModel(
       id: id ?? this.id,
@@ -285,7 +315,9 @@ class CarModel {
       location: location ?? this.location,
       orDocuments: orDocuments ?? this.orDocuments,
       crDocuments: crDocuments ?? this.crDocuments,
+      issueImages: issueImages ?? this.issueImages,
       verificationStatus: verificationStatus ?? this.verificationStatus,
+      discounts: discounts ?? this.discounts,
     );
   }
 }

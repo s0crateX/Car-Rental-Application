@@ -59,7 +59,7 @@ class CarCardCompact extends StatelessWidget {
                   Image.network(
                     car.image,
                     width: double.infinity,
-                    height: 80,
+                    height: 120,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
@@ -129,12 +129,13 @@ class CarCardCompact extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Column(
@@ -143,21 +144,22 @@ class CarCardCompact extends StatelessWidget {
                             Text(
                               '${car.brand} ${car.model}',
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                                 color: theme.colorScheme.onSurface,
+                                letterSpacing: -0.2,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 1),
                             Text(
                               car.type,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.6,
-                                ),
+                                fontWeight: FontWeight.w400,
+                                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                                letterSpacing: 0.1,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -165,38 +167,71 @@ class CarCardCompact extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Row(
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          BlinkingStatusIndicator(
-                            isAvailable:
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              BlinkingStatusIndicator(
+                                isAvailable:
+                                    car.availabilityStatus ==
+                                    AvailabilityStatus.available,
+                                size: 6,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
                                 car.availabilityStatus ==
-                                AvailabilityStatus.available,
-                            size: 8,
+                                        AvailabilityStatus.available
+                                    ? 'Available'
+                                    : 'Unavailable',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      car.availabilityStatus ==
+                                              AvailabilityStatus.available
+                                          ? Colors.green
+                                          : Colors.red,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            car.availabilityStatus ==
-                                    AvailabilityStatus.available
-                                ? 'Available'
-                                : 'Unavailable',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color:
-                                  car.availabilityStatus ==
-                                          AvailabilityStatus.available
-                                      ? Colors.green
-                                      : Colors.red,
-                            ),
+                          const SizedBox(height: 2),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SvgPicture.asset(
+                                'assets/svg/location.svg',
+                                width: 12,
+                                height: 12,
+                                colorFilter: ColorFilter.mode(
+                                  theme.colorScheme.primary,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                distanceText,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                  letterSpacing: 0.1,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
+                  // Car specifications in a horizontal layout
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Transmission Type
                       Expanded(
                         child: Row(
                           children: [
@@ -206,154 +241,83 @@ class CarCardCompact extends StatelessWidget {
                                   )
                                   ? 'assets/svg/manual-gearbox.svg'
                                   : 'assets/svg/automatic-gearbox.svg',
-                              width: 13,
-                              height: 13,
+                              width: 12,
+                              height: 12,
                               colorFilter: ColorFilter.mode(
                                 theme.colorScheme.onSurface.withOpacity(0.7),
                                 BlendMode.srcIn,
                               ),
                             ),
-                            const SizedBox(width: 2),
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  car.transmissionType,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: theme.colorScheme.onSurface
-                                        .withOpacity(0.7),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/svg/gas-station.svg',
-                              width: 13,
-                              height: 13,
-                              colorFilter: ColorFilter.mode(
-                                theme.colorScheme.onSurface.withOpacity(0.7),
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  car.fuelType,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: theme.colorScheme.onSurface
-                                        .withOpacity(0.7),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/svg/user.svg',
-                              width: 13,
-                              height: 13,
-                              colorFilter: ColorFilter.mode(
-                                theme.colorScheme.onSurface.withOpacity(0.7),
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            Expanded(
+                            const SizedBox(width: 4),
+                            Flexible(
                               child: Text(
-                                car.seatsCount,
+                                car.transmissionType,
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
                                   color: theme.colorScheme.onSurface
                                       .withOpacity(0.7),
+                                  letterSpacing: 0.1,
                                 ),
-                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 3.0),
-                            child: SvgPicture.asset(
-                              'assets/svg/peso.svg',
-                              width: 20,
-                              height: 20,
+                      const SizedBox(width: 8),
+                      // Fuel Type
+                      Expanded(
+                        child: Row(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/svg/gas-station.svg',
+                              width: 12,
+                              height: 12,
                               colorFilter: ColorFilter.mode(
-                                theme.colorScheme.primary,
+                                theme.colorScheme.onSurface.withOpacity(0.7),
                                 BlendMode.srcIn,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 1),
-                          Text(
-                            car.hourlyRate.toStringAsFixed(0),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          Text(
-                            ' / hour',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.6,
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                car.fuelType,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.7),
+                                  letterSpacing: 0.1,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      // Seat Count
                       Row(
                         children: [
                           SvgPicture.asset(
-                            'assets/svg/location.svg',
-                            width: 14,
-                            height: 14,
+                            'assets/svg/user.svg',
+                            width: 12,
+                            height: 12,
                             colorFilter: ColorFilter.mode(
-                              theme.colorScheme.primary,
+                              theme.colorScheme.onSurface.withOpacity(0.7),
                               BlendMode.srcIn,
                             ),
                           ),
-                          const SizedBox(width: 1),
+                          const SizedBox(width: 4),
                           Text(
-                            distanceText,
+                            car.seatsCount,
                             style: TextStyle(
-                              fontSize: 11,
-                              color: theme.colorScheme.primary,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.onSurface
+                                  .withOpacity(0.7),
+                              letterSpacing: 0.1,
                             ),
                           ),
                         ],

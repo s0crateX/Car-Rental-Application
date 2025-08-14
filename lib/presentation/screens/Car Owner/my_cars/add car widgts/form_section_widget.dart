@@ -57,9 +57,8 @@ class FormSectionWidget extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: AppTheme.lightBlue,
-                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

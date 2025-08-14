@@ -24,70 +24,54 @@ class DocumentUploadSection extends StatefulWidget {
 
 class _DocumentUploadSectionState extends State<DocumentUploadSection> {
   final ImagePicker _picker = ImagePicker();
-  String? _frontImageUrl;
-  String? _backImageUrl;
-  bool _isUploadingFront = false;
-  bool _isUploadingBack = false;
+  String? _documentImageUrl;
+  bool _isUploading = false;
 
   @override
   void initState() {
     super.initState();
-    _updateImageUrls(widget.documentUrls);
+    _updateImageUrl(widget.documentUrls);
   }
 
   @override
   void didUpdateWidget(covariant DocumentUploadSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.documentUrls != oldWidget.documentUrls) {
-      _updateImageUrls(widget.documentUrls);
+      _updateImageUrl(widget.documentUrls);
     }
   }
 
-  void _updateImageUrls(List<String> urls) {
+  void _updateImageUrl(List<String> urls) {
     setState(() {
-      _frontImageUrl = urls.isNotEmpty ? urls[0] : null;
-      _backImageUrl = urls.length > 1 ? urls[1] : null;
+      _documentImageUrl = urls.isNotEmpty ? urls[0] : null;
     });
   }
 
-  Future<void> _pickImage(bool isFront) async {
+  Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        if (isFront) {
-          _isUploadingFront = true;
-        } else {
-          _isUploadingBack = true;
-        }
+        _isUploading = true;
       });
 
       final url = await _uploadFile(pickedFile);
 
       if (url != null) {
         setState(() {
-          if (isFront) {
-            _frontImageUrl = url;
-          } else {
-            _backImageUrl = url;
-          }
+          _documentImageUrl = url;
         });
         _notifyParent();
       }
 
       setState(() {
-        if (isFront) {
-          _isUploadingFront = false;
-        } else {
-          _isUploadingBack = false;
-        }
+        _isUploading = false;
       });
     }
   }
 
   void _notifyParent() {
     final List<String> urls = [];
-    if (_frontImageUrl != null) urls.add(_frontImageUrl!);
-    if (_backImageUrl != null) urls.add(_backImageUrl!);
+    if (_documentImageUrl != null) urls.add(_documentImageUrl!);
     widget.onDocumentsChanged(urls);
   }
 
@@ -110,90 +94,159 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
     }
   }
 
-  void _removeImage(bool isFront) {
+  void _removeImage() {
     setState(() {
-      if (isFront) {
-        _frontImageUrl = null;
-      } else {
-        _backImageUrl = null;
-      }
+      _documentImageUrl = null;
     });
     _notifyParent();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-                child: _buildImageSlot(
-                    true, 'Front', _frontImageUrl, _isUploadingFront)),
-            const SizedBox(width: 16),
-            Expanded(
-                child: _buildImageSlot(
-                    false, 'Back', _backImageUrl, _isUploadingBack)),
-          ],
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.title, 
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildImageSlot(),
+        ],
+      ),
     );
   }
 
-  Widget _buildImageSlot(
-      bool isFront, String title, String? imageUrl, bool isUploading) {
+  Widget _buildImageSlot() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge
-                ?.copyWith(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () => _pickImage(isFront),
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.lightBlue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.lightBlue, width: 1),
-                image: imageUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(imageUrl),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: isUploading
-                  ? const Center(child: CircularProgressIndicator())
-                  : imageUrl == null
-                      ? const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_a_photo,
-                                color: AppTheme.lightBlue),
-                            SizedBox(height: 4),
-                            Text('Add',
-                                style: TextStyle(color: AppTheme.lightBlue)),
-                          ],
-                        )
-                      : null,
-            ),
+        Text(
+          'Document Image',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w500,
           ),
         ),
-        if (imageUrl != null)
-          TextButton.icon(
-            onPressed: () => _removeImage(isFront),
-            icon: const Icon(Icons.delete_outline,
-                color: Colors.redAccent, size: 16),
-            label: const Text('Remove',
-                style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-          )
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            width: double.infinity,
+            height: 200,
+            decoration: BoxDecoration(
+              color: AppTheme.navy,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _documentImageUrl != null 
+                    ? AppTheme.lightBlue 
+                    : AppTheme.lightBlue.withOpacity(0.3),
+                width: 2,
+              ),
+              image: _documentImageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(_documentImageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: _isUploading
+                ? Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.lightBlue),
+                    ),
+                  )
+                : _documentImageUrl == null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_a_photo_outlined,
+                            color: AppTheme.lightBlue,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Tap to add document',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.lightBlue,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'JPG, PNG supported',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.paleBlue,
+                            ),
+                          ),
+                        ],
+                      )
+                    : null,
+          ),
+        ),
+        if (_documentImageUrl != null) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.navy,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.lightBlue.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        color: AppTheme.green,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Document uploaded successfully',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.green,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: _removeImage,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.red.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: AppTheme.red,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

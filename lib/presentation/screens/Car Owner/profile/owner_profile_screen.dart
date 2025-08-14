@@ -1,10 +1,10 @@
 import 'package:car_rental_app/presentation/screens/Car%20Owner/profile/document_verification_Carowner.dart';
 import 'owner_rentals_history_screen.dart';
+import 'contract_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../config/theme.dart';
 import '../../../../config/routes.dart';
 import '../../../../core/authentication/auth_service.dart';
@@ -271,6 +271,17 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                       builder:
                           (context) =>
                               const DocumentVerificationCarOwnerScreen(),
+                    ),
+                  );
+                },
+              ),
+              OwnerProfileMenuItem(
+                icon: 'assets/svg/file-description.svg',
+                title: 'Contract',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ContractScreen(),
                     ),
                   );
                 },
