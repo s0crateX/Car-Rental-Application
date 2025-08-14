@@ -29,7 +29,7 @@ class ContractViewerScreen extends StatefulWidget {
   State<ContractViewerScreen> createState() => _ContractViewerScreenState();
 }
 
-class _ContractViewerScreenState extends State<ContractViewerScreen> {
+class _ContractViewerScreenState extends State<ContractViewerScreen> with TickerProviderStateMixin {
   bool _isLoading = true;
   bool _isPdf = false;
   String? _localFilePath;
@@ -41,10 +41,23 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> {
   );
   bool _hasSignature = false;
   bool _isSubmitting = false;
+  bool _isSignatureSectionVisible = true;
+  bool _isFullscreen = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  final TransformationController _transformationController = TransformationController();
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
     _loadContract();
     _signatureController.addListener(() {
       setState(() {
@@ -55,6 +68,8 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> {
 
   @override
   void dispose() {
+    _animationController.dispose();
+    _transformationController.dispose();
     _signatureController.dispose();
     super.dispose();
   }
@@ -147,29 +162,64 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> {
     });
   }
 
+  void _toggleSignatureSection() {
+    setState(() {
+      _isSignatureSectionVisible = !_isSignatureSectionVisible;
+    });
+  }
+
+  void _toggleFullscreen() {
+    setState(() {
+      _isFullscreen = !_isFullscreen;
+    });
+  }
+
+  void _resetZoom() {
+    _transformationController.value = Matrix4.identity();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkNavy,
-      appBar: AppBar(
+      appBar: _isFullscreen ? null : AppBar(
         title: Text(
           'Rental Contract',
-          style: Theme.of(context).appBarTheme.titleTextStyle,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
         ),
         backgroundColor: AppTheme.navy,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppTheme.paleBlue),
         elevation: 0,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(_isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
+            onPressed: _toggleFullscreen,
+            tooltip: _isFullscreen ? 'Exit Fullscreen' : 'Fullscreen',
+            color: AppTheme.paleBlue,
+          ),
+        ],
       ),
       body: _isLoading
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.paleBlue),
+                    strokeWidth: 3,
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     'Loading contract...',
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppTheme.paleBlue,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ],
               ),
@@ -177,218 +227,531 @@ class _ContractViewerScreenState extends State<ContractViewerScreen> {
           : _errorMessage != null
               ? Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(32.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.red,
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red[400],
+                          ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
+                        Text(
+                          'Oops! Something went wrong',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: AppTheme.paleBlue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.lightBlue,
+                            height: 1.5,
+                          ),
                         ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
+                        const SizedBox(height: 32),
+                        ElevatedButton.icon(
                           onPressed: _loadContract,
-                          child: Text(
-                            'Retry',
-                            style: Theme.of(context).textTheme.labelLarge,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text(
+                            'Try Again',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.navy,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
                           ),
                         ),
                       ],
                     ),
                   ),
                 )
-              : Column(
-                  children: [
-                    // Contract info header
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20.0),
-                      color: AppTheme.navy.withOpacity(0.1),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              : FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Stack(
+                    children: [
+                      Column(
                         children: [
-                          Text(
-                            'Contract from ${widget.ownerName}',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppTheme.paleBlue,
+                      // Contract info header (hidden in fullscreen)
+                      if (!_isFullscreen)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.navy.withOpacity(0.15),
+                                AppTheme.navy.withOpacity(0.08)
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Vehicle: ${widget.carModel}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Contract viewer
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        margin: const EdgeInsets.all(20.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: _isPdf
-                              ? _localFilePath != null
-                                  ? PDFView(
-                                      filePath: _localFilePath!,
-                                      enableSwipe: true,
-                                      swipeHorizontal: false,
-                                      autoSpacing: false,
-                                      pageFling: false,
-                                      onError: (error) {
-                                        setState(() {
-                                          _errorMessage = 'Error loading PDF: $error';
-                                        });
-                                      },
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        'Failed to load PDF',
-                                        style: Theme.of(context).textTheme.bodyLarge,
-                                      ),
-                                    )
-                              : CachedNetworkImage(
-                                  imageUrl: widget.contractUrl,
-                                  fit: BoxFit.contain,
-                                  placeholder: (context, url) => const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                  errorWidget: (context, url, error) => Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.error_outline,
-                                          size: 48,
-                                          color: Colors.red,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          'Failed to load image',
-                                          style: Theme.of(context).textTheme.bodyLarge,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                    // Signature section
-                    Container(
-                      margin: const EdgeInsets.all(20.0),
-                      padding: const EdgeInsets.all(20.0),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Digital Signature',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Please sign below to agree to the contract terms:',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            height: 160,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(color: Colors.grey[400]!),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Signature(
-                              controller: _signatureController,
-                              backgroundColor: Colors.white,
-                              height: 160,
-                              width: double.infinity,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: _clearSignature,
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: Colors.grey[400]!),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Clear',
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
-                                ),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: AppTheme.navy.withOpacity(0.2),
+                                width: 1,
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                flex: 2,
-                                child: ElevatedButton(
-                                  onPressed: _isSubmitting ? null : _submitSignature,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.navy,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Contract from ${widget.ownerName}',
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        color: AppTheme.paleBlue,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.3,
+                                      ),
                                     ),
                                   ),
-                                  child: _isSubmitting
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                          ),
-                                        )
-                                      : Text(
-                                          'Sign & Continue',
-                                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 10),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.directions_car,
+                                      color: AppTheme.lightBlue,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Vehicle: ${widget.carModel}',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: AppTheme.lightBlue,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ],
+                        ),
+                      // Contract viewer
+                      Expanded(
+                        flex: _isFullscreen ? 1 : (_isSignatureSectionVisible ? 3 : 1),
+                        child: Container(
+                          margin: _isFullscreen ? EdgeInsets.zero : const EdgeInsets.all(20.0),
+                          decoration: _isFullscreen ? null : BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: _isFullscreen ? BorderRadius.zero : BorderRadius.circular(16),
+                                child: _isPdf
+                                    ? _localFilePath != null
+                                        ? PDFView(
+                                            filePath: _localFilePath!,
+                                            enableSwipe: true,
+                                            swipeHorizontal: false,
+                                            autoSpacing: false,
+                                            pageFling: false,
+                                            pageSnap: true,
+                                            onError: (error) {
+                                              setState(() {
+                                                _errorMessage = 'Error loading PDF: $error';
+                                              });
+                                            },
+                                          )
+                                        : Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.picture_as_pdf,
+                                                  size: 64,
+                                                  color: Colors.red,
+                                                ),
+                                                const SizedBox(height: 16),
+                                                Text(
+                                                  'Failed to load PDF',
+                                                  style: Theme.of(context).textTheme.bodyLarge,
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                    : InteractiveViewer(
+                                        transformationController: _transformationController,
+                                        panEnabled: true,
+                                        scaleEnabled: true,
+                                        minScale: 0.5,
+                                        maxScale: 4.0,
+                                        child: CachedNetworkImage(
+                                          imageUrl: widget.contractUrl,
+                                          fit: BoxFit.contain,
+                                          placeholder: (context, url) => Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const CircularProgressIndicator(),
+                                                const SizedBox(height: 16),
+                                                Text(
+                                                  'Loading contract...',
+                                                  style: Theme.of(context).textTheme.bodyMedium,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) => Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.error_outline,
+                                                  size: 64,
+                                                  color: Colors.red,
+                                                ),
+                                                const SizedBox(height: 16),
+                                                Text(
+                                                  'Failed to load contract',
+                                                  style: Theme.of(context).textTheme.bodyLarge,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Please check your internet connection',
+                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                              // Fullscreen toggle overlay
+                              if (_isFullscreen)
+                                Positioned(
+                                  top: 40,
+                                  right: 20,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.7),
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.fullscreen_exit,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: _toggleFullscreen,
+                                    ),
+                                  ),
+                                ),
+                              // Zoom controls for images
+                              if (!_isPdf && !_isFullscreen)
+                                Positioned(
+                                  bottom: 20,
+                                  right: 20,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.7),
+                                          borderRadius: BorderRadius.circular(25),
+                                        ),
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.zoom_in,
+                                            color: Colors.white,
+                                          ),
+                                          onPressed: () {
+                                            final matrix = Matrix4.copy(_transformationController.value);
+                                            matrix.scale(1.2);
+                                            _transformationController.value = matrix;
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.7),
+                                          borderRadius: BorderRadius.circular(25),
+                                        ),
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.zoom_out,
+                                            color: Colors.white,
+                                          ),
+                                          onPressed: () {
+                                            final matrix = Matrix4.copy(_transformationController.value);
+                                            matrix.scale(0.8);
+                                            _transformationController.value = matrix;
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      // Signature section (conditionally visible)
+                      if (_isSignatureSectionVisible && !_isFullscreen)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.grey[50]!, Colors.white],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.navy.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.edit,
+                                      color: AppTheme.navy,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Digital Signature',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: AppTheme.navy,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.paleBlue.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppTheme.paleBlue.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: AppTheme.navy,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Sign below to agree to contract terms',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: AppTheme.navy,
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                height: 120,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(
+                                    color: _hasSignature ? AppTheme.navy : Colors.grey[400]!,
+                                    width: _hasSignature ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Signature(
+                                      controller: _signatureController,
+                                      backgroundColor: Colors.white,
+                                      height: 120,
+                                      width: double.infinity,
+                                    ),
+                                    if (!_hasSignature)
+                                      Positioned.fill(
+                                        child: Center(
+                                          child: Text(
+                                            'Sign here',
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: Colors.grey[400],
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _hasSignature ? _clearSignature : null,
+                                      icon: Icon(
+                                        Icons.refresh,
+                                        size: 16,
+                                        color: _hasSignature ? AppTheme.navy : Colors.grey[400],
+                                      ),
+                                      label: Text(
+                                        'Clear',
+                                        style: TextStyle(
+                                          color: _hasSignature ? AppTheme.navy : Colors.grey[400],
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(
+                                          color: _hasSignature ? AppTheme.navy : Colors.grey[400]!,
+                                          width: 1.5,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        backgroundColor: _hasSignature 
+                                            ? AppTheme.navy.withOpacity(0.05) 
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 2,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _isSubmitting ? null : _submitSignature,
+                                      icon: _isSubmitting
+                                          ? const SizedBox(
+                                              height: 16,
+                                              width: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                              ),
+                                            )
+                                          : const Icon(Icons.check_circle, size: 16),
+                                      label: Text(
+                                        _isSubmitting ? 'Processing...' : 'Sign & Continue',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _hasSignature ? AppTheme.navy : Colors.grey[400],
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        elevation: _hasSignature ? 3 : 0,
+                                        shadowColor: AppTheme.navy.withOpacity(0.3),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                       ],
+                     ),
+                     // Signature toggle button with expand/collapse arrows
+                     if (!_isFullscreen)
+                       Positioned(
+                         bottom: 20,
+                         right: 20,
+                         child: FloatingActionButton(
+                           onPressed: _toggleSignatureSection,
+                           backgroundColor: AppTheme.mediumBlue,
+                           foregroundColor: Colors.white,
+                           elevation: 4,
+                           child: AnimatedSwitcher(
+                             duration: const Duration(milliseconds: 300),
+                             child: Icon(
+                               _isSignatureSectionVisible 
+                                   ? Icons.keyboard_arrow_down 
+                                   : Icons.keyboard_arrow_up,
+                               key: ValueKey(_isSignatureSectionVisible),
+                               size: 28,
+                             ),
+                           ),
+                         ),
+                       ),
+                   ],
+                 ),
+      ),
     );
   }
 }

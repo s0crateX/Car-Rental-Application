@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:scrollable_clean_calendar/scrollable_clean_calendar.dart';
+import 'package:scrollable_clean_calendar/controllers/clean_calendar_controller.dart';
+import 'package:scrollable_clean_calendar/utils/enums.dart';
 
-class CalendarSection extends StatelessWidget {
+enum UnavailablePosition {
+  start,
+  middle,
+  end,
+  single,
+}
+
+class CalendarSection extends StatefulWidget {
   final DateTime initialDate;
   final DateTime firstDate;
   final DateTime lastDate;
@@ -18,14 +27,55 @@ class CalendarSection extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<CalendarSection> createState() => _CalendarSectionState();
+}
+
+class _CalendarSectionState extends State<CalendarSection> {
+  late CleanCalendarController calendarController;
+
+  @override
+  void initState() {
+    super.initState();
+    calendarController = CleanCalendarController(
+      minDate: widget.firstDate,
+      maxDate: widget.lastDate,
+      onDayTapped: (date) {
+        // Disable date selection - calendar is read-only
+      },
+      weekdayStart: DateTime.monday,
+      initialFocusDate: widget.initialDate,
+      rangeMode: false, // Single date selection
+    );
+  }
+
+  @override
+  void dispose() {
+    calendarController.dispose();
+    super.dispose();
+  }
+
+  UnavailablePosition _getUnavailablePosition(DateTime date) {
+    final previousDay = date.subtract(const Duration(days: 1));
+    final nextDay = date.add(const Duration(days: 1));
+    
+    final isPreviousUnavailable = widget.isDateUnavailable(previousDay);
+    final isNextUnavailable = widget.isDateUnavailable(nextDay);
+    
+    if (!isPreviousUnavailable && !isNextUnavailable) {
+      return UnavailablePosition.single;
+    } else if (!isPreviousUnavailable && isNextUnavailable) {
+      return UnavailablePosition.start;
+    } else if (isPreviousUnavailable && !isNextUnavailable) {
+      return UnavailablePosition.end;
+    } else {
+      return UnavailablePosition.middle;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final today = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,88 +128,101 @@ class CalendarSection extends StatelessWidget {
 
         // Calendar
         Container(
+          height: 400, // Fixed height for scrollable calendar
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
           ),
-          child: TableCalendar(
-            firstDay: firstDate,
-            lastDay: lastDate,
-            focusedDay: initialDate,
-            headerStyle: HeaderStyle(
-              formatButtonVisible: false,
-              titleCentered: true,
-              titleTextStyle:
-                  theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ) ??
-                  const TextStyle(),
-              leftChevronIcon: Icon(
-                Icons.chevron_left,
-                color: colorScheme.primary,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: ScrollableCleanCalendar(
+              calendarController: calendarController,
+              layout: Layout.BEAUTY,
+              calendarCrossAxisSpacing: 4,
+              calendarMainAxisSpacing: 4,
+              padding: const EdgeInsets.all(16),
+              monthTextStyle: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
               ),
-              rightChevronIcon: Icon(
-                Icons.chevron_right,
-                color: colorScheme.primary,
+              weekdayTextStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+                fontWeight: FontWeight.w500,
               ),
-            ),
-            calendarFormat: CalendarFormat.month,
-            availableGestures: AvailableGestures.horizontalSwipe,
-            selectedDayPredicate: (day) => false,
-            enabledDayPredicate:
-                (day) => !day.isBefore(today) && !isDateUnavailable(day),
-            onDaySelected: (selectedDay, focusedDay) {
-              if (!isDateUnavailable(selectedDay) &&
-                  !selectedDay.isBefore(today)) {
-                onDateChanged(selectedDay);
-              }
-            },
-            calendarBuilders: CalendarBuilders(
-              disabledBuilder: (context, day, focusedDay) {
-                if (isDateUnavailable(day)) {
-                  return Center(
+              dayTextStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface,
+              ),
+              daySelectedBackgroundColor: colorScheme.primary,
+              dayBackgroundColor: colorScheme.surface,
+              dayDisableBackgroundColor: colorScheme.surface.withOpacity(0.4),
+              dayDisableColor: Colors.red,
+              dayRadius: 8,
+              dayBuilder: (context, values) {
+                final date = values.day;
+                final normalizedDate = DateTime(date.year, date.month, date.day);
+                final normalizedToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+                final isToday = normalizedDate.isAtSameMomentAs(normalizedToday);
+                final isUnavailable = widget.isDateUnavailable(date);
+                final isBeforeToday = normalizedDate.isBefore(normalizedToday);
+                final isDisabled = isUnavailable || isBeforeToday;
+                
+                // Determine position in unavailable range
+                UnavailablePosition? unavailablePosition;
+                if (isUnavailable) {
+                  unavailablePosition = _getUnavailablePosition(normalizedDate);
+                }
+                
+                Color backgroundColor;
+                if (isUnavailable && unavailablePosition != null) {
+                  switch (unavailablePosition) {
+                    case UnavailablePosition.start:
+                    case UnavailablePosition.end:
+                    case UnavailablePosition.single:
+                      backgroundColor = const Color(0xFFE53E3E); // Dark red
+                      break;
+                    case UnavailablePosition.middle:
+                      backgroundColor = const Color(0xFFE53E3E).withOpacity(0.3); // Light red
+                      break;
+                  }
+                } else if (isBeforeToday) {
+                  backgroundColor = colorScheme.surface.withOpacity(0.3);
+                } else {
+                  backgroundColor = colorScheme.surface;
+                }
+                
+                return Container(
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: isToday
+                        ? Border.all(color: colorScheme.primary, width: 2)
+                        : null,
+                  ),
+                  child: Center(
                     child: Text(
-                      '${day.day}',
+                      '${date.day}',
                       style: TextStyle(
-                        color: Colors.red,
-                        decoration: TextDecoration.lineThrough,
+                        color: isUnavailable && unavailablePosition != null
+                                ? (unavailablePosition == UnavailablePosition.middle
+                                    ? const Color(0xFFE53E3E) // Dark red text on light background
+                                    : Colors.white) // White text on dark red background
+                                : isBeforeToday
+                                    ? colorScheme.onSurface.withOpacity(0.4)
+                                    : isToday
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurface,
+                        fontWeight: isToday
+                            ? FontWeight.w600
+                            : isUnavailable
+                                ? FontWeight.w600 // Bold for better contrast on colored backgrounds
+                                : FontWeight.normal,
                         fontSize: 14,
                       ),
-                    ),
-                  );
-                }
-                return null;
-              },
-              defaultBuilder: (context, day, focusedDay) {
-                return Center(
-                  child: Text(
-                    '${day.day}',
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 14,
                     ),
                   ),
                 );
               },
-            ),
-            calendarStyle: CalendarStyle(
-              outsideDaysVisible: false,
-              weekendTextStyle: TextStyle(color: colorScheme.onSurface),
-              todayTextStyle: TextStyle(color: colorScheme.onPrimary),
-              todayDecoration: BoxDecoration(
-                color: colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.8),
-                shape: BoxShape.circle,
-              ),
-              markerDecoration: BoxDecoration(
-                color: colorScheme.secondary,
-                shape: BoxShape.circle,
-              ),
             ),
           ),
         ),
