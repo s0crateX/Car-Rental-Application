@@ -437,6 +437,10 @@ class BookingInfoCard extends StatelessWidget {
               ],
             ),
           ],
+          
+          // Contract signature status
+          const SizedBox(height: 6),
+          _buildSignatureIndicator(),
         ],
       ),
     );
@@ -645,5 +649,29 @@ class BookingInfoCard extends StatelessWidget {
       default:
         return AppTheme.mediumBlue;
     }
+  }
+
+  Widget _buildSignatureIndicator() {
+    final contract = rent.contract;
+    final bool isSigned = contract?.signed == true;
+    
+    return Row(
+      children: [
+        Icon(
+          isSigned ? Icons.check_circle : Icons.pending,
+          size: 12,
+          color: isSigned ? AppTheme.green : AppTheme.orange,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          isSigned ? 'Contract Signed' : 'Contract Pending',
+          style: TextStyle(
+            fontSize: 11,
+            color: isSigned ? AppTheme.green : AppTheme.orange,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 }

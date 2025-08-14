@@ -3,6 +3,42 @@ import 'package:intl/intl.dart';
 
 import 'vehicle.dart';
 
+class ContractInfo {
+  final String? url;
+  final bool? signed;
+  final String? signatureData;
+  final List<Map<String, dynamic>>? signaturePoints;
+
+  ContractInfo({
+    this.url,
+    this.signed,
+    this.signatureData,
+    this.signaturePoints,
+  });
+
+  factory ContractInfo.fromMap(Map<String, dynamic>? map) {
+    if (map == null) return ContractInfo();
+    
+    return ContractInfo(
+      url: map['url'],
+      signed: map['signed'],
+      signatureData: map['signatureData'],
+      signaturePoints: map['signaturePoints'] is List
+          ? List<Map<String, dynamic>>.from(map['signaturePoints'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'url': url,
+      'signed': signed,
+      'signatureData': signatureData,
+      'signaturePoints': signaturePoints,
+    };
+  }
+}
+
 class Rent {
   final String? id;
   final String? bookingType;
@@ -10,6 +46,9 @@ class Rent {
   final String? carName;
   final String? carImageUrl;
   final double? carRentalCost;
+  final double? originalCarRentalCost;
+  final double? discountPercentage;
+  final double? discountAmount;
   final DateTime? createdAt;
   final String? customerId;
   final String? customerName;
@@ -27,6 +66,7 @@ class Rent {
   final String? notes;
   final String? receiptImageUrl;
   final Vehicle? vehicle;
+  final ContractInfo? contract;
 
   Rent({
     this.id,
@@ -35,6 +75,9 @@ class Rent {
     this.carName,
     this.carImageUrl,
     this.carRentalCost,
+    this.originalCarRentalCost,
+    this.discountPercentage,
+    this.discountAmount,
     this.createdAt,
     this.customerId,
     this.customerName,
@@ -52,6 +95,7 @@ class Rent {
     this.notes,
     this.receiptImageUrl,
     this.vehicle,
+    this.contract,
   });
 
   factory Rent.fromMap(Map<String, dynamic> map) {
@@ -75,6 +119,15 @@ class Rent {
       carRentalCost: map['carRentalCost'] is double 
           ? map['carRentalCost'] 
           : (map['carRentalCost'] as num?)?.toDouble(),
+      originalCarRentalCost: map['originalCarRentalCost'] is double 
+          ? map['originalCarRentalCost'] 
+          : (map['originalCarRentalCost'] as num?)?.toDouble(),
+      discountPercentage: map['discountPercentage'] is double 
+          ? map['discountPercentage'] 
+          : (map['discountPercentage'] as num?)?.toDouble(),
+      discountAmount: map['discountAmount'] is double 
+          ? map['discountAmount'] 
+          : (map['discountAmount'] as num?)?.toDouble(),
       createdAt: map['createdAt'] is Timestamp 
           ? (map['createdAt'] as Timestamp).toDate() 
           : null,
@@ -108,6 +161,9 @@ class Rent {
       notes: map['notes'],
       receiptImageUrl: map['receiptImageUrl'],
       vehicle: vehicle,
+      contract: map['contract'] != null
+          ? ContractInfo.fromMap(Map<String, dynamic>.from(map['contract']))
+          : null,
     );
   }
 
@@ -119,6 +175,9 @@ class Rent {
       'carName': carName,
       'carImageUrl': carImageUrl,
       'carRentalCost': carRentalCost,
+      'originalCarRentalCost': originalCarRentalCost,
+      'discountPercentage': discountPercentage,
+      'discountAmount': discountAmount,
       'createdAt': createdAt,
       'customerId': customerId,
       'customerName': customerName,
@@ -135,6 +194,7 @@ class Rent {
       'totalPrice': totalPrice,
       'notes': notes,
       'receiptImageUrl': receiptImageUrl,
+      'contract': contract?.toMap(),
     };
   }
   

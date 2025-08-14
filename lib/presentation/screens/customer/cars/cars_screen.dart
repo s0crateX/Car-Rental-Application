@@ -48,9 +48,7 @@ class _CarsScreenState extends State<CarsScreen> {
     super.dispose();
   }
 
-    Future<void> _onRefresh() async {
-    setState(() {}); // Triggers rebuild and re-sorts cars
-  }
+
 
 
 
@@ -104,9 +102,7 @@ class _CarsScreenState extends State<CarsScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            RefreshIndicator(
-              onRefresh: _onRefresh,
-              child: SingleChildScrollView(
+            SingleChildScrollView(
                 controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
@@ -125,7 +121,6 @@ class _CarsScreenState extends State<CarsScreen> {
                   ),
                 ),
               ),
-            ),
             if (_showScrollToTop)
               Positioned(
                 right: 16,
@@ -272,8 +267,8 @@ class _CarsScreenState extends State<CarsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        FutureBuilder<QuerySnapshot>(
-          future: FirebaseFirestore.instance.collection('Cars').get(),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('Cars').snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());

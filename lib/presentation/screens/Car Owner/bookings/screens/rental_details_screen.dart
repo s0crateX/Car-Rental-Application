@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:car_rental_app/core/authentication/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -268,6 +269,10 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
             ),
           ],
         ),
+        if (widget.rent.discountPercentage != null && widget.rent.discountPercentage! > 0) ...[
+          const SizedBox(height: 12),
+          _buildDiscountSummaryCard(),
+        ],
         const SizedBox(height: 12),
         Row(
           children: [
@@ -337,6 +342,77 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
   );
 }
 
+  Widget _buildDiscountSummaryCard() {
+    final discountPercentage = widget.rent.discountPercentage ?? 0.0;
+    final discountAmount = widget.rent.discountAmount ?? 0.0;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.green.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.green.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.local_offer, color: AppTheme.green, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Discount Applied',
+                  style: TextStyle(
+                    color: AppTheme.green,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.green,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${discountPercentage.toStringAsFixed(0)}% OFF',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Saved ${widget.rent.formatCurrency(discountAmount)}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
 
   Widget _buildRenterTab() {
@@ -366,6 +442,8 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                             _buildDetailRow('Coordinates', 
                               '${widget.rent.deliveryAddress!.latitude}, ${widget.rent.deliveryAddress!.longitude}', 
                               Icons.map, color: Colors.white),
+                        const SizedBox(height: 16),
+                        _buildContractSignatureStatus(),
                         ],
                       ],
                     ),
@@ -396,6 +474,10 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                   delegate: SliverChildListDelegate(
                     <Widget>[
                       _buildDetailRow('Payment Method', widget.rent.paymentMethod ?? 'N/A', Icons.payment, color: Colors.white),
+                      if (widget.rent.originalCarRentalCost != null && widget.rent.discountPercentage != null && widget.rent.discountPercentage! > 0) ...[
+                        _buildDetailRow('Original Car Rental Cost', widget.rent.formatCurrency(widget.rent.originalCarRentalCost ?? 0), Icons.directions_car, color: Colors.white),
+                        _buildDiscountRow(),
+                      ],
                       _buildDetailRow('Car Rental Cost', widget.rent.formatCurrency(widget.rent.carRentalCost ?? 0), Icons.directions_car, color: Colors.white),
                       _buildDetailRow('Total Amount', widget.rent.formatCurrency(widget.rent.totalPrice ?? 0), null, svgAsset: 'assets/svg/peso_blue.svg', color: Colors.white),
                       if (widget.rent.extraCharges != null && widget.rent.extraCharges!.isNotEmpty)
@@ -478,6 +560,9 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
                       _buildDetailRow('Booking ID', widget.rent.id ?? 'N/A', Icons.confirmation_number, color: Colors.white),
                       if (widget.rent.notes != null && widget.rent.notes!.isNotEmpty)
                         _buildDetailRow('Notes', widget.rent.notes!, Icons.notes, isMultiline: true, color: Colors.white),
+                      
+                      const SizedBox(height: 16),
+                      _buildContractSignatureStatus(),
 
                     ],
                   ),
@@ -542,6 +627,91 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     );
   }
 
+  Widget _buildDiscountRow() {
+    final discountPercentage = widget.rent.discountPercentage ?? 0.0;
+    final discountAmount = widget.rent.discountAmount ?? 0.0;
+    
+    if (discountPercentage <= 0) return const SizedBox.shrink();
+    
+    // Determine discount type based on rental duration
+    String discountType = 'Discount';
+    if (widget.rent.rentalPeriod != null) {
+      final duration = widget.rent.rentalPeriod!.endDate?.difference(widget.rent.rentalPeriod!.startDate!);
+      if (duration != null) {
+        final days = duration.inDays;
+        if (days >= 30) {
+          discountType = 'Monthly Discount';
+        } else if (days >= 7) {
+          discountType = 'Weekly Discount';
+        } else if (days >= 3) {
+          discountType = 'Short-term Discount';
+        }
+      }
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.local_offer, color: AppTheme.green, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  discountType,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.green,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${discountPercentage.toStringAsFixed(0)}% OFF',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '-${widget.rent.formatCurrency(discountAmount)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatDate(DateTime? date) {
     if (date == null) return 'N/A';
     return DateFormat('MMM d, yyyy, h:mm a').format(date);
@@ -555,6 +725,166 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen> {
     final days = duration.inDays;
     final hours = duration.inHours % 24;
     return '${days}d ${hours}h';
+  }
+
+  Widget _buildContractSignatureStatus() {
+    final contract = widget.rent.contract;
+    final bool isSigned = contract?.signed == true;
+    final bool hasSignatureData = contract?.signatureData != null && contract!.signatureData!.isNotEmpty;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isSigned ? AppTheme.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSigned ? AppTheme.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isSigned ? AppTheme.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  isSigned ? Icons.check_circle : Icons.pending,
+                  color: isSigned ? AppTheme.green : Colors.orange,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Contract Signature',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          isSigned ? 'Signed' : 'Not Signed',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isSigned ? AppTheme.green : Colors.orange,
+                          ),
+                        ),
+                        if (isSigned && hasSignatureData) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.green.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Verified',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.green,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (!isSigned)
+                      Text(
+                        'Customer has not signed the rental contract yet',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withOpacity(0.6),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (isSigned && hasSignatureData) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Customer Signature:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.memory(
+                        base64Decode(contract!.signatureData!),
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            alignment: Alignment.center,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.grey.shade400,
+                                  size: 24,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Unable to load signature',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
 

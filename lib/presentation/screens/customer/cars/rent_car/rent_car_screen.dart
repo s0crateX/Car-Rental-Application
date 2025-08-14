@@ -1509,7 +1509,9 @@ class _RentCarScreenState extends State<RentCarScreen> {
                         children: [
                           Text(
                             'No Contract Available',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.orange[700],
+                            ),
                           ),
                           Text(
                             'The car owner has not uploaded a rental contract yet. Standard terms and conditions will apply.',

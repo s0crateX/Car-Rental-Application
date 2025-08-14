@@ -48,6 +48,7 @@ class _HistoryTabState extends State<HistoryTab> {
                         Expanded(
                           child: _buildStatCard(
                             'Approved Reservations',
+                          
                             reserveCount.toString(),
                             Icons.event_note,
                             AppTheme.mediumBlue,
@@ -182,7 +183,7 @@ class _HistoryTabState extends State<HistoryTab> {
             title,
             style: const TextStyle(
                 color: AppTheme.paleBlue,
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: FontWeight.w500),
           ),
         ],
